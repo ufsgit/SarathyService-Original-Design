@@ -1,98 +1,113 @@
 .legacy-card {
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-top: 10px;
+    font-family: 'Roboto', 'Arial', sans-serif;
 }
 
 .card-header {
-  background: #f5f5f5;
-  border-bottom: 1px solid #ddd;
-  padding: 8px 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    background: #2b57f5;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
 }
 
 .header-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: bold;
-  font-size: 14px;
-  color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.card-body {
+    padding: 15px;
 }
 
 .search-section {
-  padding: 10px 15px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 13px;
-}
-
-.search-section label {
-  color: #cc1212;
-  font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #cc1212;
+    font-weight: bold;
 }
 
 .search-section input {
-  border: 1px solid #ccc;
-  padding: 3px 8px;
-  border-radius: 2px;
-  width: 150px;
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    outline: none;
+    width: 200px;
 }
 
 .table-container {
-  padding: 0 15px 15px 15px;
-  overflow-x: auto;
+    overflow-x: auto;
+    border: 1px solid #ddd;
 }
 
 .legacy-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
 }
 
 .legacy-table th {
-  background: #f9f9f9;
-  border: 1px solid #eee;
-  padding: 8px;
-  text-align: center;
-  color: #444;
-  font-weight: bold;
+    background: #f5f5f5;
+    color: #333;
+    font-weight: bold;
+    padding: 10px;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+    border-right: 1px solid #ddd;
+    white-space: nowrap;
 }
 
 .legacy-table td {
-  border: 1px solid #eee;
-  padding: 8px;
-  vertical-align: top;
-  color: #333;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    border-right: 1px solid #ddd;
+    color: #444;
 }
 
-.reg-no {
-  color: #cc1212;
-  font-weight: bold;
-  display: block;
-  margin-bottom: 3px;
+.legacy-table tr:hover {
+    background: #f9f9f9;
+}
+
+.text-center { text-align: center; }
+
+.reg-no-link {
+    text-decoration: none;
+    font-weight: bold;
+    color: #cc1212;
+    cursor: pointer;
+}
+
+.reg-no-link:hover {
+    text-decoration: underline;
+    color: #b10f0f;
 }
 
 .customer-info {
-  line-height: 1.4;
-}
-
-.no-data {
-  text-align: center;
-  padding: 20px;
-  color: #999;
+    font-size: 11px;
+    color: #666;
+    margin-top: 4px;
 }
 
 .amount-cell {
-  text-align: right;
-  font-weight: bold;
+    color: #cc1212;
+    font-weight: bold;
+    text-align: right;
 }
 
-.text-center {
-  text-align: center;
+.no-data {
+    text-align: center;
+    padding: 30px !important;
+    color: #999;
 }

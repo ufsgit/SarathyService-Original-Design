@@ -38,7 +38,11 @@ export const routes: Routes = [
       { path: 'insurance/edit/:id', loadComponent: () => import('./features/insurance-company/edit-insurance/edit-insurance.component').then(m => m.EditInsuranceComponent), canActivate: [adminGuard] },
       // Invoice
       { path: 'invoice/labour', loadComponent: () => import('./features/invoice/labour-invoice/labour-invoice.component').then(m => m.LabourInvoiceComponent) },
+      { path: 'invoice/labour/:id', loadComponent: () => import('./features/invoice/labour-invoice/labour-invoice.component').then(m => m.LabourInvoiceComponent) },
+
       { path: 'invoice/insurance', loadComponent: () => import('./features/invoice/insurance-invoice/insurance-invoice.component').then(m => m.InsuranceInvoiceComponent) },
+      { path: 'invoice/insurance/:id', loadComponent: () => import('./features/invoice/insurance-invoice/insurance-invoice.component').then(m => m.InsuranceInvoiceComponent) },
+
       { path: 'invoice/list', loadComponent: () => import('./features/invoice/invoice-list/invoice-list.component').then(m => m.InvoiceListComponent) },
       { path: 'invoice/edit/:id', loadComponent: () => import('./features/invoice/invoice-edit/invoice-edit.component').then(m => m.InvoiceEditComponent) },
       { path: 'invoice/ready/labour', loadComponent: () => import('./features/invoice/ready-bills/ready-bills.component').then(m => m.ReadyBillsComponent), data: { type: 'labour' } },
@@ -66,7 +70,11 @@ export const routes: Routes = [
       { path: 'customer/edit/:id', loadComponent: () => import('./features/customer/edit-customer/edit-customer.component').then(m => m.EditCustomerComponent) },
       // Invoice
       { path: 'invoice/labour', loadComponent: () => import('./features/invoice/labour-invoice/labour-invoice.component').then(m => m.LabourInvoiceComponent) },
+      { path: 'invoice/labour/:id', loadComponent: () => import('./features/invoice/labour-invoice/labour-invoice.component').then(m => m.LabourInvoiceComponent) },
+
       { path: 'invoice/insurance', loadComponent: () => import('./features/invoice/insurance-invoice/insurance-invoice.component').then(m => m.InsuranceInvoiceComponent) },
+      { path: 'invoice/insurance/:id', loadComponent: () => import('./features/invoice/insurance-invoice/insurance-invoice.component').then(m => m.InsuranceInvoiceComponent) },
+
       { path: 'invoice/list', loadComponent: () => import('./features/invoice/invoice-list/invoice-list.component').then(m => m.InvoiceListComponent) },
       { path: 'invoice/edit/:id', loadComponent: () => import('./features/invoice/invoice-edit/invoice-edit.component').then(m => m.InvoiceEditComponent) },
       { path: 'invoice/ready/labour', loadComponent: () => import('./features/invoice/ready-bills/ready-bills.component').then(m => m.ReadyBillsComponent), data: { type: 'labour' } },

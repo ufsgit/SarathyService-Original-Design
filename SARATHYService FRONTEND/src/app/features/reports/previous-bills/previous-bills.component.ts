@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -32,8 +32,10 @@ export class FilterBillsPipe implements PipeTransform {
 })
 export class PreviousBillsComponent implements OnInit {
   bills:any[]=[]; type='labour'; searchText = '';
-  constructor(public api:ApiService,private notify:NotificationService,private route:ActivatedRoute){}
+  isAdmin = false;
+  constructor(public api:ApiService,private notify:NotificationService,private route:ActivatedRoute,private router: Router){}
   ngOnInit(){
+    this.isAdmin = this.router.url.includes('/admin/');
     this.type=this.route.snapshot.data['type']||'labour';
     if(this.type==='labour')this.api.getPreviousLabourBills().subscribe({next:(d:any[])=>this.bills=d,error:()=>this.notify.error('Failed')});
     else this.api.getPreviousInsuranceBills().subscribe({next:(d:any[])=>this.bills=d,error:()=>this.notify.error('Failed')});

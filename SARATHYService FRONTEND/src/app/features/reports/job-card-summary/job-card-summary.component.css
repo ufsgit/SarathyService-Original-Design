@@ -177,9 +177,17 @@
   box-shadow: 0 0 3px rgba(51, 102, 204, 0.2);
 }
 
+.header-label {
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .header-filter-select {
   width: 100%;
-  min-width: 150px;
+  min-width: 130px;
 }
 
 /* Material Select Overrides for Table Header */
@@ -188,15 +196,17 @@
 }
 
 ::v-deep .header-filter-select .mat-mdc-select {
-  font-size: 11px !important;
-  background: white;
-  padding: 6px 10px;
-  border: 1px solid #c0c8d9;
-  border-radius: 3px;
-  min-height: 28px;
+  font-size: 10px !important;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  min-height: 26px;
   display: flex !important;
   align-items: center;
   box-sizing: border-box;
+  color: #333;
+  transition: all 0.2s ease;
 }
 
 ::v-deep .header-filter-select .mat-mdc-select-trigger {
@@ -205,17 +215,20 @@
 }
 
 ::v-deep .header-filter-select .mat-mdc-select-placeholder {
-  color: #777;
+  color: #666;
+  font-weight: 500;
 }
 
 ::v-deep .header-filter-select .mat-mdc-select-arrow-wrapper {
-  transform: scale(0.8);
+  transform: scale(0.7);
+  opacity: 0.7;
 }
 
 /* Hover effects for filters */
-.header-filter-wrapper input:hover,
 ::v-deep .header-filter-select .mat-mdc-select:hover {
-  border-color: #a0acc0;
+  background: #fff;
+  border-color: #fff;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
 }
 
 .main-header th {
@@ -225,6 +238,13 @@
   position: sticky;
   top: 0;
   z-index: 5;
+  vertical-align: top;
+  padding: 10px 8px !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.main-header th:last-child {
+  border-right: 1px solid #ddd;
 }
 
 .legacy-table tbody tr:hover {

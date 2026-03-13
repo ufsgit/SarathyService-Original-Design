@@ -69,52 +69,42 @@
     <div class="scrollable-table-wrap">
       <table class="legacy-table">
         <thead>
-          <tr class="header-inputs">
-            <th><div class="header-filter-wrapper"><input type="text" placeholder="JobCard"></div></th>
-            <th><div class="header-filter-wrapper"><input type="text" placeholder="JobCard Date"></div></th>
-            <th><div class="header-filter-wrapper"><input type="text" placeholder="Branch Name"></div></th>
+          <tr class="main-header">
+            <th>JobCard</th>
+            <th>Date</th>
+            <th>Branch</th>
             <th>
+              <div class="header-label">Mechanic</div>
               <div class="header-filter-select">
-                <mat-select placeholder="--Select Mechanic--" multiple [(ngModel)]="filters.mechanic" (selectionChange)="search()">
+                <mat-select placeholder="Select Mechanic" multiple [(ngModel)]="filters.mechanic" (selectionChange)="search()" panelClass="legacy-select-panel">
                   <mat-option *ngFor="let m of options.mechanics" [value]="m.emp_id">{{m.e_first_name}} [{{m.e_code}}]</mat-option>
                 </mat-select>
               </div>
             </th>
             <th>
+              <div class="header-label">Advisor</div>
               <div class="header-filter-select">
-                <mat-select placeholder="--Select Advisor--" multiple [(ngModel)]="filters.advisor" (selectionChange)="search()">
+                <mat-select placeholder="Select Advisor" multiple [(ngModel)]="filters.advisor" (selectionChange)="search()" panelClass="legacy-select-panel">
                   <mat-option *ngFor="let a of options.advisors" [value]="a.emp_id">{{a.e_first_name}} [{{a.e_code}}]</mat-option>
                 </mat-select>
               </div>
             </th>
             <th>
+              <div class="header-label">Repair Type</div>
               <div class="header-filter-select">
-                <mat-select placeholder="--Select Repair Type--" multiple [(ngModel)]="filters.repair_types" (selectionChange)="search()">
+                <mat-select placeholder="Select Repair Type" multiple [(ngModel)]="filters.repair_types" (selectionChange)="search()" panelClass="legacy-select-panel">
                   <mat-option *ngFor="let t of options.repairTypes" [value]="t">{{t}}</mat-option>
                 </mat-select>
               </div>
             </th>
             <th>
+              <div class="header-label">Insurance</div>
               <div class="header-filter-select">
-                <mat-select placeholder="--Select Insurance Company--" multiple [(ngModel)]="filters.insurance_companies" (selectionChange)="search()">
+                <mat-select placeholder="Select Insurance" multiple [(ngModel)]="filters.insurance_companies" (selectionChange)="search()" panelClass="legacy-select-panel">
                   <mat-option *ngFor="let c of options.insuranceCompanies" [value]="c.com_id">{{c.icompany_name}}</mat-option>
                 </mat-select>
               </div>
             </th>
-            <th><div class="header-filter-wrapper"><input type="text" placeholder="Model Name:"></div></th>
-            <th><div class="header-filter-wrapper"><input type="text" placeholder="HSN/SAC:"></div></th>
-            <th><div class="header-filter-wrapper"><input type="text" placeholder="Invoice no:"></div></th>
-            <th><div class="header-filter-wrapper"><input type="text" placeholder="Invoice Cust:"></div></th>
-            <th colspan="18"></th>
-          </tr>
-          <tr class="main-header">
-            <th>JobCard</th>
-            <th>Date</th>
-            <th>Branch</th>
-            <th>Mechanic</th>
-            <th>Advisor</th>
-            <th>Repair Type</th>
-            <th>Insurance</th>
             <th>Model</th>
             <th>HSN</th>
             <th>Invoice No</th>

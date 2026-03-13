@@ -11,7 +11,7 @@
     <div class="widget-title">
       <span class="icon"> <i class="icon-align-justify"></i> </span>
       <h5>INVOICE (Insurance)</h5>
-      <button type="button" class="btn-danger" (click)="onAddToReadyForBill()">Add to Ready for Bill</button>
+      <button type="button" class="btn-ready-bill" (click)="onAddToReadyForBill()">Add to Ready for Bill</button>
     </div>
 
     <div class="widget-content">
@@ -76,7 +76,7 @@
           </div>
           <div class="control-group">
             <label>Mobile Number:</label>
-            <input type="text" name="cusph" [(ngModel)]="form.inv_pho" readonly />
+            <input type="text" name="cusph" [(ngModel)]="form.inv_pho" required />
           </div>
           <div class="control-group">
             <label>Insurance Company:</label>
@@ -113,7 +113,7 @@
           </div>
           <div class="control-group">
             <label>Insurance Address:</label>
-            <textarea name="cusaddr" [(ngModel)]="form.inv_insurance_address" rows="2" readonly></textarea>
+            <textarea name="insaddr" [(ngModel)]="form.inv_insurance_address" rows="2" readonly></textarea>
           </div>
           <div class="control-group">
             <label>Repair Type:</label>
@@ -137,13 +137,13 @@
       </div>
 
       <div class="total-payable-wrap">
-        <h4>Total Payable Amount : Rs 
-          <input type="text" [(ngModel)]="form.inv_total" readonly />
-        </h4>
-        <button type="button" class="btn-danger" (click)="onPrint()">Print</button>
+        <div class="total-amount-display">
+          Total Payable Amount : Rs {{ form.inv_total | number:'1.2-2' }}
+        </div>
+        <button type="button" class="btn-print" (click)="onPrint()">Print</button>
       </div>
 
-      <!-- Line Items Table with Scroll Wrapper -->
+      <!-- Line Items Table with scroll arrows like legacy system -->
       <div class="table-scroll-outer">
         <div class="table-responsive" id="tableScrollContainer">
           <table class="items-table">
@@ -157,12 +157,14 @@
                 <th style="width: 60px;">Dis %</th>
                 <th style="width: 80px;">Dis</th>
                 <th style="width: 90px;">Taxable Amt</th>
-                <th style="width: 80px;">SGST/UTGST %</th>
-                <th style="width: 90px;">SGST/UTGST</th>
+                <th style="width: 100px;">SGST/UTGST %</th>
+                <th style="width: 100px;">SGST/UTGST AMT</th>
                 <th style="width: 80px;">CGST %</th>
-                <th style="width: 90px;">CGST</th>
+                <th style="width: 90px;">CGST AMT</th>
                 <th style="width: 100px;">Amount</th>
-                <th style="width: 40px; text-align: center; cursor: pointer; color: blue;" (click)="addItem()">+</th>
+                <th style="width: 40px; text-align:center;">
+                  <i class="icon-plus" style="cursor: pointer;" (click)="addItem()">+</i>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -191,8 +193,8 @@
                 <td><input type="number" [(ngModel)]="item.ic_cgst_p" readonly /></td>
                 <td><input type="number" [(ngModel)]="item.ic_cgst_amt" readonly /></td>
                 <td><input type="number" [(ngModel)]="item.ic_total" readonly /></td>
-                <td style="text-align: center;">
-                  <button type="button" class="btn-delete-row" (click)="removeItem(i)">−</button>
+                <td style="text-align: center; vertical-align: middle;">
+                  <button type="button" class="btn-delete-row" (click)="removeItem(i)" title="Delete row">&#8722;</button>
                 </td>
               </tr>
             </tbody>
@@ -202,12 +204,14 @@
 
       <!-- Totals Section -->
       <div class="totals-row">
-        <b>Total</b>
+        <div class="label-total">Total</div>
         <input type="text" [(ngModel)]="form.inv_discount" readonly />
         <input type="text" [(ngModel)]="form.inv_taxable_total" readonly />
+        <div class="empty-cell"></div>
         <input type="text" [(ngModel)]="form.inv_sgst" readonly />
+        <div class="empty-cell"></div>
         <input type="text" [(ngModel)]="form.inv_cgst" readonly />
-        <input type="text" id="netamount" [(ngModel)]="form.inv_total" readonly />
+        <input type="text" class="net-total" [(ngModel)]="form.inv_total" readonly />
       </div>
 
       <div class="form-actions">

@@ -1,39 +1,32 @@
 /* Legacy Maruti Style for Insurance Invoice */
 .container-fluid {
-    padding: 0 20px;
-    background: #f4f4f4;
+    padding: 0 10px;
+    background: #fff;
     min-height: 100vh;
+    font-family: Arial, sans-serif;
 }
 
 #breadcrumb {
     background-color: #fff;
-    border-bottom: 1px solid #e3ebed;
-    padding: 8px 20px;
-    margin-bottom: 10px;
+    padding: 5px 10px;
+    margin-bottom: 5px;
+    font-size: 11px;
 }
 
 #breadcrumb a {
-    font-size: 11px;
-    color: #666666;
+    color: #666;
     text-decoration: none;
 }
 
 #breadcrumb a.current {
     font-weight: bold;
-    color: #444444;
+    color: #333;
 }
 
 .widget-box {
-    background: none repeat scroll 0 0 #F9F9F9;
-    border-top: 1px solid #fff;
-    border-left: 1px solid #fff;
-    border-right: 1px solid #fff;
-    border-radius: 10px 10px 0 0;
-    clear: both;
-    margin-top: 16px;
-    margin-bottom: 16px;
-    position: relative;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #cdcdcd;
+    border-radius: 4px;
+    margin-bottom: 20px;
 }
 
 .widget-title {
@@ -52,7 +45,74 @@
     font-size: 13px;
     font-weight: bold;
     text-transform: uppercase;
+}
+
+.btn-ready-bill, .btn-print, .btn-danger {
+    background-color: #d12a2a; /* Corporate Red */
     color: #fff;
+    border: none;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-ready-bill:hover, .btn-print:hover, .btn-danger:hover {
+    background-color: #b71c1c;
+}
+
+.widget-content {
+    padding: 15px;
+}
+
+/* 4-column Grid */
+.invoice-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.control-group label {
+    width: 110px;
+    font-size: 11px;
+    color: #333;
+    text-align: right;
+    margin-right: 8px;
+}
+
+.control-group input, .control-group select, .control-group textarea {
+    flex: 1;
+    height: 22px;
+    padding: 2px 5px;
+    border: 1px solid #ccc;
+    font-size: 11px;
+    background: #fff;
+}
+
+.control-group input[readonly], .control-group textarea[readonly] {
+    background: #f9f9f9;
+}
+
+.total-payable-wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+    margin-top: 10px;
+}
+
+.total-amount-display {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
 }
 
 /* Table scroll wrapper */
@@ -64,6 +124,12 @@
     overflow-x: auto;
     overflow-y: auto;
     max-height: 250px;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
 }
 
 /* Delete button in table rows */
@@ -96,28 +162,71 @@
     color: #000;
 }
 
-.totals-row label {
+.items-table td {
+    border: 1px solid #cdcdcd;
+    padding: 2px;
+}
+
+.items-table td input, .items-table td select {
+    width: 100%;
+    height: 20px;
+    border: 1px solid #ddd;
+    padding: 1px 3px;
+    font-size: 11px;
+}
+
+/* Totals Row alignment */
+.totals-row {
+    display: flex;
+    background: #f9f9f9;
+    border: 1px solid #cdcdcd;
+    border-top: none;
+    padding: 2px 0;
+}
+
+.label-total {
+    width: 430px; /* Aligns "Total" label under first columns */
+    text-align: right;
+    padding-right: 10px;
     font-weight: bold;
     font-size: 11px;
+    line-height: 24px;
     color: #000;
 }
 
 .totals-row input {
-    width: 80px;
-    height: 24px;
-    text-align: right;
-    border: 1px solid #ccc;
-    font-size: 11px;
+    height: 22px;
+    border: 1px solid #ddd;
     background: #fff;
+    margin-right: 2px;
+    font-size: 11px;
+    text-align: right;
+    padding: 0 5px;
 }
 
-#netamount {
-    width: 120px;
-    background: #fff;
+/* Widths matching table columns */
+.totals-row input:nth-child(2) { width: 60px; } /* Dis % - actually just Dis in footer? */
+.totals-row input:nth-child(3) { width: 80px; } /* Dis */
+.totals-row input:nth-child(4) { width: 90px; } /* Taxable Amt */
+.empty-cell { width: 100px; } /* SGST % */
+.totals-row input:nth-child(6) { width: 100px; } /* SGST AMT */
+
+.totals-row input {
+    flex: 0 0 auto;
+}
+
+.net-total {
     font-weight: bold;
+    background: #fff !important;
 }
 
 .form-actions {
-    text-align: right;
-    padding: 20px 0;
+    text-align: center;
+    margin-top: 30px;
+}
+
+.form-actions .btn-danger {
+    padding: 10px 30px;
+    border-radius: 4px;
+    font-size: 13px;
 }

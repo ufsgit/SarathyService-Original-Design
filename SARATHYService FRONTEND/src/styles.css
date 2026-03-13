@@ -332,3 +332,30 @@ body {
   display: inline-block;
   text-align: center;
 }
+
+/* ====== Legacy Select Panel Overrides ====== */
+.legacy-select-panel {
+  background-color: #ffffff !important;
+}
+
+.legacy-select-panel .mat-mdc-option {
+  color: #000000 !important;
+  font-size: 12px !important;
+}
+
+.legacy-select-panel .mat-mdc-option .mdc-list-item__primary-text {
+  color: #000000 !important;
+}
+
+.legacy-select-panel .mdc-checkbox ~ label {
+  color: #000000 !important;
+  font-weight: 500 !important;
+}
+
+.legacy-select-panel .mat-pseudo-checkbox {
+  color: #000000 !important;
+}
+
+.legacy-select-panel .mat-mdc-option-active {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}

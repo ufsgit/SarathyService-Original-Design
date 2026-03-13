@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -16,9 +16,10 @@ export class InsuranceInvoiceComponent implements OnInit {
   form: any = { inv_discount: 0, inv_type: 'Cash', inv_total: 0 };
   items: any[] = [this.newItem()];
   branches: any[] = []; mechanics: any[] = []; advisors: any[] = []; companies: any[] = []; labourNames: any[] = [];
-  
-  constructor(private api: ApiService, private notify: NotificationService, private router: Router, private auth: AuthService) {}
-  
+  editMode = false; invoiceId: number | null = null;
+
+  constructor(private api: ApiService, private notify: NotificationService, private router: Router, private auth: AuthService, private route: ActivatedRoute) {}
+
   ngOnInit() {
     this.api.getBranches().subscribe(d => this.branches = d);
     this.api.getLabourNames().subscribe(d => this.labourNames = d);
@@ -26,17 +27,53 @@ export class InsuranceInvoiceComponent implements OnInit {
     // Load all advisors & mechanics initially
     this.api.getMechanics().subscribe(d => this.mechanics = d);
     this.api.getAdvisors().subscribe(d => this.advisors = d);
-    
-    this.form.inv_inv_date = new Date().toISOString().split('T')[0];
-    this.form.inv_jcard_date = new Date().toISOString().split('T')[0];
-    this.form.inv_repair_typ = 'Accidental Repair';
-    this.form.inv_type = 'Cash';
 
-    if (this.auth.currentUser?.branchId) {
-      this.form.inv_branch = this.auth.currentUser.branchId;
-      this.loadNextNo();
-      this.loadBranchEmployees(this.auth.currentUser.branchId);
+    this.invoiceId = this.route.snapshot.params['id'] ? +this.route.snapshot.params['id'] : null;
+    if (this.invoiceId) {
+      this.editMode = true;
+      this.loadInvoice(this.invoiceId);
+    } else {
+      this.form.inv_inv_date = new Date().toISOString().split('T')[0];
+      this.form.inv_jcard_date = new Date().toISOString().split('T')[0];
+      this.form.inv_repair_typ = 'Accidental Repair';
+      this.form.inv_type = 'Cash';
+
+      if (this.auth.currentUser?.branchId) {
+        this.form.inv_branch = this.auth.currentUser.branchId;
+        this.loadNextNo();
+        this.loadBranchEmployees(this.auth.currentUser.branchId);
+      }
     }
+  }
+
+  loadInvoice(id: number) {
+    this.api.getInvoice(id).subscribe({
+      next: (res: any) => {
+        this.form = res.invoice;
+        if (this.form.inv_inv_date) this.form.inv_inv_date = this.form.inv_inv_date.split('T')[0];
+        if (this.form.inv_jcard_date) this.form.inv_jcard_date = this.form.inv_jcard_date.split('T')[0];
+        if (this.form.inv_sale_date) this.form.inv_sale_date = this.form.inv_sale_date.split('T')[0];
+
+        this.items = res.items.map((it: any) => ({
+          ic_labour_code: it.lc_lab_code,
+          ic_particular: it.lc_lb_name,
+          ic_hsn: it.lc_sacode,
+          ic_qty: it.lc_qty || 1,
+          ic_rate: +it.lc_rate,
+          ic_disc_per: +it.lc_disc_p,
+          ic_disc: +it.lc_disc,
+          ic_taxable_amt: +it.lc_tax_amunt,
+          ic_sgst_p: +it.lc_sgst_p,
+          ic_sgst_amt: +it.lc_sgst_a,
+          ic_cgst_p: +it.lc_cgst_p,
+          ic_cgst_amt: +it.lc_cgst_a,
+          ic_total: +it.lc_amount,
+          ic_type: it.lc_type
+        }));
+        this.calcTotals();
+      },
+      error: () => this.notify.error('Failed to load invoice')
+    });
   }
 
   loadNextNo() {
@@ -204,13 +241,25 @@ export class InsuranceInvoiceComponent implements OnInit {
       return;
     }
     this.form.items = this.items;
-    this.api.createInsuranceInvoice(this.form).subscribe({
-      next: () => { 
-        this.notify.success('Invoice created'); 
-        this.router.navigate(['/admin/invoice/list']); 
-      },
-      error: (e:any) => this.notify.error(e.error?.message || 'Error')
-    });
+    
+    if (this.editMode && this.invoiceId) {
+      this.api.updateInvoice(this.invoiceId, this.form).subscribe({
+        next: () => {
+          this.notify.success('Invoice updated');
+          const prefix = this.router.url.includes('/admin/') ? '/admin' : '/staff';
+          this.router.navigate([prefix + '/reports/previous-bills/insurance']);
+        },
+        error: (e: any) => this.notify.error(e.error?.message || 'Error updating invoice')
+      });
+    } else {
+      this.api.createInsuranceInvoice(this.form).subscribe({
+        next: () => { 
+          this.notify.success('Invoice created'); 
+          this.router.navigate(['/admin/invoice/list']); 
+        },
+        error: (e:any) => this.notify.error(e.error?.message || 'Error')
+      });
+    }
   }
 
   scrollTableUp() {
