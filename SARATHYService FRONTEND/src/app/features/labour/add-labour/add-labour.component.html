@@ -1,0 +1,60 @@
+<div class="container">
+  <div class="legacy-card">
+    <div class="card-header blue-header">
+      <div class="header-title">
+        <i class="icon-menu">≡</i>
+        <span>Add Labour Code</span>
+      </div>
+      <a class="btn-red" routerLink="/admin/labour/list">List Labour Code</a>
+    </div>
+
+    <div class="card-body">
+      <form (ngSubmit)="onSubmit()" class="legacy-form horizontal-form">
+        <div class="form-group row-group">
+          <label>Labour Code :</label>
+          <div class="form-input">
+            <input type="text" [(ngModel)]="form.l_code" name="code" placeholder="Labour code">
+          </div>
+        </div>
+
+        <div class="form-group row-group">
+          <label>Name :</label>
+          <div class="form-input">
+            <input type="text" [(ngModel)]="form.l_name" name="name" placeholder="Name" required>
+          </div>
+        </div>
+
+        <div class="form-group row-group">
+          <label>Description :</label>
+          <div class="form-input">
+            <textarea [(ngModel)]="form.l_descr" name="descr" rows="3" placeholder="Description"></textarea>
+          </div>
+        </div>
+
+        <div class="form-group row-group">
+          <label>Repair Type :</label>
+          <div class="form-input">
+            <select [(ngModel)]="form.l_repair_type" name="repair_type">
+              <option value="Paid Service">Paid Service</option>
+              <option value="Free Service">Free Service</option>
+              <option value="Accident">Accident</option>
+              <option value="Warranty">Warranty</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group row-group">
+          <label>Sale Price :</label>
+          <div class="form-input">
+            <input type="number" [(ngModel)]="form.l_amount" name="amount" placeholder="Sale price">
+          </div>
+        </div>
+
+        <div class="form-actions center-actions">
+          <button type="submit" class="btn-submit-red">Submit</button>
+          <button type="reset" class="btn-cancel-white">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

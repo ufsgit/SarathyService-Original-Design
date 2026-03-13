@@ -1,0 +1,213 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>List JobCard</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn-excel" (click)="exportExcel()">EXCEL</button>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <!-- Centered Filter Section -->
+    <div class="centered-filter-container">
+      <div class="filter-row">
+        <label>Branch</label>
+        <select [(ngModel)]="filters.branch" (change)="search()">
+          <option value="">--Select Branch--</option>
+          <option *ngFor="let b of options.branches" [value]="b.b_id">{{b.branch_name}}({{b.branch_id}})</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <label>Service</label>
+        <select [(ngModel)]="filters.service_type" (change)="search()">
+          <option value="Paid Service">Paid Service</option>
+          <option value="Free Service">Free Service</option>
+          <option value="Expense">Expense</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <label>Search Option</label>
+        <select [(ngModel)]="filters.view_by" (change)="onViewByChange()">
+          <option value="Custom Date">Custom Date</option>
+          <option value="Month to date">Month to date</option>
+          <option value="Previous Month">Previous Month</option>
+          <option value="Year to Date">Year to Date</option>
+          <option value="Previous Year">Previous Year</option>
+        </select>
+      </div>
+      <div class="date-row">
+        <div class="date-group">
+          <label>Date From</label>
+          <input type="date" [(ngModel)]="filters.from_date" [readOnly]="filters.view_by !== 'Custom Date'" (change)="search()">
+        </div>
+        <div class="date-group">
+          <label>Date To</label>
+          <input type="date" [(ngModel)]="filters.to_date" [readOnly]="filters.view_by !== 'Custom Date'" (change)="search()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="btn-group">
+        <button class="btn-small">CSV</button>
+        <button class="btn-small">Excel</button>
+      </div>
+      <div class="show-entries">
+        Show 
+        <select>
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+        entries
+      </div>
+    </div>
+
+    <div class="scrollable-table-wrap">
+      <table class="legacy-table">
+        <thead>
+          <tr class="header-inputs">
+            <th><div class="header-filter-wrapper"><input type="text" placeholder="JobCard"></div></th>
+            <th><div class="header-filter-wrapper"><input type="text" placeholder="JobCard Date"></div></th>
+            <th><div class="header-filter-wrapper"><input type="text" placeholder="Branch Name"></div></th>
+            <th>
+              <div class="header-filter-select">
+                <mat-select placeholder="--Select Mechanic--" multiple [(ngModel)]="filters.mechanic" (selectionChange)="search()">
+                  <mat-option *ngFor="let m of options.mechanics" [value]="m.emp_id">{{m.e_first_name}} [{{m.e_code}}]</mat-option>
+                </mat-select>
+              </div>
+            </th>
+            <th>
+              <div class="header-filter-select">
+                <mat-select placeholder="--Select Advisor--" multiple [(ngModel)]="filters.advisor" (selectionChange)="search()">
+                  <mat-option *ngFor="let a of options.advisors" [value]="a.emp_id">{{a.e_first_name}} [{{a.e_code}}]</mat-option>
+                </mat-select>
+              </div>
+            </th>
+            <th>
+              <div class="header-filter-select">
+                <mat-select placeholder="--Select Repair Type--" multiple [(ngModel)]="filters.repair_types" (selectionChange)="search()">
+                  <mat-option *ngFor="let t of options.repairTypes" [value]="t">{{t}}</mat-option>
+                </mat-select>
+              </div>
+            </th>
+            <th>
+              <div class="header-filter-select">
+                <mat-select placeholder="--Select Insurance Company--" multiple [(ngModel)]="filters.insurance_companies" (selectionChange)="search()">
+                  <mat-option *ngFor="let c of options.insuranceCompanies" [value]="c.com_id">{{c.icompany_name}}</mat-option>
+                </mat-select>
+              </div>
+            </th>
+            <th><div class="header-filter-wrapper"><input type="text" placeholder="Model Name:"></div></th>
+            <th><div class="header-filter-wrapper"><input type="text" placeholder="HSN/SAC:"></div></th>
+            <th><div class="header-filter-wrapper"><input type="text" placeholder="Invoice no:"></div></th>
+            <th><div class="header-filter-wrapper"><input type="text" placeholder="Invoice Cust:"></div></th>
+            <th colspan="18"></th>
+          </tr>
+          <tr class="main-header">
+            <th>JobCard</th>
+            <th>Date</th>
+            <th>Branch</th>
+            <th>Mechanic</th>
+            <th>Advisor</th>
+            <th>Repair Type</th>
+            <th>Insurance</th>
+            <th>Model</th>
+            <th>HSN</th>
+            <th>Invoice No</th>
+            <th>Customer</th>
+            <th>Mobile</th>
+            <th>Inv Date</th>
+            <th>Reg No</th>
+            <th>Chassis</th>
+            <th>Engine</th>
+            <th>KM</th>
+            <th>Surveyor</th>
+            <th>Paid Amt</th>
+            <th>Free Amt</th>
+            <th>Exp Amt</th>
+            <th>GSTN</th>
+            <th>Discount</th>
+            <th>Taxable</th>
+            <th>SGST</th>
+            <th>CGST</th>
+            <th>KFC</th>
+            <th>Type</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of results">
+            <td class="link">{{r.inv_job_card_no}}</td>
+            <td>{{r.inv_jcard_date | date:'yyyy-MM-dd'}}</td>
+            <td>{{r.branch_name}}</td>
+            <td>{{r.mechanic_name}}</td>
+            <td>{{r.advisor_name}}</td>
+            <td>{{r.inv_repair_typ}}</td>
+            <td>{{r.icompany_name}}</td>
+            <td>{{r.inv_modl}}</td>
+            <td>998729</td>
+            <td>{{r.inv_no}}</td>
+            <td>{{r.inv_cus}}</td>
+            <td>{{r.inv_pho}}</td>
+            <td>{{r.inv_inv_date | date:'yyyy-MM-dd'}}</td>
+            <td>{{r.in_registr}}</td>
+            <td>{{r.inv_chassis}}</td>
+            <td>{{r.in_engine}}</td>
+            <td>{{r.inv_km}}</td>
+            <td>{{r.insurance_serveyor}}</td>
+            <td>{{(r.inv_type === 'Paid Service' || r.inv_type === 'Cash') ? r.inv_total : '0'}}</td>
+            <td>{{(r.inv_type === 'Free Service' || r.inv_type === 'Free') ? r.inv_total : '0'}}</td>
+            <td>{{r.inv_type === 'Expense' ? r.inv_total : '0'}}</td>
+            <td>{{r.inv_cus_gstin}}</td>
+            <td>{{r.inv_disc_total || '0'}}</td>
+            <td>{{r.inv_taxtotal}}</td>
+            <td>{{r.inv_sgstotal}}</td>
+            <td>{{r.inv_gsttotal}}</td>
+            <td>{{r.inv_cesstotal}}</td>
+            <td>{{r.inv_type}}</td>
+            <td>{{r.inv_total}}</td>
+          </tr>
+          <tr *ngIf="results.length === 0">
+            <td colspan="29" class="no-data">No data available in table</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Redesigned Footer Totals matching Image 2 -->
+    <div class="footer-summary-container" *ngIf="searched">
+      <div class="summary-line">
+        <span class="label">Total Labour Taxable Amount :</span>
+        <span class="value">{{totals.labour_taxable?.toFixed(2)}}</span>
+      </div>
+      <div class="summary-line">
+        <span class="label">Total Parts Taxable Amount :</span>
+        <span class="value">{{totals.parts_taxable?.toFixed(2)}}</span>
+      </div>
+      <div class="summary-line">
+        <span class="label">Total Discount :</span>
+        <span class="value">{{totals.total_discount?.toFixed(2)}}</span>
+      </div>
+      <div class="summary-line">
+        <span class="label">Total Labour Amount :</span>
+        <span class="value">{{totals.labour_amount?.toFixed(2)}}</span>
+      </div>
+      <div class="summary-line">
+        <span class="label">Total Parts Amount :</span>
+        <span class="value">{{totals.parts_amount?.toFixed(2)}}</span>
+      </div>
+      <div class="summary-line">
+        <span class="label">Total Gst Amount :</span>
+        <span class="value">{{totals.total_gst?.toFixed(2)}}</span>
+      </div>
+      <div class="summary-line grand-total">
+        <span class="label">Total Bill Amount :</span>
+        <span class="value">{{totals.grand_total?.toFixed(2)}}</span>
+      </div>
+    </div>
+  </div>
+</div>

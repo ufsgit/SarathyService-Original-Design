@@ -1,0 +1,228 @@
+.legacy-card {
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-top: 10px;
+    font-family: 'Roboto', 'Arial', sans-serif;
+}
+
+.card-header {
+    background: #2b57f5;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.icon-menu {
+    font-style: normal;
+    font-size: 14px; /* Adjusted to look like a dot/icon */
+    font-weight: bold;
+}
+
+.btn-top-add {
+    background: #cc1212;
+    color: white;
+    text-decoration: none;
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+.card-body {
+    padding: 10px;
+}
+
+/* ====== Table ====== */
+.table-container {
+    overflow-x: auto;
+}
+
+.legacy-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    border: 1px solid #ddd;
+}
+
+.legacy-table th {
+    background: #eeeeee;
+    color: #333;
+    font-weight: bold;
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #ddd;
+    white-space: nowrap;
+}
+
+.legacy-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    color: #333;
+}
+
+/* Zebra Stripes */
+.legacy-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.no-data {
+    text-align: center;
+    padding: 20px !important;
+    color: #999;
+}
+
+/* ====== Action Button ====== */
+.action-dropdown {
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-red-action {
+    background: #cc1212;
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.action-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: #fff;
+    min-width: 80px;
+    box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+    z-index: 10;
+    border: 1px solid #ddd;
+}
+
+.action-content a {
+    color: #333;
+    padding: 6px 10px;
+    text-decoration: none;
+    display: block;
+    font-size: 11px;
+}
+
+.action-content a:hover {
+    background-color: #f5f5f5;
+}
+
+.action-dropdown:hover .action-content {
+    display: block;
+}
+
+/* ====== Status ====== */
+.status-text {
+    color: #333;
+}
+
+.status-text.active {
+    color: #333;
+}
+
+/* ====== Modal Styling ====== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 100px;
+    z-index: 1000;
+}
+
+.modal-dialog {
+    background: #fff;
+    width: 500px;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    background: #17a2b8; /* Teal/Cyan color from screenshot */
+    color: #fff;
+    padding: 10px 15px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.modal-body {
+    padding: 20px 30px;
+}
+
+.status-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.status-form-group label {
+    font-size: 13px;
+    color: #333;
+    font-weight: bold;
+}
+
+.status-form-group select {
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    font-size: 13px;
+    outline: none;
+    width: 100%;
+}
+
+.modal-footer {
+    padding: 10px 15px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn-save {
+    background: #17a2b8;
+    color: #fff;
+    border: none;
+    padding: 5px 20px;
+    font-size: 13px;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.btn-close {
+    background: #fff;
+    color: #333;
+    border: 1px solid #ccc;
+    padding: 5px 20px;
+    font-size: 13px;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.btn-save:hover { background: #138496; }
+.btn-close:hover { background: #f8f9fa; }
+

@@ -1,0 +1,79 @@
+<!-- Top Header Bar -->
+<header class="top-header">
+  <div class="header-left">
+    <img src="/assets/sarathy-logo.png" alt="Sarathy Logo" class="header-logo">
+  </div>
+  <div class="header-right">
+    <span class="welcome-info">
+      <i class="icon-user">👤</i> Welcome&nbsp;&nbsp;Staff Panel
+    </span>
+    <span class="phone-info">+91 9847771177 / 04742729610</span>
+    <a class="logout-link" (click)="auth.logout()">→ Logout</a>
+  </div>
+</header>
+
+<!-- Blue Navigation Bar -->
+<nav class="main-nav">
+  <ul class="nav-list">
+    <li class="nav-item">
+      <a routerLink="/staff/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">Home</a>
+    </li>
+    <li class="nav-item has-dropdown">
+      <a routerLink="/staff/customer/add" routerLinkActive="active">Customer</a>
+      <ul class="dropdown">
+        <li><a routerLink="/staff/customer/add" routerLinkActive="active">Add Customer</a></li>
+        <li><a routerLink="/staff/customer/list" routerLinkActive="active">List Customer</a></li>
+      </ul>
+    </li>
+    <li class="nav-item has-dropdown">
+      <a>Reports</a>
+      <ul class="dropdown">
+        <li><a routerLink="/staff/reports/job-card-summary" routerLinkActive="active">Job Card Summary</a></li>
+        <li><a routerLink="/staff/reports/job-card-statement" routerLinkActive="active">Job Card Statement</a></li>
+      </ul>
+    </li>
+    <li class="nav-item has-dropdown">
+      <a routerLink="/staff/invoice/labour" routerLinkActive="active">Invoice</a>
+      <ul class="dropdown">
+        <li><a routerLink="/staff/invoice/labour" routerLinkActive="active">Labour Invoice</a></li>
+        <li><a routerLink="/staff/invoice/insurance" routerLinkActive="active">Insurance Invoice</a></li>
+      </ul>
+    </li>
+    <li class="nav-item has-dropdown">
+      <a>Ready for bill list</a>
+      <ul class="dropdown">
+        <li><a routerLink="/staff/invoice/ready/labour" routerLinkActive="active">Labour</a></li>
+        <li><a routerLink="/staff/invoice/ready/insurance" routerLinkActive="active">Insurance</a></li>
+      </ul>
+    </li>
+    <li class="nav-item has-dropdown">
+      <a>Previous Bills</a>
+      <ul class="dropdown">
+        <li><a routerLink="/staff/reports/previous-bills/labour" routerLinkActive="active">Labour</a></li>
+        <li><a routerLink="/staff/reports/previous-bills/insurance" routerLinkActive="active">Insurance</a></li>
+      </ul>
+    </li>
+    <li class="nav-item">
+      <a routerLink="/staff/vehicle-history" routerLinkActive="active">Vehicle History</a>
+    </li>
+    <li class="nav-item">
+      <a routerLink="/staff/change-password" routerLinkActive="active">My Profile</a>
+    </li>
+  </ul>
+</nav>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb-bar">
+  <span class="breadcrumb-icon">🏠</span>
+  <span class="breadcrumb-text">{{breadcrumb}}</span>
+</div>
+
+<!-- Content Area -->
+<main class="content-area">
+  <router-outlet></router-outlet>
+</main>
+
+<!-- Footer -->
+<footer class="staff-footer">
+  2018 © <a href="#" class="footer-link">Cyberia Softwares Pvt.Ltd</a>
+</footer>

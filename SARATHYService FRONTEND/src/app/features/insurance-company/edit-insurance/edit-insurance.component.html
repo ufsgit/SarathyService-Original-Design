@@ -1,0 +1,39 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>Edit Insurance Company</span>
+    </div>
+    <a class="btn-list" routerLink="/admin/insurance/list">List Companies</a>
+  </div>
+
+  <div class="card-body">
+    <form (ngSubmit)="onSubmit()" class="legacy-form">
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-group">
+            <label>Company Name :</label>
+            <input type="text" [(ngModel)]="form.icompany_name" name="name" placeholder="Company name" required>
+          </div>
+
+          <div class="form-group">
+            <label>GSTIN :</label>
+            <input type="text" [(ngModel)]="form.icompany_gst" name="gst" placeholder="GST number">
+          </div>
+        </div>
+
+        <div class="form-col">
+          <div class="form-group">
+            <label>Address :</label>
+            <textarea [(ngModel)]="form.icompany_address" name="address" placeholder="Company address" rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-submit">Update</button>
+        <a class="btn-cancel" routerLink="/admin/insurance/list">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>

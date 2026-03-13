@@ -1,0 +1,109 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>List Customer</span>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" *ngIf="loading">
+      <div class="spinner"></div>
+      <span>Loading...</span>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <label>Search:</label>
+        <input type="text" [(ngModel)]="searchTerm" (input)="applyFilter()" placeholder="Search...">
+      </div>
+      
+      <div class="toolbar-right">
+        <div class="show-entries">
+          <span>Show</span>
+          <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+            <option [value]="10">10</option>
+            <option [value]="25">25</option>
+            <option [value]="50">50</option>
+            <option [value]="100">100</option>
+          </select>
+          <span>entries</span>
+        </div>
+        <a class="btn-add" [routerLink]="basePath + '/customer/add'">Add Customer</a>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="legacy-table">
+        <thead>
+          <tr>
+            <th>Serial No</th>
+            <th>Customer Name</th>
+            <th>Customer Address</th>
+            <th>Registration Number</th>
+            <th>Chassis Number</th>
+            <th>Engine Number</th>
+            <th>Model Name</th>
+            <th>Contact Number</th>
+            <th>GSTIN No</th>
+            <th>Date of Sale</th>
+            <th>Email Id</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let customer of paginatedCustomers; let i = index">
+            <td>{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+            <td>{{ customer.c_name }}</td>
+            <td>{{ customer.c_address }}</td>
+            <td>{{ customer.c_reg_no }}</td>
+            <td>{{ customer.c_chassis_no }}</td>
+            <td>{{ customer.c_engine_no }}</td>
+            <td>{{ customer.model_name }}</td>
+            <td>{{ customer.c_contact_no }}</td>
+            <td>{{ customer.gstin_no }}</td>
+            <td>{{ customer.c_sales_date | date:'dd-MM-yyyy' }}</td>
+            <td>{{ customer.c_email }}</td>
+            <td>
+              <div class="action-dropdown">
+                <button class="btn-action">Action▾</button>
+                <div class="action-content">
+                  <a [routerLink]="[basePath + '/customer/edit', customer.c_id]">Edit</a>
+                  <a (click)="del(customer.c_id)">Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filtered.length === 0 && !loading">
+            <td colspan="12" class="no-data">No customers found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="pagination-footer" *ngIf="filtered.length > 0">
+      <div class="pagination-info">
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filtered.length) }} of {{ filtered.length }} entries
+      </div>
+      <div class="pagination-controls">
+        <button class="btn-page-text" [disabled]="currentPage === 1" (click)="onPageChange(currentPage - 1)">Previous</button>
+        
+        <div class="page-numbers">
+          <ng-container *ngFor="let p of pages">
+            <button *ngIf="p !== '...'" 
+                    class="btn-page" 
+                    [class.active]="p === currentPage"
+                    (click)="onPageChange(p)">
+              {{ p }}
+            </button>
+            <span *ngIf="p === '...'" class="pagination-ellipsis">...</span>
+          </ng-container>
+        </div>
+
+        <button class="btn-page-text" [disabled]="currentPage === totalPages" (click)="onPageChange(currentPage + 1)">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+

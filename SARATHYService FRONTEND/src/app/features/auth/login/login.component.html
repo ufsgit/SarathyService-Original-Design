@@ -1,0 +1,47 @@
+<div class="login-page">
+  <header class="header">
+    <div class="logo-container">
+      <img src="/assets/sarathy-logo.png" alt="Sarathy Logo" class="main-logo">
+    </div>
+    <div class="blue-strip"></div>
+  </header>
+
+  <main class="login-container">
+    <div class="login-card legacy-card">
+      <div class="avatar-container">
+        <img src="/assets/avatar-woman.png" alt="Avatar" class="avatar-img">
+      </div>
+      
+      <form (ngSubmit)="onLogin()" class="login-form">
+        <div class="form-group">
+          <label for="username">Login Id</label>
+          <input type="text" id="username" [(ngModel)]="username" name="username" placeholder="Enter Username" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" [(ngModel)]="password" name="password" placeholder="Enter Password" required>
+        </div>
+
+        <button type="submit" class="legacy-login-btn" [disabled]="loading">
+          <span *ngIf="!loading">LOGIN</span>
+          <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="#">Terms & Conditions</a>
+      <a href="#">Terms Of Use</a>
+      <a href="#">FAQ on Sarathy motors</a>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Customer Grievance Redresal Policy</a>
+      <a href="#">Operation Manual</a>
+    </div>
+    <div class="copyright">
+      2018 © Cyberia Softwares Pvt.Ltd
+    </div>
+  </footer>
+</div>

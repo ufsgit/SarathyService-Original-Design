@@ -1,0 +1,123 @@
+/* Legacy Maruti Style for Insurance Invoice */
+.container-fluid {
+    padding: 0 20px;
+    background: #f4f4f4;
+    min-height: 100vh;
+}
+
+#breadcrumb {
+    background-color: #fff;
+    border-bottom: 1px solid #e3ebed;
+    padding: 8px 20px;
+    margin-bottom: 10px;
+}
+
+#breadcrumb a {
+    font-size: 11px;
+    color: #666666;
+    text-decoration: none;
+}
+
+#breadcrumb a.current {
+    font-weight: bold;
+    color: #444444;
+}
+
+.widget-box {
+    background: none repeat scroll 0 0 #F9F9F9;
+    border-top: 1px solid #fff;
+    border-left: 1px solid #fff;
+    border-right: 1px solid #fff;
+    border-radius: 10px 10px 0 0;
+    clear: both;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.widget-title {
+    background-color: #2a58ad; /* Corporate Blue */
+    color: #fff;
+    height: 34px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+    border-bottom: 1px solid #cdcdcd;
+}
+
+.widget-title h5 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+/* Table scroll wrapper */
+.table-scroll-outer {
+    margin-top: 10px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 250px;
+}
+
+/* Delete button in table rows */
+.btn-delete-row {
+    background-color: #b70818;
+    color: #fff;
+    border: none;
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-delete-row:hover {
+    background-color: #8c0512;
+}
+
+.items-table th {
+    background-color: #f2f2f2;
+    border: 1px solid #cdcdcd;
+    padding: 6px 4px;
+    text-align: left;
+    font-weight: bold;
+    color: #000;
+}
+
+.totals-row label {
+    font-weight: bold;
+    font-size: 11px;
+    color: #000;
+}
+
+.totals-row input {
+    width: 80px;
+    height: 24px;
+    text-align: right;
+    border: 1px solid #ccc;
+    font-size: 11px;
+    background: #fff;
+}
+
+#netamount {
+    width: 120px;
+    background: #fff;
+    font-weight: bold;
+}
+
+.form-actions {
+    text-align: right;
+    padding: 20px 0;
+}

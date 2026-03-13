@@ -1,0 +1,43 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>Insurance Company List</span>
+    </div>
+    <a class="btn-list" routerLink="/admin/insurance/add" *ngIf="auth.isAdmin">Add Company</a>
+  </div>
+
+  <div class="card-body">
+    <div class="table-container">
+      <table class="legacy-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Company Name</th>
+            <th>GSTIN</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of companies; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ e.icompany_name }}</td>
+            <td>{{ e.icompany_gst }}</td>
+            <td>
+              <div class="action-dropdown">
+                <button class="btn-action">Action▾</button>
+                <div class="action-content">
+                  <a [routerLink]="['/admin/insurance/edit', e.com_id]">Edit</a>
+                  <a (click)="del(e.com_id)" *ngIf="auth.isAdmin">Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="companies.length === 0">
+            <td colspan="4" class="no-data">No companies found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

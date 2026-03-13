@@ -1,0 +1,45 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>List Branch</span>
+    </div>
+    <a class="btn-list" routerLink="/admin/branch/add" *ngIf="auth.isAdmin">Add Branch</a>
+  </div>
+
+  <div class="card-body">
+    <div class="table-container">
+      <table class="legacy-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Branch Name</th>
+            <th>Branch ID</th>
+            <th>Phone</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of branches; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ e.branch_name }}</td>
+            <td>{{ e.branch_id }}</td>
+            <td>{{ e.branch_ph }}</td>
+            <td>
+              <div class="action-dropdown">
+                <button class="btn-action">Action▾</button>
+                <div class="action-content">
+                  <a [routerLink]="['/admin/branch/edit', e.b_id]">Edit</a>
+                  <a (click)="onDelete(e.b_id)" *ngIf="auth.isAdmin">Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="branches.length === 0">
+            <td colspan="5" class="no-data">No branches found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

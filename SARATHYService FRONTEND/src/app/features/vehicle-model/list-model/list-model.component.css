@@ -1,0 +1,145 @@
+.legacy-card {
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-top: 10px;
+    font-family: 'Roboto', 'Arial', sans-serif;
+}
+
+.card-header {
+    background: #2b57f5;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.icon-menu {
+    font-style: normal;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.btn-list {
+    background: #cc1212;
+    color: white;
+    text-decoration: none;
+    padding: 6px 15px;
+    font-size: 13px;
+    border-radius: 3px;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.btn-list:hover {
+    background: #b10f0f;
+}
+
+.card-body {
+    padding: 15px;
+}
+
+/* ====== Table ====== */
+.table-container {
+    overflow-x: auto;
+    border: 1px solid #eee;
+}
+
+.legacy-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.legacy-table th {
+    background: #f8f8f8;
+    color: #333;
+    font-weight: bold;
+    padding: 10px;
+    text-align: left;
+    border-bottom: 2px solid #eee;
+    border-right: 1px solid #eee;
+    white-space: nowrap;
+}
+
+.legacy-table td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    border-right: 1px solid #eee;
+    color: #444;
+}
+
+.legacy-table tr:last-child td {
+    border-bottom: none;
+}
+
+.legacy-table tr:hover {
+    background: #fcfcfc;
+}
+
+.no-data {
+    text-align: center;
+    padding: 20px !important;
+    color: #999;
+}
+
+/* ====== Action Button ====== */
+.action-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.btn-action {
+    background: #cc1212;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-action:hover {
+    background: #b10f0f;
+}
+
+.action-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #f9f9f9;
+    min-width: 100px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    border-radius: 4px;
+}
+
+.action-content a {
+    color: #333;
+    padding: 8px 12px;
+    text-decoration: none;
+    display: block;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.action-content a:hover {
+    background-color: #f1f1f1;
+}
+
+.action-dropdown:hover .action-content {
+    display: block;
+}

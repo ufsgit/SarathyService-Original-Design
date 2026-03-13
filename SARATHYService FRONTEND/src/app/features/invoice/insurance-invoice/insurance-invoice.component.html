@@ -1,0 +1,218 @@
+<div id="content" class="container-fluid">
+  <div id="content-header">
+    <div id="breadcrumb">
+      <a title="Go to Home" class="tip-bottom"><i class="icon-home"></i> Home</a>
+      <a class="tip-bottom">INVOICE</a>
+      <a class="current">Insurance</a>
+    </div>
+  </div>
+
+  <div class="widget-box">
+    <div class="widget-title">
+      <span class="icon"> <i class="icon-align-justify"></i> </span>
+      <h5>INVOICE (Insurance)</h5>
+      <button type="button" class="btn-danger" (click)="onAddToReadyForBill()">Add to Ready for Bill</button>
+    </div>
+
+    <div class="widget-content">
+      <!-- 4-column Grid Header -->
+      <div class="invoice-grid">
+        <!-- Col 1 -->
+        <div class="grid-col">
+          <div class="control-group">
+            <label>Branch Name:</label>
+            <select name="branchname" [(ngModel)]="form.inv_branch" (change)="onBranchChange()" required>
+              <option value="">--Select--</option>
+              <option *ngFor="let b of branches" [value]="b.b_id">{{b.branch_name}} [{{b.branch_id}}]</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Jobcard No :</label>
+            <input type="text" name="jno" [(ngModel)]="form.inv_job_card_no" required />
+          </div>
+          <div class="control-group">
+            <label>Jobcard Date :</label>
+            <input type="date" name="jname" [(ngModel)]="form.inv_jcard_date" required />
+          </div>
+          <div class="control-group">
+            <label>Invoice No :</label>
+            <input type="text" name="invoic" [(ngModel)]="form.inv_no" readonly required />
+          </div>
+          <div class="control-group">
+            <label>Invoice Date :</label>
+            <input type="date" name="invoicedate" [(ngModel)]="form.inv_inv_date" readonly />
+          </div>
+        </div>
+
+        <!-- Col 2 -->
+        <div class="grid-col">
+          <div class="control-group">
+            <label>Registration No:</label>
+            <input type="text" name="rno" [(ngModel)]="form.in_registr" (blur)="onRegBlur()" required />
+          </div>
+          <div class="control-group">
+            <label>Model Name:</label>
+            <input type="text" name="mname" [(ngModel)]="form.inv_modl" readonly />
+          </div>
+          <div class="control-group">
+            <label>KM Reading:</label>
+            <input type="text" name="km" [(ngModel)]="form.inv_km" required />
+          </div>
+          <div class="control-group">
+            <label>Chassis No:</label>
+            <input type="text" name="cno" [(ngModel)]="form.inv_chassis" readonly />
+          </div>
+          <div class="control-group">
+            <label>Engine No:</label>
+            <input type="text" name="eno" [(ngModel)]="form.inv_engine" readonly />
+          </div>
+        </div>
+
+        <!-- Col 3 -->
+        <div class="grid-col">
+          <div class="control-group">
+            <label>Customer Name:</label>
+            <input type="text" name="cusname" [(ngModel)]="form.inv_cus" readonly />
+          </div>
+          <div class="control-group">
+            <label>Mobile Number:</label>
+            <input type="text" name="cusph" [(ngModel)]="form.inv_pho" readonly />
+          </div>
+          <div class="control-group">
+            <label>Insurance Company:</label>
+            <select name="ins_id" [(ngModel)]="form.inv_insurance_company" (change)="onInsuranceChange()">
+              <option value=""></option>
+              <option *ngFor="let c of companies" [value]="c.com_id">{{c.ic_name || c.ic_company_name || c.icompany_name}}</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Insurance GSTIN:</label>
+            <input type="text" name="cusgst" [(ngModel)]="form.inv_insurance_gstin" readonly />
+          </div>
+          <div class="control-group">
+            <label>Invoice Type :</label>
+            <input type="text" name="invtype" [(ngModel)]="form.inv_type" readonly />
+          </div>
+        </div>
+
+        <!-- Col 4 -->
+        <div class="grid-col">
+          <div class="control-group">
+            <label>Advisor Name:</label>
+            <select name="advname" [(ngModel)]="form.inv_advisername" required>
+              <option value="">--Select--</option>
+              <option *ngFor="let a of advisors" [value]="a.e_first_name">{{a.e_first_name}} [{{a.e_code}}]</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Mechanic Name:</label>
+            <select name="mechname" [(ngModel)]="form.inv_mechna" required>
+              <option value="">--Select--</option>
+              <option *ngFor="let m of mechanics" [value]="m.e_first_name">{{m.e_first_name}} [{{m.e_code}}]</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Insurance Address:</label>
+            <textarea name="cusaddr" [(ngModel)]="form.inv_insurance_address" rows="2" readonly></textarea>
+          </div>
+          <div class="control-group">
+            <label>Repair Type:</label>
+            <select name="repairty" [(ngModel)]="form.inv_repair_typ" required>
+              <option value="">--Select--</option>
+              <option value="First free service">First free service</option>
+              <option value="Second free service">Second free service</option>
+              <option value="Third free service">Third free service</option>
+              <option value="Paid service">Paid service</option>
+              <option value="Amc service">AMC service</option>
+              <option value="Accidental Repair">Accidental Repair</option>
+              <option value="Other Repairs(within warranty)">Other Repairs (within warranty)</option>
+              <option value="Other Repairs(outside warranty)">Other Repairs (outside warranty)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Surveyor Name:</label>
+            <input type="text" name="surveyor" [(ngModel)]="form.inv_surveyor" />
+          </div>
+        </div>
+      </div>
+
+      <div class="total-payable-wrap">
+        <h4>Total Payable Amount : Rs 
+          <input type="text" [(ngModel)]="form.inv_total" readonly />
+        </h4>
+        <button type="button" class="btn-danger" (click)="onPrint()">Print</button>
+      </div>
+
+      <!-- Line Items Table with Scroll Wrapper -->
+      <div class="table-scroll-outer">
+        <div class="table-responsive" id="tableScrollContainer">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="width: 100px;">Labour Code</th>
+                <th style="width: 150px;">Labour Name</th>
+                <th style="width: 80px;">SAC Code</th>
+                <th style="width: 100px;">Job Type</th>
+                <th style="width: 80px;">Rate</th>
+                <th style="width: 60px;">Dis %</th>
+                <th style="width: 80px;">Dis</th>
+                <th style="width: 90px;">Taxable Amt</th>
+                <th style="width: 80px;">SGST/UTGST %</th>
+                <th style="width: 90px;">SGST/UTGST</th>
+                <th style="width: 80px;">CGST %</th>
+                <th style="width: 90px;">CGST</th>
+                <th style="width: 100px;">Amount</th>
+                <th style="width: 40px; text-align: center; cursor: pointer; color: blue;" (click)="addItem()">+</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of items; let i = index">
+                <td>
+                  <select [(ngModel)]="item.ic_labour_code" (change)="onLabourCodeSelect(i)">
+                    <option value="">-Select-</option>
+                    <option *ngFor="let l of labourNames" [value]="l.l_code">{{l.l_code}}</option>
+                  </select>
+                </td>
+                <td><input type="text" [(ngModel)]="item.ic_particular" readonly /></td>
+                <td><input type="text" [(ngModel)]="item.ic_hsn" readonly /></td>
+                <td>
+                  <select [(ngModel)]="item.ic_type" (change)="calcItem(i)">
+                    <option value="Paid Service">Paid Service</option>
+                    <option value="Expense">Expense</option>
+                    <option value="Free Service">Free Service</option>
+                  </select>
+                </td>
+                <td><input type="number" [(ngModel)]="item.ic_rate" (keyup)="calcItem(i)" /></td>
+                <td><input type="number" [(ngModel)]="item.ic_disc_per" (keyup)="calcItem(i)" /></td>
+                <td><input type="number" [(ngModel)]="item.ic_disc" readonly /></td>
+                <td><input type="number" [(ngModel)]="item.ic_taxable_amt" readonly /></td>
+                <td><input type="number" [(ngModel)]="item.ic_sgst_p" readonly /></td>
+                <td><input type="number" [(ngModel)]="item.ic_sgst_amt" readonly /></td>
+                <td><input type="number" [(ngModel)]="item.ic_cgst_p" readonly /></td>
+                <td><input type="number" [(ngModel)]="item.ic_cgst_amt" readonly /></td>
+                <td><input type="number" [(ngModel)]="item.ic_total" readonly /></td>
+                <td style="text-align: center;">
+                  <button type="button" class="btn-delete-row" (click)="removeItem(i)">−</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Totals Section -->
+      <div class="totals-row">
+        <b>Total</b>
+        <input type="text" [(ngModel)]="form.inv_discount" readonly />
+        <input type="text" [(ngModel)]="form.inv_taxable_total" readonly />
+        <input type="text" [(ngModel)]="form.inv_sgst" readonly />
+        <input type="text" [(ngModel)]="form.inv_cgst" readonly />
+        <input type="text" id="netamount" [(ngModel)]="form.inv_total" readonly />
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-danger" style="padding: 10px 40px; border-radius: 20px;" (click)="onSubmit()">Save Invoice</button>
+      </div>
+    </div>
+  </div>
+</div>

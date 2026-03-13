@@ -1,0 +1,52 @@
+.legacy-card {
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-top: 10px;
+  font-family: 'Roboto', 'Arial', sans-serif;
+}
+
+.card-header {
+  background: #2b57f5;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 15px;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.icon-menu {
+  font-style: normal;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.card-body {
+  padding: 40px;
+}
+
+.welcome-container {
+  text-align: center;
+  padding: 20px;
+}
+
+.staff-welcome {
+  font-size: 24px;
+  color: #2b57f5;
+  margin-bottom: 10px;
+}
+
+.staff-subtitle {
+  font-size: 14px;
+  color: #666;
+}

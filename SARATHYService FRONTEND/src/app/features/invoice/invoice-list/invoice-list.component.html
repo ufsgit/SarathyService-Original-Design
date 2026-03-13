@@ -1,0 +1,94 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>Invoice List</span>
+    </div>
+    <div class="tab-btns">
+      <button class="tab-btn" [class.active]="activeTab==='labour'" (click)="activeTab='labour';onTabChange('labour')">Labour Invoices</button>
+      <button class="tab-btn" [class.active]="activeTab==='insurance'" (click)="activeTab='insurance';onTabChange('insurance')">Insurance Invoices</button>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <!-- Labour Tab -->
+    <div *ngIf="activeTab==='labour'" class="table-container">
+      <table class="legacy-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Inv No</th>
+            <th>Job Card</th>
+            <th>Customer</th>
+            <th>Reg No</th>
+            <th>Amount</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of labourInvoices; let i = index">
+            <td>{{i+1}}</td>
+            <td>{{e.inv_no}}</td>
+            <td>{{e.inv_job_card_no}}</td>
+            <td>{{e.inv_cus}}</td>
+            <td>{{e.in_registr}}</td>
+            <td class="amount-cell">₹{{e.inv_final_amount}}</td>
+            <td>
+              <div class="action-dropdown">
+                <button class="btn-action">Action▾</button>
+                <div class="action-content">
+                  <a [routerLink]="['/staff/invoice/edit',e.inv_id]">Edit</a>
+                  <a (click)="markReady(e.inv_id)">Mark Ready</a>
+                  <a [href]="api.getInvoicePDFUrl(e.inv_id)" target="_blank">PDF</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="labourInvoices.length===0">
+            <td colspan="7" class="no-data">No invoices found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Insurance Tab -->
+    <div *ngIf="activeTab==='insurance'" class="table-container">
+      <table class="legacy-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Inv No</th>
+            <th>Job Card</th>
+            <th>Customer</th>
+            <th>Reg No</th>
+            <th>Amount</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of insuranceInvoices; let i = index">
+            <td>{{i+1}}</td>
+            <td>{{e.inv_no}}</td>
+            <td>{{e.inv_job_card_no}}</td>
+            <td>{{e.inv_cus}}</td>
+            <td>{{e.in_registr}}</td>
+            <td class="amount-cell">₹{{e.inv_final_amount}}</td>
+            <td>
+              <div class="action-dropdown">
+                <button class="btn-action">Action▾</button>
+                <div class="action-content">
+                  <a [routerLink]="['/staff/invoice/edit',e.inv_id]">Edit</a>
+                  <a (click)="markReady(e.inv_id)">Mark Ready</a>
+                  <a [href]="api.getInvoicePDFUrl(e.inv_id)" target="_blank">PDF</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="insuranceInvoices.length===0">
+            <td colspan="7" class="no-data">No invoices found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

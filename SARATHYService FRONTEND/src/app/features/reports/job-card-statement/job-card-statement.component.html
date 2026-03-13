@@ -1,0 +1,72 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>Job Card Statement</span>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label>From Date :</label>
+        <input type="date" [(ngModel)]="filters.from_date" name="from">
+      </div>
+      <div class="filter-group">
+        <label>To Date :</label>
+        <input type="date" [(ngModel)]="filters.to_date" name="to">
+      </div>
+      <div class="filter-group">
+        <label>Job Card No :</label>
+        <input type="text" [(ngModel)]="filters.job_card_no" name="jcno" placeholder="Job card no">
+      </div>
+      <div class="filter-group">
+        <label>Branch :</label>
+        <select [(ngModel)]="filters.branch" name="branch">
+          <option value="">All</option>
+          <option *ngFor="let b of options.branches" [value]="b.b_id">{{b.branch_name}}</option>
+        </select>
+      </div>
+      <button class="btn-search" (click)="search()">🔍 Search</button>
+    </div>
+
+    <!-- Results -->
+    <div *ngFor="let inv of results" class="statement-block">
+      <div class="statement-header">
+        <div>
+          <strong class="jc-label">JC# {{inv.inv_job_card_no}}</strong>
+          &nbsp;|&nbsp; {{inv.inv_jcard_date}}
+          &nbsp;|&nbsp; {{inv.inv_cus}}
+          &nbsp;|&nbsp; {{inv.in_registr}}
+        </div>
+        <span class="inv-amount">₹{{inv.inv_final_amount}}</span>
+      </div>
+      <div class="table-container" *ngIf="inv.items?.length">
+        <table class="legacy-table">
+          <thead>
+            <tr>
+              <th>Particular</th>
+              <th>Qty</th>
+              <th>Rate</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of inv.items">
+              <td>{{item.ic_particular}}</td>
+              <td>{{item.ic_qty}}</td>
+              <td>₹{{item.ic_rate}}</td>
+              <td>₹{{item.ic_total}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div *ngIf="results.length>0" class="total-footer">
+      Total: <strong>₹{{totalAmount.toFixed(2)}}</strong>
+    </div>
+    <p *ngIf="searched && results.length===0" class="no-data-msg">No results found</p>
+  </div>
+</div>

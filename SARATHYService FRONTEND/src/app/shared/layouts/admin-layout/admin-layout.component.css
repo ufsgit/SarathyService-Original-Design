@@ -1,0 +1,144 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: 'Roboto', 'Arial', sans-serif;
+}
+
+/* ====== Top Header ====== */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1a1a2e;
+  padding: 10px 20px;
+  color: #ccc;
+}
+.header-logo {
+  height: 50px;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 13px;
+}
+.welcome-info {
+  color: #ccc;
+}
+.icon-user {
+  font-style: normal;
+}
+.phone-info {
+  color: #ccc;
+}
+.logout-link {
+  color: #ccc;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.logout-link:hover {
+  color: #fff;
+}
+
+/* ====== Navigation Bar ====== */
+.main-nav {
+  background: #2b57f5;
+}
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+.nav-item {
+  position: relative;
+}
+.nav-item > a {
+  display: block;
+  padding: 10px 18px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.nav-item > a:hover,
+.nav-item > a.active {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Dropdown */
+.has-dropdown .dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #2b3a8a;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 180px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.has-dropdown:hover .dropdown {
+  display: block;
+}
+.dropdown li a {
+  display: block;
+  padding: 8px 18px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+.dropdown li a:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ====== Breadcrumb ====== */
+.breadcrumb-bar {
+  background: #f0f0f0;
+  padding: 8px 20px;
+  font-size: 13px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid #ddd;
+}
+.breadcrumb-icon {
+  font-size: 14px;
+}
+.breadcrumb-text {
+  color: #555;
+}
+
+/* ====== Content Area ====== */
+.content-area {
+  flex: 1;
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 400px;
+}
+
+/* ====== Footer ====== */
+.admin-footer {
+  background: #1a1a2e;
+  color: #888;
+  text-align: center;
+  padding: 15px 20px;
+  font-size: 12px;
+}
+.footer-link {
+  color: #6c8fff;
+  text-decoration: none;
+}
+.footer-link:hover {
+  text-decoration: underline;
+}

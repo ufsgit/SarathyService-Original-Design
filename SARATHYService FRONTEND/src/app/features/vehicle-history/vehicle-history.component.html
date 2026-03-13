@@ -1,0 +1,67 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>Vehicle Service History</span>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <div class="form-group">
+        <label>Registration Number :</label>
+        <input type="text" [(ngModel)]="regNo" name="reg" placeholder="Enter registration number" (keyup.enter)="search()">
+      </div>
+      <button class="btn-search" (click)="search()">🔍 Search</button>
+    </div>
+
+    <!-- Customer Details -->
+    <div *ngIf="customer" class="customer-block">
+      <div class="section-title">Customer Details</div>
+      <div class="customer-info-grid">
+        <div class="info-item"><span class="info-label">Name:</span> {{customer.c_name}}</div>
+        <div class="info-item"><span class="info-label">Reg:</span> {{customer.c_reg_no}}</div>
+        <div class="info-item"><span class="info-label">Model:</span> {{customer.model_name}}</div>
+        <div class="info-item"><span class="info-label">Contact:</span> {{customer.c_contact_no}}</div>
+        <div class="info-item"><span class="info-label">Chassis:</span> {{customer.c_chassis_no}}</div>
+        <div class="info-item"><span class="info-label">Engine:</span> {{customer.c_engine_no}}</div>
+      </div>
+    </div>
+
+    <!-- Invoice History -->
+    <div *ngFor="let inv of invoices; let idx=index" class="history-block">
+      <div class="history-header">
+        <div>
+          <strong class="jc-label">{{idx+1}}. JC# {{inv.inv_job_card_no}}</strong>
+          &nbsp;|&nbsp; {{inv.inv_jcard_date}}
+          &nbsp;|&nbsp; {{inv.branch_name||'N/A'}}
+        </div>
+        <span class="inv-amount">₹{{inv.inv_final_amount}}</span>
+      </div>
+      <p class="history-meta">KM: {{inv.inv_km_in}} → {{inv.inv_km_out}} | Repair: {{inv.inv_repair_typ}} | Service: {{inv.inv_service_typ}}</p>
+      <div *ngIf="inv.items?.length" class="table-container">
+        <table class="legacy-table">
+          <thead>
+            <tr>
+              <th>Particular</th>
+              <th>Qty</th>
+              <th>Rate</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of inv.items">
+              <td>{{item.ic_particular}}</td>
+              <td>{{item.ic_qty}}</td>
+              <td>₹{{item.ic_rate}}</td>
+              <td>₹{{item.ic_total}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p *ngIf="searched && invoices.length===0" class="no-data-msg">No service history found</p>
+  </div>
+</div>

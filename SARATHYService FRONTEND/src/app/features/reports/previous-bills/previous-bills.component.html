@@ -1,0 +1,71 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <span>Previous Bill({{type==='labour'?'Labour':'Insurance'}})</span>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <div class="search-section">
+      <div class="search-left">
+        <label>Search:</label>
+        <input type="text" [(ngModel)]="searchText" name="search">
+      </div>
+      <div class="search-right">
+        <span>Show</span>
+        <select>
+          <option>10</option>
+          <option>25</option>
+          <option>50</option>
+          <option>100</option>
+        </select>
+        <span>entries</span>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="legacy-table">
+        <thead>
+          <tr>
+            <th style="width: 50px;">Sl:No</th>
+            <th>Customer Details</th>
+            <th>Branch</th>
+            <th>Jobcard No</th>
+            <th>Invoice No</th>
+            <th>Jobcard Date</th>
+            <th>Service Type</th>
+            <th>Model</th>
+            <th style="width: 100px;">Total Amount</th>
+            <th style="width: 80px;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of bills | filterBills:searchText; let i = index">
+            <td class="text-center">{{i+1}}</td>
+            <td>
+              <span class="reg-no">{{e.in_registr}}</span>
+              <div class="customer-info">
+                {{e.inv_cus}}<br>
+                {{e.inv_cus_addres}}<br>
+                {{e.inv_pho}}
+              </div>
+            </td>
+            <td>{{e.branch_name || e.inv_branch}}</td>
+            <td class="text-center">{{e.inv_job_card_no}}</td>
+            <td class="text-center">{{e.inv_no}}</td>
+            <td class="text-center">{{e.inv_jcard_date | date:'dd-MM-yyyy'}}</td>
+            <td>{{e.inv_repair_typ || e.inv_service_typ}}</td>
+            <td>{{e.inv_modl}}</td>
+            <td class="amount-cell">{{e.inv_total || e.inv_final_amount | number:'1.2-2'}}</td>
+            <td class="text-center">
+              <a class="btn-edit-bill" [routerLink]="['/admin/invoice/edit', e.inv_id]">Edit Bill</a>
+            </td>
+          </tr>
+          <tr *ngIf="bills.length===0">
+            <td colspan="10" class="no-data">No records found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

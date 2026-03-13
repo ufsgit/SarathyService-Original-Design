@@ -1,0 +1,126 @@
+.legacy-card {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  background: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+  padding: 8px 15px;
+}
+
+.header-title {
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+}
+
+.search-section {
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.search-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.search-left label {
+  color: #cc1212;
+  font-weight: bold;
+}
+
+.search-left input {
+  border: 1px solid #ccc;
+  padding: 3px 8px;
+  border-radius: 2px;
+  width: 150px;
+}
+
+.search-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-right select {
+  padding: 2px 5px;
+  border: 1px solid #ccc;
+}
+
+.table-container {
+  padding: 0 15px 15px 15px;
+  overflow-x: auto;
+}
+
+.legacy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.legacy-table th {
+  background: #f9f9f9;
+  border: 1px solid #eee;
+  padding: 8px;
+  text-align: center;
+  color: #444;
+  font-weight: bold;
+}
+
+.legacy-table td {
+  border: 1px solid #eee;
+  padding: 8px;
+  vertical-align: top;
+  color: #333;
+}
+
+.reg-no {
+  color: #cc1212;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.customer-info {
+  line-height: 1.4;
+}
+
+.btn-edit-bill {
+  display: inline-block;
+  padding: 4px 8px;
+  border: 1px solid #bbb;
+  background: #fff;
+  color: #cc1212;
+  text-decoration: none;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-edit-bill:hover {
+  background: #f0f0f0;
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+}
+
+.amount-cell {
+  text-align: right;
+  font-weight: bold;
+}
+
+.text-center {
+  text-align: center;
+}

@@ -1,0 +1,88 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>Edit Invoice</span>
+    </div>
+    <a class="btn-list" routerLink="/staff/invoice/list">Invoice List</a>
+  </div>
+
+  <div class="card-body" *ngIf="invoice">
+    <div class="invoice-info">
+      <strong>Invoice:</strong> {{invoice.inv_no}} &nbsp;|&nbsp;
+      <strong>Customer:</strong> {{invoice.inv_cus}} &nbsp;|&nbsp;
+      <strong>Reg:</strong> {{invoice.in_registr}}
+    </div>
+
+    <!-- Line Items -->
+    <div class="section-title">Line Items</div>
+    <div class="items-table-wrap">
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Particular</th>
+            <th>SAC Code</th>
+            <th>Rate</th>
+            <th>Job Type</th>
+            <th>Disc %</th>
+            <th>Taxable</th>
+            <th>CGST(9%)</th>
+            <th>SGST(9%)</th>
+            <th>Total</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items; let i = index">
+            <td><input type="text" [(ngModel)]="item.ic_particular" [name]="'part'+i"></td>
+            <td><input type="text" [(ngModel)]="item.ic_hsn" [name]="'hsn'+i"></td>
+            <td><input type="number" [(ngModel)]="item.ic_rate" [name]="'rate'+i" (input)="calc(i)"></td>
+            <td>
+              <select [(ngModel)]="item.ic_type" [name]="'type'+i" (change)="calc(i)">
+                <option value="Paid Service">Paid Service</option>
+                <option value="Expense">Expense</option>
+                <option value="Free Service">Free Service</option>
+              </select>
+            </td>
+            <td><input type="number" [(ngModel)]="item.ic_disc_per" [name]="'discp'+i" (input)="calc(i)"></td>
+            <td class="td-ro">{{item.ic_taxable_amt||0}}</td>
+            <td class="td-ro">{{item.ic_cgst_amt||0}}</td>
+            <td class="td-ro">{{item.ic_sgst_amt||0}}</td>
+            <td class="td-total">{{item.ic_total||0}}</td>
+            <td><button type="button" class="btn-remove" (click)="items.splice(i,1);calcTotals()">✕</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <button type="button" class="btn-add-item" (click)="addItem()">+ Add Item</button>
+    </div>
+
+    <!-- Totals -->
+    <div class="section-title" style="margin-top:20px">Totals</div>
+    <div class="totals-row">
+      <div class="total-group">
+        <label>Taxable Total :</label>
+        <input type="number" [(ngModel)]="form.inv_taxable_total" name="taxable" readonly>
+      </div>
+      <div class="total-group">
+        <label>Discount Total :</label>
+        <input type="number" [(ngModel)]="form.inv_discount" name="disc" (input)="calcTotals()">
+      </div>
+      <div class="total-group">
+        <label>CGST Total :</label>
+        <input type="number" [(ngModel)]="form.inv_cgst" name="cgst" readonly>
+      </div>
+      <div class="total-group">
+        <label>SGST Total :</label>
+        <input type="number" [(ngModel)]="form.inv_sgst" name="sgst" readonly>
+      </div>
+      <div class="total-group">
+        <label>Grand Total :</label>
+        <input type="number" [(ngModel)]="form.inv_final_amount" name="final" readonly class="grand-total">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn-submit" (click)="onSubmit()">Update Invoice</button>
+    </div>
+  </div>
+</div>

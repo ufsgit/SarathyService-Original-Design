@@ -1,0 +1,51 @@
+<div class="container">
+  <div class="legacy-card">
+    <div class="card-header blue-header">
+      <div class="header-title">
+        <i class="icon-menu">≡</i>
+        <span>Labour Code List</span>
+      </div>
+      <a class="btn-red" routerLink="/admin/labour/add" *ngIf="auth.isAdmin">Add Labour Code</a>
+    </div>
+
+    <div class="card-body">
+      <div class="table-container">
+        <table class="legacy-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">Sl No</th>
+              <th>Labour Code</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Repair Type</th>
+              <th style="width: 100px;">Sale Price</th>
+              <th style="width: 100px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of labours; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ e.l_code }}</td>
+              <td>{{ e.l_name }}</td>
+              <td>{{ e.l_descr }}</td>
+              <td>{{ e.l_repair_type || 'Paid Service' }}</td>
+              <td>{{ e.l_amount }}</td>
+              <td>
+                <div class="action-dropdown">
+                  <button class="btn-action-red">Action▾</button>
+                  <div class="action-content">
+                    <a [routerLink]="['/admin/labour/edit', e.l_id]">Edit</a>
+                    <a (click)="del(e.l_id)" *ngIf="auth.isAdmin">Delete</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="labours.length === 0">
+              <td colspan="7" class="no-data">No labours found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

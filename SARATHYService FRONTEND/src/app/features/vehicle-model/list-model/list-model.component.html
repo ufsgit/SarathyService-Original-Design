@@ -1,0 +1,43 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>Vehicle Model List</span>
+    </div>
+    <a class="btn-list" routerLink="/admin/model/add" *ngIf="auth.isAdmin">Add Model</a>
+  </div>
+
+  <div class="card-body">
+    <div class="table-container">
+      <table class="legacy-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Model Name</th>
+            <th>Code</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of models; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ e.mod_name }}</td>
+            <td>{{ e.mod_code }}</td>
+            <td>
+              <div class="action-dropdown">
+                <button class="btn-action">Action▾</button>
+                <div class="action-content">
+                  <a [routerLink]="['/admin/model/edit', e.model_id]">Edit</a>
+                  <a (click)="del(e.model_id)" *ngIf="auth.isAdmin">Delete</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="models.length === 0">
+            <td colspan="4" class="no-data">No models found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

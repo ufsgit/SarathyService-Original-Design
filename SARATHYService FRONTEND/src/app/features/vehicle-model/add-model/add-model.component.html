@@ -1,0 +1,28 @@
+<div class="legacy-card" style="max-width:500px">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>Add Vehicle Model</span>
+    </div>
+    <a class="btn-list" routerLink="/admin/model/list">List Models</a>
+  </div>
+
+  <div class="card-body">
+    <form (ngSubmit)="onSubmit()" class="legacy-form">
+      <div class="form-group">
+        <label>Model Name :</label>
+        <input type="text" [(ngModel)]="form.mod_name" name="name" placeholder="Model name" required>
+      </div>
+
+      <div class="form-group">
+        <label>Model Code :</label>
+        <input type="text" [(ngModel)]="form.mod_code" name="code" placeholder="Model code">
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-submit">Submit</button>
+        <a class="btn-cancel" routerLink="/admin/model/list">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>

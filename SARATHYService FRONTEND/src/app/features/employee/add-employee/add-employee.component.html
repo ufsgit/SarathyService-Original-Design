@@ -1,0 +1,94 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>Add Employee</span>
+    </div>
+    <a class="btn-list" routerLink="/admin/employee/list">List Employee</a>
+  </div>
+
+  <div class="card-body">
+    <form (ngSubmit)="onSubmit()" class="legacy-form">
+      <div class="form-row">
+        <!-- Basic Information Column -->
+        <div class="form-col">
+          <div class="section-header">Basic Information</div>
+          
+          <div class="form-group row-inline">
+            <label>Name :</label>
+            <div class="input-group-inline">
+              <select [(ngModel)]="form.emp_intial" name="initial" class="select-initial">
+                <option *ngFor="let t of titles" [value]="t">{{t}}</option>
+              </select>
+              <input type="text" [(ngModel)]="form.e_first_name" name="fname" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Branch Name :</label>
+            <select [(ngModel)]="form.e_branch" name="branch">
+              <option value="" disabled selected>--Select--</option>
+              <option *ngFor="let b of branches" [value]="b.b_id">{{b.branch_name}}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Address :</label>
+            <textarea [(ngModel)]="form.e_address" name="addr" placeholder="Address" rows="6"></textarea>
+          </div>
+        </div>
+
+        <!-- Personal Details Column -->
+        <div class="form-col">
+          <div class="section-header">Personal Details</div>
+
+          <div class="form-group">
+            <label>Mobile No. :</label>
+            <input type="text" [(ngModel)]="form.e_mobile" name="mobile">
+          </div>
+
+          <div class="form-group">
+            <label>Employee Code:</label>
+            <input type="text" [(ngModel)]="form.e_code" name="code">
+          </div>
+
+          <div class="form-group">
+            <label>Employee Designation:</label>
+            <select [(ngModel)]="form.e_designation" name="desig">
+              <option value="" disabled selected>--Select Designation--</option>
+              <option *ngFor="let d of designations" [value]="d">{{d}}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Email Id :</label>
+            <input type="email" [(ngModel)]="form.e_email" name="email">
+          </div>
+
+          <div class="form-group checkbox-group">
+            <div class="label-placeholder"></div>
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="form.add_as_user" name="addUser"> Add as User
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>Username:</label>
+            <input type="text" [(ngModel)]="form.login_id" name="loginId" [disabled]="!form.add_as_user">
+          </div>
+
+          <div class="form-group">
+            <label>Password :</label>
+            <input type="password" [(ngModel)]="form.login_password" name="loginPass" [disabled]="!form.add_as_user">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-submit">Submit</button>
+        <button type="button" class="btn-cancel" routerLink="/admin/employee/list">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+

@@ -1,0 +1,83 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>Employee List</span>
+    </div>
+    <a class="btn-top-add" routerLink="/admin/employee/add" *ngIf="auth.isAdmin">Add Employee</a>
+  </div>
+
+  <div class="card-body">
+    <div class="table-container">
+      <table class="legacy-table">
+        <thead>
+          <tr>
+            <th>Sl No</th>
+            <th>Full Name</th>
+            <th>Branch</th>
+            <th>Email</th>
+            <th>Mobile Number</th>
+            <th>Address</th>
+            <th>Employee Code</th>
+            <th>Employee Designation</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of employees; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ e.emp_intial }} {{ e.e_first_name }}</td>
+            <td>{{ e.branch_name }}</td>
+            <td>{{ e.e_email }}</td>
+            <td>{{ e.e_mobile }}</td>
+            <td>{{ e.e_address }}</td>
+            <td>{{ e.e_code }}</td>
+            <td>{{ e.e_designation }}</td>
+            <td>
+              <span class="status-text" [class.active]="e.status == 1">
+                {{ e.status == 1 ? 'active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-dropdown">
+                <button class="btn-red-action">Action▾</button>
+                <div class="action-content">
+                  <a [routerLink]="['/admin/employee/edit', e.emp_id]">Edit</a>
+                  <a (click)="openStatusModal(e)">Status</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="employees.length === 0">
+            <td colspan="10" class="no-data">No employees found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal-overlay" *ngIf="showStatusModal">
+  <div class="modal-dialog status-modal">
+    <div class="modal-header">
+      <span>Update Status</span>
+    </div>
+    <div class="modal-body">
+      <div class="status-form-group">
+        <label>Employee Status:</label>
+        <select [(ngModel)]="statusToUpdate" name="statusUpdate">
+          <option value="active">active</option>
+          <option value="inactive">inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-save" (click)="updateStatus()">Save</button>
+      <button class="btn-close" (click)="closeStatusModal()">No</button>
+    </div>
+  </div>
+</div>
+
+

@@ -1,0 +1,29 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>Dashboard</span>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <div class="welcome-container">
+      <h2 class="admin-welcome">Welcome to Admin Panel</h2>
+      <p class="admin-subtitle">Manage your branches, employees, customers, invoices, and reports from here.</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card" *ngFor="let stat of stats">
+        <div class="stat-icon-wrap">{{stat.icon}}</div>
+        <div class="stat-info">
+          <span class="stat-value">{{stat.value}}</span>
+          <span class="stat-label">{{stat.label}}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="login-info-box">
+      Logged in as: <strong>{{auth.currentUser?.name}}</strong> ({{auth.currentUser?.role}})
+    </div>
+  </div>
+</div>

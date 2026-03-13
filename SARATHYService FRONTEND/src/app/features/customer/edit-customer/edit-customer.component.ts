@@ -1,0 +1,24 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ApiService } from '../../../core/services/api.service';
+import { NotificationService } from '../../../core/services/notification.service';
+@Component({
+  selector: 'app-edit-customer', standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
+  templateUrl: './edit-customer.component.html',
+  styleUrls: ['./edit-customer.component.css']
+})
+export class EditCustomerComponent implements OnInit {
+  form:any={}; models:any[]=[];
+  constructor(private api:ApiService,private notify:NotificationService,private route:ActivatedRoute,private router:Router){}
+  ngOnInit(){const id=+this.route.snapshot.params['id'];this.api.getCustomer(id).subscribe((d:any)=>{this.form=d; if(this.form.c_sales_date) this.form.c_sales_date=this.form.c_sales_date.split('T')[0];});this.api.getModels().subscribe((d:any[])=>this.models=d);}
+  onSubmit(){
+    if(!this.form.c_name||!this.form.c_reg_no||!this.form.c_chassis_no||!this.form.c_engine_no){
+      this.notify.error('Name, Reg No, Chassis No, and Engine No are required');
+      return;
+    }
+    this.api.updateCustomer(this.form.c_id,this.form).subscribe({next:()=>{this.notify.success('Updated');this.router.navigate(['/admin/customer/list']);},error:(e:any)=>this.notify.error(e.error?.message||'Error')});
+  }
+}

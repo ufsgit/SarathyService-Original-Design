@@ -1,0 +1,199 @@
+
+--- admin_info ---
+admin_id | int | NO | PRI | null | auto_increment
+admin_username | varchar(100) | NO |  | null | 
+admin_password | varchar(255) | NO |  | null | 
+admin_name | varchar(100) | YES |  | null | 
+admin_email | varchar(150) | YES |  | null | 
+created_at | timestamp | NO |  | CURRENT_TIMESTAMP | DEFAULT_GENERATED
+
+--- customer_details ---
+c_id | int | NO | PRI | null | auto_increment
+c_name | varchar(50) | NO |  | null | 
+c_address | text | NO |  | null | 
+c_reg_no | varchar(50) | NO |  | null | 
+c_chassis_no | varchar(50) | NO |  | null | 
+c_engine_no | varchar(50) | NO |  | null | 
+model_name | varchar(100) | NO |  | null | 
+c_contact_no | varchar(100) | NO |  | null | 
+gstin_no | varchar(50) | YES |  | null | 
+c_sales_date | date | YES |  | null | 
+c_email | varchar(50) | YES |  | null | 
+
+--- login_details ---
+lg_id | int | NO | PRI | null | auto_increment
+login_id | varchar(100) | NO |  | null | 
+login_password | varchar(255) | NO |  | null | 
+emp_id | int | YES | MUL | null | 
+login_status | tinyint(1) | YES |  | 1 | 
+login_type | varchar(50) | YES |  | staff | 
+login_branch | int | YES |  | null | 
+attempt_count | int | YES |  | 0 | 
+blocked | tinyint(1) | YES |  | 0 | 
+last_login | datetime | YES |  | null | 
+created_at | timestamp | NO |  | CURRENT_TIMESTAMP | DEFAULT_GENERATED
+
+--- tbl_branch ---
+b_id | int | NO | PRI | null | auto_increment
+branch_id | int | YES |  | null | 
+branch_name | varchar(500) | NO |  | null | 
+branch_address | varchar(1000) | NO |  | null | 
+branch_ph | varchar(50) | NO |  | null | 
+
+--- tbl_employee ---
+emp_id | int | NO | PRI | null | auto_increment
+emp_login_id | int | YES |  | null | 
+emp_intial | text | NO |  | null | 
+e_first_name | text | NO |  | null | 
+e_branch | varchar(50) | NO |  | null | 
+e_address | mediumtext | YES |  | null | 
+e_mobile | varchar(25) | YES |  | null | 
+e_email | varchar(250) | YES |  | null | 
+e_code | varchar(50) | NO |  | null | 
+e_designation | varchar(50) | NO |  | null | 
+status | varchar(10) | NO |  | null | 
+
+--- tbl_insurance_company ---
+com_id | int | NO | PRI | null | auto_increment
+icompany_name | varchar(200) | NO |  | null | 
+icompany_address | text | NO |  | null | 
+icompany_gst | varchar(50) | NO |  | null | 
+
+--- tbl_invoice_labour ---
+inv_id | int | NO | PRI | null | auto_increment
+inv_no | varchar(500) | NO |  | null | 
+inv_cus | varchar(100) | NO |  | null | 
+inv_cus_addres | varchar(100) | NO |  | null | 
+inv_pho | varchar(100) | NO |  | null | 
+inv_cus_gstin | varchar(100) | YES |  | null | 
+inv_inv_date | date | NO | MUL | null | 
+inv_type | varchar(100) | NO |  | null | 
+inv_job_card_no | varchar(100) | NO |  | null | 
+inv_jcard_date | date | NO |  | null | 
+inv_repair_typ | varchar(100) | NO | MUL | null | 
+inv_km | varchar(100) | NO |  | null | 
+in_registr | varchar(100) | NO |  | null | 
+inv_chassis | varchar(100) | NO |  | null | 
+in_engine | varchar(100) | NO |  | null | 
+inv_modl | varchar(100) | NO |  | null | 
+inv_sale_date | varchar(100) | NO |  | null | 
+inv_taxpay | varchar(100) | NO |  | null | 
+inv_advisername | varchar(100) | NO |  | null | 
+inv_mechna | varchar(100) | NO |  | null | 
+inv_branch | varchar(100) | NO | MUL | null | 
+inv_disc_total | varchar(100) | NO |  | null | 
+inv_taxtotal | varchar(100) | NO |  | null | 
+inv_sgstotal | varchar(100) | NO |  | null | 
+inv_gsttotal | varchar(100) | NO |  | null | 
+inv_total | varchar(100) | NO |  | null | 
+insurance_id | int | YES |  | null | 
+insurance_serveyor | varchar(100) | YES |  | null | 
+status | int | NO | MUL | 0 | 
+ready_status | int | NO |  | 0 | 
+inv_cesstotal | varchar(100) | YES |  | null | 
+
+--- tbl_invoice_labour_cost ---
+lc_id | int | NO | PRI | null | auto_increment
+ic_inv_id | int | NO | MUL | null | 
+lc_lab_code | varchar(100) | NO |  | null | 
+lc_type | varchar(100) | YES |  | null | 
+lc_lb_name | varchar(100) | NO |  | null | 
+lc_sacode | varchar(100) | NO |  | null | 
+lc_rate | varchar(100) | NO |  | null | 
+lc_disc_p | varchar(100) | NO |  | null | 
+lc_disc | varchar(100) | NO |  | 00.00 | 
+lc_tax_amunt | varchar(100) | NO |  | null | 
+lc_sgst_p | varchar(100) | NO |  | null | 
+lc_sgst_a | varchar(100) | NO |  | null | 
+lc_cgst_p | varchar(100) | NO |  | null | 
+lc_cgst_a | varchar(100) | NO |  | null | 
+lc_amount | varchar(100) | NO |  | null | 
+lc_cess | varchar(100) | YES |  | null | 
+
+--- tbl_labour ---
+l_id | int | NO | PRI | null | auto_increment
+l_name | varchar(200) | NO |  | null | 
+l_hsn | varchar(100) | YES |  | null | 
+l_amount | decimal(10,2) | YES |  | 0.00 | 
+l_gst | decimal(5,2) | YES |  | 0.00 | 
+l_status | tinyint(1) | YES |  | 1 | 
+created_at | timestamp | NO |  | CURRENT_TIMESTAMP | DEFAULT_GENERATED
+
+--- tbl_labour_code ---
+labour_id | int | NO | PRI | null | auto_increment
+labour_title | varchar(100) | NO |  | null | 
+labour_code | varchar(100) | NO |  | null | 
+discription | varchar(100) | NO |  | null | 
+repair_type | varchar(30) | NO |  | null | 
+sale_price | int | NO |  | null | 
+
+--- tbl_login ---
+login_id | int | NO | PRI | null | auto_increment
+uname | varchar(20) | NO |  | null | 
+pwd | text | NO |  | null | 
+role | int | NO |  | null | 
+role_des | varchar(20) | NO |  | null | 
+
+--- tbl_model ---
+model_id | int | NO | PRI | null | auto_increment
+mod_code | varchar(20) | NO |  | null | 
+mod_name | varchar(50) | NO |  | null | 
+
+--- tbl_notification ---
+n_id | int | NO | PRI | null | auto_increment
+n_title | varchar(255) | YES |  | null | 
+n_message | text | YES |  | null | 
+n_image | varchar(255) | YES |  | null | 
+n_status | tinyint(1) | YES |  | 1 | 
+created_at | timestamp | NO |  | CURRENT_TIMESTAMP | DEFAULT_GENERATED
+
+--- tbl_readyfor_bill ---
+lcr_id | int | NO | PRI | null | auto_increment
+ic_inv_id | int | NO |  | null | 
+lc_lab_code | varchar(100) | NO |  | null | 
+lc_type | varchar(100) | YES |  | null | 
+lc_lb_name | varchar(100) | NO |  | null | 
+lc_sacode | varchar(100) | NO |  | null | 
+lc_rate | varchar(100) | NO |  | null | 
+lc_disc_p | varchar(100) | NO |  | null | 
+lc_disc | varchar(100) | NO |  | 00.00 | 
+lc_tax_amunt | varchar(100) | NO |  | null | 
+lc_sgst_p | varchar(100) | NO |  | null | 
+lc_sgst_a | varchar(100) | NO |  | null | 
+lc_cgst_p | varchar(100) | NO |  | null | 
+lc_cgst_a | varchar(100) | NO |  | null | 
+lc_amount | varchar(100) | NO |  | null | 
+lc_cess | varchar(200) | YES |  | null | 
+
+--- tbl_readyfor_labour ---
+inv_id | int | NO | PRI | null | auto_increment
+inv_no | varchar(500) | NO |  | null | 
+inv_cus | varchar(100) | NO |  | null | 
+inv_cus_addres | varchar(100) | NO |  | null | 
+inv_pho | varchar(100) | NO |  | null | 
+inv_cus_gstin | varchar(100) | NO |  | null | 
+inv_inv_date | date | NO |  | null | 
+inv_type | varchar(100) | NO |  | null | 
+inv_job_card_no | varchar(100) | NO |  | null | 
+inv_jcard_date | date | NO |  | null | 
+inv_repair_typ | varchar(100) | NO |  | null | 
+inv_km | varchar(100) | NO |  | null | 
+in_registr | varchar(100) | NO |  | null | 
+inv_chassis | varchar(100) | NO |  | null | 
+in_engine | varchar(100) | NO |  | null | 
+inv_modl | varchar(100) | NO |  | null | 
+inv_sale_date | varchar(100) | NO |  | null | 
+inv_taxpay | varchar(100) | NO |  | null | 
+inv_advisername | varchar(100) | NO |  | null | 
+inv_mechna | varchar(100) | NO |  | null | 
+inv_branch | varchar(100) | NO |  | null | 
+inv_disc_total | varchar(100) | NO |  | null | 
+inv_taxtotal | varchar(100) | NO |  | null | 
+inv_sgstotal | varchar(100) | NO |  | null | 
+inv_gsttotal | varchar(100) | NO |  | null | 
+inv_total | varchar(100) | NO |  | null | 
+insurance_id | int | YES |  | null | 
+insurance_serveyor | varchar(100) | YES |  | null | 
+status | int | NO |  | 0 | 
+ready_status | int | NO |  | 0 | 
+inv_cesstotal | varchar(200) | YES |  | null | 

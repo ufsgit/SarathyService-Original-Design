@@ -1,0 +1,44 @@
+<div class="legacy-card">
+  <div class="card-header">
+    <div class="header-title">
+      <i class="icon-menu">≡</i>
+      <span>Edit Branch</span>
+    </div>
+    <a class="btn-list" routerLink="/admin/branch/list">List</a>
+  </div>
+
+  <div class="card-body">
+    <form (ngSubmit)="onSubmit()" class="legacy-form">
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-group">
+            <label>Branch Name :</label>
+            <input type="text" [(ngModel)]="form.branch_name" name="name" placeholder="Branch name" required>
+          </div>
+
+          <div class="form-group">
+            <label>Branch ID :</label>
+            <input type="text" [(ngModel)]="form.branch_id" name="bid" placeholder="Branch ID">
+          </div>
+
+          <div class="form-group">
+            <label>Phone :</label>
+            <input type="text" [(ngModel)]="form.branch_ph" name="ph" placeholder="Phone number">
+          </div>
+        </div>
+
+        <div class="form-col">
+          <div class="form-group">
+            <label>Address :</label>
+            <textarea [(ngModel)]="form.branch_address" name="address" placeholder="Branch address" rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-submit">Update</button>
+        <a class="btn-cancel" routerLink="/admin/branch/list">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
