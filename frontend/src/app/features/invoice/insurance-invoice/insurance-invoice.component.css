@@ -154,65 +154,76 @@
 }
 
 .items-table th {
-    background-color: #f2f2f2;
-    border: 1px solid #cdcdcd;
-    padding: 6px 4px;
+    background-color: transparent;
+    border: none;
+    padding: 8px 4px;
     text-align: left;
-    font-weight: bold;
-    color: #000;
+    font-weight: normal;
+    color: #333;
+    font-size: 11px;
 }
 
 .items-table td {
-    border: 1px solid #cdcdcd;
-    padding: 2px;
+    border: 1px solid #ddd;
+    padding: 1px;
 }
 
 .items-table td input, .items-table td select {
     width: 100%;
-    height: 20px;
-    border: 1px solid #ddd;
-    padding: 1px 3px;
+    height: 24px;
+    border: 1px solid #ccc;
+    padding: 1px 4px;
     font-size: 11px;
+    background-color: #f2f2f2;
+    color: #333;
 }
 
-/* Totals Row alignment */
-.totals-row {
-    display: flex;
-    background: #f9f9f9;
-    border: 1px solid #cdcdcd;
-    border-top: none;
-    padding: 2px 0;
+.items-table td input[readonly] {
+    background-color: #e9e9e9;
 }
 
-.label-total {
-    width: 430px; /* Aligns "Total" label under first columns */
+/* Totals Row alignment - matching Image 3 (using tfoot) */
+.items-table tfoot td {
+    border: none;
+    padding: 10px 1px;
+    background-color: transparent;
+}
+
+.label-total-td {
     text-align: right;
-    padding-right: 10px;
+    padding-right: 15px !important;
     font-weight: bold;
-    font-size: 11px;
-    line-height: 24px;
-    color: #000;
+    font-size: 13px;
+    color: #333;
 }
 
-.totals-row input {
-    height: 22px;
-    border: 1px solid #ddd;
-    background: #fff;
-    margin-right: 2px;
+.items-table tfoot input {
+    width: 100%;
+    height: 24px;
+    border: 1px solid #ccc;
+    background-color: #f2f2f2;
+    padding: 1px 4px;
     font-size: 11px;
     text-align: right;
-    padding: 0 5px;
+    color: #333;
 }
 
-/* Widths matching table columns */
-.totals-row input:nth-child(2) { width: 60px; } /* Dis % - actually just Dis in footer? */
-.totals-row input:nth-child(3) { width: 80px; } /* Dis */
-.totals-row input:nth-child(4) { width: 90px; } /* Taxable Amt */
-.empty-cell { width: 100px; } /* SGST % */
-.totals-row input:nth-child(6) { width: 100px; } /* SGST AMT */
+.items-table tfoot .net-total {
+    font-weight: bold;
+    background-color: #e9e9e9;
+}
 
-.totals-row input {
-    flex: 0 0 auto;
+.col-dis { width: 80px; }
+.col-taxable { width: 90px; }
+.col-sgst-p { width: 100px; }
+.col-sgst-amt { width: 100px; }
+.col-cgst-p { width: 80px; }
+.col-cgst-amt { width: 90px; }
+.col-amount { width: 100px; }
+.col-action { width: 40px; }
+
+.empty-cell {
+    flex-shrink: 0;
 }
 
 .net-total {

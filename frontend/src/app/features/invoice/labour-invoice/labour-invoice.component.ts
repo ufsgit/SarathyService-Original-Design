@@ -5,10 +5,11 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { AddCustomerModalComponent } from '../../../shared/components/add-customer-modal/add-customer-modal.component';
 
 @Component({
   selector: 'app-labour-invoice', standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, AddCustomerModalComponent],
   templateUrl: './labour-invoice.component.html',
   styleUrls: ['./labour-invoice.component.css']
 })
@@ -17,6 +18,8 @@ export class LabourInvoiceComponent implements OnInit {
   items: any[] = [this.newItem()];
   branches: any[] = []; mechanics: any[] = []; advisors: any[] = []; labourNames: any[] = [];
   editMode = false; invoiceId: number | null = null;
+  showAddCustomerModal = false;
+  pendingRegNo = '';
   
   constructor(private api: ApiService, private notify: NotificationService, private router: Router, private auth: AuthService, private route: ActivatedRoute) {}
   
@@ -189,9 +192,24 @@ export class LabourInvoiceComponent implements OnInit {
           this.form.inv_chassis = c.c_chassis_no; 
           this.form.inv_engine = c.c_engine_no; 
         },
-        error: () => {}
+        error: () => {
+          this.pendingRegNo = this.form.in_registr;
+          this.showAddCustomerModal = true;
+        }
       });
     }
+  }
+
+  onCustomerAdded(c: any) {
+    this.form.inv_cus = c.c_name;
+    this.form.inv_cus_addres = c.c_address;
+    this.form.inv_pho = c.c_contact_no;
+    this.form.inv_email = c.c_email;
+    this.form.inv_gstin = c.gstin_no;
+    this.form.inv_modl = c.model_name;
+    this.form.inv_chassis = c.c_chassis_no;
+    this.form.inv_engine = c.c_engine_no;
+    this.showAddCustomerModal = false;
   }
 
   onAddToReadyForBill() {
@@ -204,54 +222,40 @@ export class LabourInvoiceComponent implements OnInit {
       return;
     }
     this.form.items = this.items;
-    this.api.createLabourInvoice(this.form).subscribe({
-      next: (res: any) => {
-        this.api.markInvoiceReady(res.id).subscribe({
-          next: () => {
-            this.notify.success('Invoice saved and marked as Ready for Bill');
-            this.router.navigate(['/admin/invoice/ready-bills']);
-          },
-          error: (e: any) => this.notify.error('Invoice saved but failed to mark as ready')
-        });
-      },
-      error: (e: any) => this.notify.error(e.error?.message || 'Error saving invoice')
-    });
+
+    if (this.editMode && this.invoiceId) {
+      this.api.updateInvoice(this.invoiceId, this.form).subscribe({
+        next: () => {
+          this.api.markInvoiceReady(this.invoiceId!).subscribe({
+            next: () => {
+              this.notify.success('Invoice updated and marked as Ready for Bill');
+              this.router.navigate(['/admin/invoice/ready-bills']);
+            },
+            error: (e: any) => this.notify.error('Invoice updated but failed to mark as ready')
+          });
+        },
+        error: (e: any) => this.notify.error(e.error?.message || 'Error updating invoice')
+      });
+    } else {
+      this.api.createLabourInvoice(this.form).subscribe({
+        next: (res: any) => {
+          this.api.markInvoiceReady(res.id).subscribe({
+            next: () => {
+              this.notify.success('Invoice saved and marked as Ready for Bill');
+              this.router.navigate(['/admin/invoice/ready-bills']);
+            },
+            error: (e: any) => this.notify.error('Invoice saved but failed to mark as ready')
+          });
+        },
+        error: (e: any) => this.notify.error(e.error?.message || 'Error saving invoice')
+      });
+    }
   }
 
   onPrint() {
     this.notify.info('Print functionality will be triggered here');
   }
 
-  onSubmit() {
-    if (!this.form.in_registr || !this.form.inv_cus || !this.form.inv_branch || !this.form.inv_no) {
-      this.notify.error('Please fill Registration No, Customer Name, Branch and Invoice No');
-      return;
-    }
-    if (this.items.length === 0 || !this.items[0].ic_particular) {
-      this.notify.error('Please add at least one line item');
-      return;
-    }
-    this.form.items = this.items;
-    
-    if (this.editMode && this.invoiceId) {
-      this.api.updateInvoice(this.invoiceId, this.form).subscribe({
-        next: () => {
-          this.notify.success('Invoice updated');
-          const prefix = this.router.url.includes('/admin/') ? '/admin' : '/staff';
-          this.router.navigate([prefix + '/reports/previous-bills/labour']);
-        },
-        error: (e: any) => this.notify.error(e.error?.message || 'Error updating invoice')
-      });
-    } else {
-      this.api.createLabourInvoice(this.form).subscribe({
-        next: () => { 
-          this.notify.success('Invoice created'); 
-          this.router.navigate(['/admin/invoice/list']); 
-        },
-        error: (e:any) => this.notify.error(e.error?.message || 'Error')
-      });
-    }
-  }
 
   scrollTableUp() {
     const el = document.getElementById('tableScrollContainer');

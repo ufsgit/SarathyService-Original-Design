@@ -1,0 +1,69 @@
+<div class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h5>Add Customer</h5>
+    </div>
+    <div class="modal-body">
+      <form (ngSubmit)="onSubmit()" #customerForm="ngForm">
+        <div class="form-grid">
+          <!-- Col 1 -->
+          <div class="form-col">
+            <div class="form-group">
+              <label>Registration Number :</label>
+              <input type="text" [(ngModel)]="form.c_reg_no" name="reg" readonly required>
+            </div>
+            <div class="form-group">
+              <label>Chassis No :</label>
+              <input type="text" [(ngModel)]="form.c_chassis_no" name="chassis" placeholder="Chassis no" required>
+            </div>
+            <div class="form-group">
+              <label>Customer Name:</label>
+              <input type="text" [(ngModel)]="form.c_name" name="name" placeholder="Customer name" required>
+            </div>
+            <div class="form-group">
+              <label>Address:</label>
+              <textarea [(ngModel)]="form.c_address" name="address" placeholder="Customer address" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label>GSTIN Number</label>
+              <input type="text" [(ngModel)]="form.gstin_no" name="gstin" placeholder="GSTIN">
+            </div>
+          </div>
+
+          <!-- Col 2 -->
+          <div class="form-col">
+            <div class="form-group">
+              <label>Model Name :</label>
+              <select [(ngModel)]="form.model_name" name="model" required>
+                <option value="" disabled selected>--Select--</option>
+                <option *ngFor="let m of models" [value]="m.mod_name">{{m.mod_name}}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Engine No :</label>
+              <input type="text" [(ngModel)]="form.c_engine_no" name="engine" placeholder="Engine number" required>
+            </div>
+            <div class="form-group">
+              <label>Contact No :</label>
+              <input type="text" [(ngModel)]="form.c_contact_no" name="contact" placeholder="contact no">
+            </div>
+            <div class="form-group">
+              <label>Date Of Sale :</label>
+              <input type="date" [(ngModel)]="form.c_sales_date" name="sale">
+            </div>
+            <div class="form-group">
+              <label>Email Id :</label>
+              <input type="email" [(ngModel)]="form.c_email" name="email" placeholder="Email-Id">
+            </div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-submit">Submit</button>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-no" (click)="onCancel()">No</button>
+    </div>
+  </div>
+</div>

@@ -191,25 +191,30 @@
                 </td>
               </tr>
             </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="6" class="label-total-td">Total</td>
+                <td><input type="text" [(ngModel)]="form.inv_discount" readonly /></td>
+                <td><input type="text" [(ngModel)]="form.inv_taxable_total" readonly /></td>
+                <td></td>
+                <td><input type="text" [(ngModel)]="form.inv_sgst" readonly /></td>
+                <td></td>
+                <td><input type="text" [(ngModel)]="form.inv_cgst" readonly /></td>
+                <td><input type="text" class="net-total" [(ngModel)]="form.inv_total" readonly /></td>
+                <td></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
 
-      <!-- Totals Section -->
-      <div class="totals-row">
-        <div class="label-total">Total</div>
-        <input type="text" [(ngModel)]="form.inv_discount" readonly />
-        <input type="text" [(ngModel)]="form.inv_taxable_total" readonly />
-        <div class="empty-cell"></div>
-        <input type="text" [(ngModel)]="form.inv_sgst" readonly />
-        <div class="empty-cell"></div>
-        <input type="text" [(ngModel)]="form.inv_cgst" readonly />
-        <input type="text" class="net-total" [(ngModel)]="form.inv_total" readonly />
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" class="btn-danger" style="padding: 10px 40px; border-radius: 20px;" (click)="onSubmit()">Save Invoice</button>
-      </div>
     </div>
   </div>
 </div>
+
+<app-add-customer-modal 
+  *ngIf="showAddCustomerModal" 
+  [registrationNumber]="pendingRegNo"
+  (customerAdded)="onCustomerAdded($event)"
+  (close)="showAddCustomerModal = false">
+</app-add-customer-modal>
