@@ -272,7 +272,7 @@ exports.generatePDF = async (req, res) => {
         const { generateInvoicePDF } = require('../utils/pdfGenerator');
         const pdfBuffer = await generateInvoicePDF(invoices[0], items);
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename=invoice_${req.params.id}.pdf`);
+        res.setHeader('Content-Disposition', 'inline; filename=invoice_' + req.params.id + '.pdf');
         res.send(pdfBuffer);
     } catch (err) {
         console.error('PDF error:', err);

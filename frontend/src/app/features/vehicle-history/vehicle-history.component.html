@@ -34,12 +34,12 @@
       <div class="history-header">
         <div>
           <strong class="jc-label">{{idx+1}}. JC# {{inv.inv_job_card_no}}</strong>
-          &nbsp;|&nbsp; {{inv.inv_jcard_date}}
+          &nbsp;|&nbsp; {{inv.inv_jcard_date | date:'dd/MM/yyyy'}}
           &nbsp;|&nbsp; {{inv.branch_name||'N/A'}}
         </div>
-        <span class="inv-amount">₹{{inv.inv_final_amount}}</span>
+        <span class="inv-amount">₹{{inv.inv_total}}</span>
       </div>
-      <p class="history-meta">KM: {{inv.inv_km_in}} → {{inv.inv_km_out}} | Repair: {{inv.inv_repair_typ}} | Service: {{inv.inv_service_typ}}</p>
+      <p class="history-meta">KM: {{inv.inv_km}} | Repair: {{inv.inv_repair_typ}} | Date: {{inv.inv_inv_date | date:'dd/MM/yyyy'}}</p>
       <div *ngIf="inv.items?.length" class="table-container">
         <table class="legacy-table">
           <thead>
@@ -52,13 +52,17 @@
           </thead>
           <tbody>
             <tr *ngFor="let item of inv.items">
-              <td>{{item.ic_particular}}</td>
-              <td>{{item.ic_qty}}</td>
-              <td>₹{{item.ic_rate}}</td>
-              <td>₹{{item.ic_total}}</td>
+              <td>{{item.lc_lb_name}}</td>
+              <td>1</td>
+              <td>₹{{item.lc_rate}}</td>
+              <td>₹{{item.lc_amount}}</td>
             </tr>
           </tbody>
         </table>
+      </div>
+      <div style="margin-top: 10px; font-size: 13px;">
+          <span>Supervisor: <strong>{{inv.advisor_name || '-'}}</strong></span>
+          <span style="margin-left: 20px;">Technician: <strong>{{inv.mechanic_name || '-'}}</strong></span>
       </div>
     </div>
 

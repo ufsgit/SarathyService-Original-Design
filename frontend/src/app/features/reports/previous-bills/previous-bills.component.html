@@ -43,7 +43,7 @@
           <tr *ngFor="let e of bills | filterBills:searchText; let i = index">
             <td class="text-center">{{i+1}}</td>
             <td>
-              <span class="reg-no">{{e.in_registr}}</span>
+              <span class="reg-no" style="cursor:pointer; color:#c00; text-decoration:underline;" title="Click to view invoice PDF" (click)="openPdf(e)">{{e.in_registr}}</span>
               <div class="customer-info">
                 {{e.inv_cus}}<br>
                 {{e.inv_cus_addres}}<br>

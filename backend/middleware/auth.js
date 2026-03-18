@@ -3,7 +3,8 @@ require('dotenv').config();
 
 const verifyToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    // Support token in Authorization header OR as ?token= query param (for direct PDF links)
+    const token = (authHeader && authHeader.split(' ')[1]) || req.query.token;
 
     if (!token) {
         return res.status(401).json({ message: 'Access denied. No token provided.' });

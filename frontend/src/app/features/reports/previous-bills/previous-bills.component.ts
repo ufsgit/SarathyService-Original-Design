@@ -17,9 +17,9 @@ export class FilterBillsPipe implements PipeTransform {
     searchText = searchText.toLowerCase();
     return items.filter(it => {
       return (it.in_registr?.toLowerCase().includes(searchText)) ||
-             (it.inv_cus?.toLowerCase().includes(searchText)) ||
-             (it.inv_job_card_no?.toString().includes(searchText)) ||
-             (it.inv_no?.toLowerCase().includes(searchText));
+        (it.inv_cus?.toLowerCase().includes(searchText)) ||
+        (it.inv_job_card_no?.toString().includes(searchText)) ||
+        (it.inv_no?.toLowerCase().includes(searchText));
     });
   }
 }
@@ -31,13 +31,23 @@ export class FilterBillsPipe implements PipeTransform {
   styleUrls: ['./previous-bills.component.css']
 })
 export class PreviousBillsComponent implements OnInit {
-  bills:any[]=[]; type='labour'; searchText = '';
+  bills: any[] = []; type = 'labour'; searchText = '';
   isAdmin = false;
-  constructor(public api:ApiService,private notify:NotificationService,private route:ActivatedRoute,private router: Router){}
-  ngOnInit(){
+  constructor(public api: ApiService, private notify: NotificationService, private route: ActivatedRoute, private router: Router) { }
+  ngOnInit() {
     this.isAdmin = this.router.url.includes('/admin/');
-    this.type=this.route.snapshot.data['type']||'labour';
-    if(this.type==='labour')this.api.getPreviousLabourBills().subscribe({next:(d:any[])=>this.bills=d,error:()=>this.notify.error('Failed')});
-    else this.api.getPreviousInsuranceBills().subscribe({next:(d:any[])=>this.bills=d,error:()=>this.notify.error('Failed')});
+    this.type = this.route.snapshot.data['type'] || 'labour';
+    if (this.type === 'labour') this.api.getPreviousLabourBills().subscribe({ next: (d: any[]) => this.bills = d, error: () => this.notify.error('Failed') });
+    else this.api.getPreviousInsuranceBills().subscribe({ next: (d: any[]) => this.bills = d, error: () => this.notify.error('Failed') });
+  }
+
+  openPdf(bill: any): void {
+    if (!bill?.inv_id) return;
+    const url = this.api.getInvoicePDFUrl(bill.inv_id);
+    // Append auth token so the protected PDF endpoint can verify the request
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+    const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
+    window.open(pdfUrl, '_blank');
   }
 }
+
