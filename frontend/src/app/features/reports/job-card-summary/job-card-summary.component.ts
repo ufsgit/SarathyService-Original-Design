@@ -38,6 +38,49 @@ export class JobCardSummaryComponent implements OnInit {
   totals: any = {};
   searched = false;
 
+  // Pagination
+  pageSize = 10;
+  currentPage = 1;
+
+  get totalPages(): number {
+    return Math.ceil(this.results.length / this.pageSize);
+  }
+
+  get pagedResults(): any[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.results.slice(start, start + this.pageSize);
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const pages: number[] = [];
+    const range = 2; // pages around current
+    for (let i = 1; i <= total; i++) {
+      if (i === 1 || i === total || (i >= current - range && i <= current + range)) {
+        pages.push(i);
+      }
+    }
+    // insert ellipsis markers (-1)
+    const withEllipsis: number[] = [];
+    let prev = 0;
+    for (const p of pages) {
+      if (prev && p - prev > 1) withEllipsis.push(-1);
+      withEllipsis.push(p);
+      prev = p;
+    }
+    return withEllipsis;
+  }
+
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
+  onPageSizeChange() {
+    this.currentPage = 1;
+  }
+
   constructor(private api: ApiService, private notify: NotificationService) {}
 
   ngOnInit() {
@@ -96,6 +139,7 @@ export class JobCardSummaryComponent implements OnInit {
         this.results = d.data;
         this.totals = d.totals;
         this.searched = true;
+        this.currentPage = 1; // reset to first page on new search
       },
       error: (err) => {
         console.error(err);

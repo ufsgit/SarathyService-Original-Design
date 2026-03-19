@@ -56,11 +56,12 @@
         <button class="btn-small">Excel</button>
       </div>
       <div class="show-entries">
-        Show 
-        <select>
-          <option value="10">10</option>
-          <option value="25">25</option>
-          <option value="50">50</option>
+        Show
+        <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
         </select>
         entries
       </div>
@@ -70,77 +71,69 @@
       <table class="legacy-table">
         <thead>
           <tr class="main-header">
-            <th>JobCard</th>
-            <th>Date</th>
-            <th>Branch</th>
+            <th><input type="text" class="th-input" value="JobCard" readonly></th>
+            <th><input type="text" class="th-input" value="JobCard Date" readonly></th>
+            <th><input type="text" class="th-input th-wide" value="Branch Name" readonly></th>
             <th>
-              <div class="header-label">Mechanic</div>
-              <div class="header-filter-select">
-                <mat-select placeholder="Select Mechanic" multiple [(ngModel)]="filters.mechanic" (selectionChange)="search()" panelClass="legacy-select-panel">
-                  <mat-option *ngFor="let m of options.mechanics" [value]="m.emp_id">{{m.e_first_name}} [{{m.e_code}}]</mat-option>
-                </mat-select>
-              </div>
+              <mat-select placeholder="--Select Mechanic--" multiple [(ngModel)]="filters.mechanic" (selectionChange)="search()" panelClass="legacy-select-panel">
+                <mat-option *ngFor="let m of options.mechanics" [value]="m.emp_id">{{m.e_first_name}} [{{m.e_code}}]</mat-option>
+              </mat-select>
             </th>
             <th>
-              <div class="header-label">Advisor</div>
-              <div class="header-filter-select">
-                <mat-select placeholder="Select Advisor" multiple [(ngModel)]="filters.advisor" (selectionChange)="search()" panelClass="legacy-select-panel">
-                  <mat-option *ngFor="let a of options.advisors" [value]="a.emp_id">{{a.e_first_name}} [{{a.e_code}}]</mat-option>
-                </mat-select>
-              </div>
+              <mat-select placeholder="--Select Advisor--" multiple [(ngModel)]="filters.advisor" (selectionChange)="search()" panelClass="legacy-select-panel">
+                <mat-option *ngFor="let a of options.advisors" [value]="a.emp_id">{{a.e_first_name}} [{{a.e_code}}]</mat-option>
+              </mat-select>
             </th>
             <th>
-              <div class="header-label">Repair Type</div>
-              <div class="header-filter-select">
-                <mat-select placeholder="Select Repair Type" multiple [(ngModel)]="filters.repair_types" (selectionChange)="search()" panelClass="legacy-select-panel">
-                  <mat-option *ngFor="let t of options.repairTypes" [value]="t">{{t}}</mat-option>
-                </mat-select>
-              </div>
+              <mat-select placeholder="--Select Repair Type--" multiple [(ngModel)]="filters.repair_types" (selectionChange)="search()" panelClass="legacy-select-panel">
+                <mat-option *ngFor="let t of options.repairTypes" [value]="t">{{t}}</mat-option>
+              </mat-select>
             </th>
             <th>
-              <div class="header-label">Insurance</div>
-              <div class="header-filter-select">
-                <mat-select placeholder="Select Insurance" multiple [(ngModel)]="filters.insurance_companies" (selectionChange)="search()" panelClass="legacy-select-panel">
-                  <mat-option *ngFor="let c of options.insuranceCompanies" [value]="c.com_id">{{c.icompany_name}}</mat-option>
-                </mat-select>
-              </div>
+              <mat-select placeholder="--Select Insurance Company--" multiple [(ngModel)]="filters.insurance_companies" (selectionChange)="search()" panelClass="legacy-select-panel">
+                <mat-option *ngFor="let c of options.insuranceCompanies" [value]="c.com_id">{{c.icompany_name}}</mat-option>
+              </mat-select>
             </th>
-            <th>Model</th>
-            <th>HSN</th>
-            <th>Invoice No</th>
-            <th>Customer</th>
-            <th>Mobile</th>
-            <th>Inv Date</th>
-            <th>Reg No</th>
-            <th>Chassis</th>
-            <th>Engine</th>
-            <th>KM</th>
-            <th>Surveyor</th>
-            <th>Paid Amt</th>
-            <th>Free Amt</th>
-            <th>Exp Amt</th>
-            <th>GSTN</th>
-            <th>Discount</th>
-            <th>Taxable</th>
-            <th>SGST</th>
-            <th>CGST</th>
-            <th>KFC</th>
-            <th>Type</th>
-            <th>Total</th>
+            <th><input type="text" class="th-input" value="Model Name" readonly></th>
+            <th><input type="text" class="th-input th-sm" value="HSN/SAC" readonly></th>
+            <th><input type="text" class="th-input" value="Invoice no" readonly></th>
+            <th><input type="text" class="th-input" value="Invoice Customer" readonly></th>
+            <th><input type="text" class="th-input" value="Mobile Number" readonly></th>
+            <th><input type="text" class="th-input" value="Invoice Date" readonly></th>
+            <th><input type="text" class="th-input" value="Register No" readonly></th>
+            <th><input type="text" class="th-input" value="Chassis Number" readonly></th>
+            <th><input type="text" class="th-input" value="Engine Number" readonly></th>
+            <th><input type="text" class="th-input" value="KM Reading" readonly></th>
+            <th><input type="text" class="th-input th-lg" value="Insurance Serveyor" readonly></th>
+            <th><input type="text" class="th-input" value="Paid Service Amount" readonly></th>
+            <th><input type="text" class="th-input" value="Free Service Amount" readonly></th>
+            <th><input type="text" class="th-input" value="Expense Service Amount" readonly></th>
+            <th><input type="text" class="th-input" value="Customer GSTN" readonly></th>
+            <th><input type="text" class="th-input" value="Discount" readonly></th>
+            <th><input type="text" class="th-input" value="Taxable Amount" readonly></th>
+            <th><input type="text" class="th-input" value="SGST/UTGST(9)" readonly></th>
+            <th><input type="text" class="th-input" value="CGST(9)" readonly></th>
+            <th><input type="text" class="th-input" value="KFC(1)" readonly></th>
+            <th><input type="text" class="th-input" value="Invoice Type" readonly></th>
+            <th><input type="text" class="th-input" value="Invoice Amount" readonly></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of results">
+          <tr *ngFor="let r of pagedResults">
             <td class="link">{{r.inv_job_card_no}}</td>
             <td>{{r.inv_jcard_date | date:'yyyy-MM-dd'}}</td>
             <td>{{r.branch_name}}</td>
             <td>{{r.mechanic_name}}</td>
             <td>{{r.advisor_name}}</td>
             <td>{{r.inv_repair_typ}}</td>
-            <td>{{r.icompany_name}}</td>
+            <td>
+              {{r.icompany_name}}
+              <div *ngIf="r.inv_cus_gstin" class="cell-sub">GSTIN:</div>
+              <div *ngIf="r.inv_cus_gstin" class="cell-sub">Company Address:</div>
+            </td>
             <td>{{r.inv_modl}}</td>
             <td>998729</td>
-            <td>{{r.inv_no}}</td>
+            <td class="link">{{r.inv_no}}</td>
             <td>{{r.inv_cus}}</td>
             <td>{{r.inv_pho}}</td>
             <td>{{r.inv_inv_date | date:'yyyy-MM-dd'}}</td>
@@ -168,36 +161,57 @@
       </table>
     </div>
 
-    <!-- Redesigned Footer Totals matching Image 2 -->
-    <div class="footer-summary-container" *ngIf="searched">
-      <div class="summary-line">
-        <span class="label">Total Labour Taxable Amount :</span>
-        <span class="value">{{totals.labour_taxable?.toFixed(2)}}</span>
-      </div>
-      <div class="summary-line">
-        <span class="label">Total Parts Taxable Amount :</span>
-        <span class="value">{{totals.parts_taxable?.toFixed(2)}}</span>
-      </div>
-      <div class="summary-line">
-        <span class="label">Total Discount :</span>
-        <span class="value">{{totals.total_discount?.toFixed(2)}}</span>
-      </div>
-      <div class="summary-line">
-        <span class="label">Total Labour Amount :</span>
-        <span class="value">{{totals.labour_amount?.toFixed(2)}}</span>
-      </div>
-      <div class="summary-line">
-        <span class="label">Total Parts Amount :</span>
-        <span class="value">{{totals.parts_amount?.toFixed(2)}}</span>
-      </div>
-      <div class="summary-line">
-        <span class="label">Total Gst Amount :</span>
-        <span class="value">{{totals.total_gst?.toFixed(2)}}</span>
-      </div>
-      <div class="summary-line grand-total">
-        <span class="label">Total Bill Amount :</span>
-        <span class="value">{{totals.grand_total?.toFixed(2)}}</span>
+    <!-- Pagination Footer -->
+    <div class="pagination-bar" *ngIf="results.length > 0">
+      <span class="pagination-info">
+        Showing {{(currentPage - 1) * pageSize + 1}} –
+        {{currentPage * pageSize > results.length ? results.length : currentPage * pageSize}}
+        of {{results.length}} entries
+      </span>
+      <div class="pagination-controls">
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">← Prev</button>
+        <ng-container *ngFor="let p of pageNumbers">
+          <span *ngIf="p === -1" class="page-ellipsis">…</span>
+          <button *ngIf="p !== -1"
+                  class="page-btn"
+                  [class.active]="p === currentPage"
+                  (click)="goToPage(p)">{{p}}</button>
+        </ng-container>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Next →</button>
       </div>
     </div>
+
+    <!-- Footer Totals — 4-column grid matching reference image -->
+    <div class="footer-totals-grid" *ngIf="searched">
+      <!-- col1: SGST | col2: Taxable | col3: Discount | col4: CGST -->
+      <div class="total-field">
+        <label>Total SGST/UTGST(9) Amount</label>
+        <input type="text" readonly [value]="(totals.total_sgst || 0) | number:'1.2-2'">
+      </div>
+      <div class="total-field">
+        <label>Total Taxable Amount</label>
+        <input type="text" readonly [value]="(totals.total_taxable || 0) | number:'1.2-2'">
+      </div>
+      <div class="total-field">
+        <label>Total Discount</label>
+        <input type="text" readonly [value]="(totals.total_discount || 0) | number:'1.2-2'">
+      </div>
+      <div class="total-field">
+        <label>Total CGST Amount</label>
+        <input type="text" readonly [value]="(totals.total_cgst || 0) | number:'1.2-2'">
+      </div>
+      <!-- col4 only: KFC under CGST -->
+      <div class="total-field total-field--col4">
+        <label>Total KFC Amount</label>
+        <input type="text" readonly [value]="(totals.total_kfc || 0) | number:'1.2-2'">
+      </div>
+      <!-- col4 only: Invoice Amount under KFC -->
+      <div class="total-field total-field--col4">
+        <label>Total Invoice Amount</label>
+        <input type="text" readonly [value]="(totals.grand_total || 0) | number:'1.2-2'">
+      </div>
+    </div>
+
+
   </div>
 </div>

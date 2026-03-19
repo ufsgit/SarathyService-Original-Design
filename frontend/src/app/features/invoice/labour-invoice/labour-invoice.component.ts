@@ -124,7 +124,7 @@ export class LabourInvoiceComponent implements OnInit {
       ic_cgst_p: 9, 
       ic_cgst_amt: 0, 
       ic_total: 0, 
-      ic_type: 'Paid Service' 
+      ic_type: 'Paid Service'
     }; 
   }
 

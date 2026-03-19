@@ -2,71 +2,213 @@
   <div class="card-header">
     <div class="header-title">
       <i class="icon-menu">≡</i>
-      <span>Job Card Statement</span>
+      <span>List JobCard Statement</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn-excel" (click)="exportExcel()">EXCEL</button>
     </div>
   </div>
 
   <div class="card-body">
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-      <div class="filter-group">
-        <label>From Date :</label>
-        <input type="date" [(ngModel)]="filters.from_date" name="from">
-      </div>
-      <div class="filter-group">
-        <label>To Date :</label>
-        <input type="date" [(ngModel)]="filters.to_date" name="to">
-      </div>
-      <div class="filter-group">
-        <label>Job Card No :</label>
-        <input type="text" [(ngModel)]="filters.job_card_no" name="jcno" placeholder="Job card no">
-      </div>
-      <div class="filter-group">
-        <label>Branch :</label>
-        <select [(ngModel)]="filters.branch" name="branch">
-          <option value="">All</option>
-          <option *ngFor="let b of options.branches" [value]="b.b_id">{{b.branch_name}}</option>
+    <!-- Centered Filter Section -->
+    <div class="centered-filter-container">
+      <div class="filter-row">
+        <label>Branch</label>
+        <select [(ngModel)]="filters.branch" (change)="search()">
+          <option value="">--Select Branch--</option>
+          <option *ngFor="let b of options.branches" [value]="b.b_id">{{b.branch_name}}({{b.branch_id}})</option>
         </select>
       </div>
-      <button class="btn-search" (click)="search()">🔍 Search</button>
-    </div>
-
-    <!-- Results -->
-    <div *ngFor="let inv of results" class="statement-block">
-      <div class="statement-header">
-        <div>
-          <strong class="jc-label">JC# {{inv.inv_job_card_no}}</strong>
-          &nbsp;|&nbsp; {{inv.inv_jcard_date}}
-          &nbsp;|&nbsp; {{inv.inv_cus}}
-          &nbsp;|&nbsp; {{inv.in_registr}}
+      <div class="filter-row">
+        <label>Service</label>
+        <select [(ngModel)]="filters.service_type" (change)="search()">
+          <option value="">--Select Service--</option>
+          <option value="Paid Service">Paid Service</option>
+          <option value="Free Service">Free Service</option>
+          <option value="Expense">Expense</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <label>Search Option</label>
+        <select [(ngModel)]="filters.view_by" (change)="onViewByChange()">
+          <option value="Custom Date">Custom Date</option>
+          <option value="Month to date">Month to date</option>
+          <option value="Previous Month">Previous Month</option>
+          <option value="Year to Date">Year to Date</option>
+          <option value="Previous Year">Previous Year</option>
+        </select>
+      </div>
+      <div class="date-row">
+        <div class="date-group">
+          <label>Date From</label>
+          <input type="date" [(ngModel)]="filters.from_date" [readOnly]="filters.view_by !== 'Custom Date'" (change)="search()">
         </div>
-        <span class="inv-amount">₹{{inv.inv_final_amount}}</span>
-      </div>
-      <div class="table-container" *ngIf="inv.items?.length">
-        <table class="legacy-table">
-          <thead>
-            <tr>
-              <th>Particular</th>
-              <th>Qty</th>
-              <th>Rate</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of inv.items">
-              <td>{{item.ic_particular}}</td>
-              <td>{{item.ic_qty}}</td>
-              <td>₹{{item.ic_rate}}</td>
-              <td>₹{{item.ic_total}}</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="date-group">
+          <label>Date To</label>
+          <input type="date" [(ngModel)]="filters.to_date" [readOnly]="filters.view_by !== 'Custom Date'" (change)="search()">
+        </div>
       </div>
     </div>
 
-    <div *ngIf="results.length>0" class="total-footer">
-      Total: <strong>₹{{totalAmount.toFixed(2)}}</strong>
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="btn-group">
+        <button class="btn-small">CSV</button>
+        <button class="btn-small">Excel</button>
+      </div>
+      <div class="show-entries">
+        Show
+        <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+        entries
+      </div>
     </div>
-    <p *ngIf="searched && results.length===0" class="no-data-msg">No results found</p>
+
+    <!-- Table -->
+    <div class="scrollable-table-wrap">
+      <table class="legacy-table">
+        <thead>
+          <tr class="main-header">
+            <th><input type="text" class="th-input" value="JobCard" readonly></th>
+            <th><input type="text" class="th-input" value="JobCard Date" readonly></th>
+            <th><input type="text" class="th-input th-wide" value="Branch Name" readonly></th>
+            <th>
+              <mat-select placeholder="--Select Labour Code--" multiple [(ngModel)]="filters.labour_codes" (selectionChange)="search()" panelClass="legacy-select-panel">
+                <mat-option *ngFor="let l of options.labourNames" [value]="l.labour_code">{{l.labour_title}}({{l.labour_code}})</mat-option>
+              </mat-select>
+            </th>
+            <th>
+              <mat-select placeholder="--Select Mechanic--" multiple [(ngModel)]="filters.mechanic" (selectionChange)="search()" panelClass="legacy-select-panel">
+                <mat-option *ngFor="let m of options.mechanics" [value]="m.emp_id">{{m.e_first_name}} [{{m.e_code}}]</mat-option>
+              </mat-select>
+            </th>
+            <th>
+              <mat-select placeholder="--Select Advisor--" multiple [(ngModel)]="filters.advisor" (selectionChange)="search()" panelClass="legacy-select-panel">
+                <mat-option *ngFor="let a of options.advisors" [value]="a.emp_id">{{a.e_first_name}} [{{a.e_code}}]</mat-option>
+              </mat-select>
+            </th>
+            <th>
+              <mat-select placeholder="--Select Repair Type--" multiple [(ngModel)]="filters.repair_types" (selectionChange)="search()" panelClass="legacy-select-panel">
+                <mat-option *ngFor="let t of options.repairTypes" [value]="t">{{t}}</mat-option>
+              </mat-select>
+            </th>
+            <th>
+              <mat-select placeholder="--Select Insurance Company--" multiple [(ngModel)]="filters.insurance_companies" (selectionChange)="search()" panelClass="legacy-select-panel">
+                <mat-option *ngFor="let c of options.insuranceCompanies" [value]="c.com_id">{{c.icompany_name}}</mat-option>
+              </mat-select>
+            </th>
+            <th><input type="text" class="th-input" value="Model Name" readonly></th>
+            <th><input type="text" class="th-input th-sm" value="HSN/SAC" readonly></th>
+            <th><input type="text" class="th-input" value="Invoice no" readonly></th>
+            <th><input type="text" class="th-input" value="Invoice Customer" readonly></th>
+            <th><input type="text" class="th-input" value="Mobile Number" readonly></th>
+            <th><input type="text" class="th-input" value="Invoice Date" readonly></th>
+            <th><input type="text" class="th-input" value="Register No" readonly></th>
+            <th><input type="text" class="th-input" value="Chassis Number" readonly></th>
+            <th><input type="text" class="th-input" value="Engine Number" readonly></th>
+            <th><input type="text" class="th-input" value="KM Reading" readonly></th>
+            <th><input type="text" class="th-input" value="Paid Service Amount" readonly></th>
+            <th><input type="text" class="th-input" value="Free Service Amount" readonly></th>
+            <th><input type="text" class="th-input" value="Expense Service Amount" readonly></th>
+            <th><input type="text" class="th-input" value="Customer GSTN" readonly></th>
+            <th><input type="text" class="th-input" value="Discount" readonly></th>
+            <th><input type="text" class="th-input" value="Taxable Amount" readonly></th>
+            <th><input type="text" class="th-input" value="KFC(1)" readonly></th>
+            <th><input type="text" class="th-input" value="Invoice Type" readonly></th>
+            <th><input type="text" class="th-input" value="Invoice Amount" readonly></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of pagedResults">
+            <td class="link">{{r.inv_job_card_no}}</td>
+            <td>{{r.inv_jcard_date | date:'yyyy-MM-dd'}}</td>
+            <td>{{r.branch_name}}</td>
+            <td>{{r.labour_code}}</td>
+            <td>{{r.mechanic_name}}</td>
+            <td>{{r.advisor_name}}</td>
+            <td>{{r.inv_repair_typ}}</td>
+            <td>
+              {{r.icompany_name}}
+              <div *ngIf="r.inv_cus_gstin" class="cell-sub">GSTIN:</div>
+              <div *ngIf="r.inv_cus_gstin" class="cell-sub">Company Address:</div>
+            </td>
+            <td>{{r.inv_modl}}</td>
+            <td>998729</td>
+            <td class="link">{{r.inv_no}}</td>
+            <td>{{r.inv_cus}}</td>
+            <td>{{r.inv_pho}}</td>
+            <td>{{r.inv_inv_date | date:'yyyy-MM-dd'}}</td>
+            <td>{{r.in_registr}}</td>
+            <td>{{r.inv_chassis}}</td>
+            <td>{{r.in_engine}}</td>
+            <td>{{r.inv_km}}</td>
+            <td>{{(r.inv_type === 'Paid Service' || r.inv_type === 'Cash') ? r.inv_total : '0'}}</td>
+            <td>{{(r.inv_type === 'Free Service' || r.inv_type === 'Free') ? r.inv_total : '0'}}</td>
+            <td>{{r.inv_type === 'Expense' ? r.inv_total : '0'}}</td>
+            <td>{{r.inv_cus_gstin}}</td>
+            <td>{{r.inv_disc_total || '0'}}</td>
+            <td>{{r.inv_taxtotal}}</td>
+            <td>{{r.inv_cesstotal}}</td>
+            <td>{{r.inv_type}}</td>
+            <td>{{r.inv_total}}</td>
+          </tr>
+          <tr *ngIf="results.length === 0">
+            <td colspan="27" class="no-data">No data available in table</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar" *ngIf="results.length > 0">
+      <span class="pagination-info">
+        Showing {{(currentPage - 1) * pageSize + 1}} –
+        {{currentPage * pageSize > results.length ? results.length : currentPage * pageSize}}
+        of {{results.length}} entries
+      </span>
+      <div class="pagination-controls">
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">← Prev</button>
+        <ng-container *ngFor="let p of pageNumbers">
+          <span *ngIf="p === -1" class="page-ellipsis">…</span>
+          <button *ngIf="p !== -1"
+                  class="page-btn"
+                  [class.active]="p === currentPage"
+                  (click)="goToPage(p)">{{p}}</button>
+        </ng-container>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Next →</button>
+      </div>
+    </div>
+
+    <!-- Footer Totals — matches legacy reference image exactly -->
+    <!-- Row 1: No.of Labour Codes | Total Taxable Amount | Total Discount | Total KFC Amount -->
+    <!-- Row 2: (right) Total Invoice Amount -->
+    <div class="footer-totals-grid" *ngIf="searched">
+      <div class="total-field">
+        <label>No.of Labour Codes</label>
+        <input type="text" readonly [value]="labourCodeCount">
+      </div>
+      <div class="total-field">
+        <label>Total Taxable Amount</label>
+        <input type="text" readonly [value]="(totals.total_taxable || 0) | number:'1.2-2'">
+      </div>
+      <div class="total-field">
+        <label>Total Discount</label>
+        <input type="text" readonly [value]="(totals.total_discount || 0) | number:'1.2-2'">
+      </div>
+      <div class="total-field">
+        <label>Total KFC Amount</label>
+        <input type="text" readonly [value]="(totals.total_kfc || 0) | number:'1.2-2'">
+      </div>
+      <!-- Row 2 — Total Invoice Amount in column 4 (right) -->
+      <div class="total-field total-field--col4">
+        <label>Total Invoice Amount</label>
+        <input type="text" readonly [value]="(totals.grand_total || 0) | number:'1.2-2'">
+      </div>
+    </div>
+
   </div>
 </div>

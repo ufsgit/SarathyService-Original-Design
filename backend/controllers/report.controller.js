@@ -107,31 +107,73 @@ exports.getJobCardSummary = async (req, res) => {
     }
 };
 
-// Job Card Statement (with line items)
+// Job Card Statement (flat table with same filters as Summary)
 exports.getJobCardStatement = async (req, res) => {
     try {
-        const { from_date, to_date, job_card_no, branch } = req.body;
-        let query = `SELECT i.*, b.branch_name FROM tbl_invoice_labour i 
-                 LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
-                 WHERE i.inv_jcard_date BETWEEN ? AND ?`;
+        const { from_date, to_date, branch, service_type, mechanic, advisor,
+                repair_types, insurance_companies } = req.body;
+
+        let query = `
+            SELECT i.*,
+                   b.branch_name, b.branch_id,
+                   e1.e_first_name as advisor_name,
+                   e2.e_first_name as mechanic_name,
+                   ic.icompany_name
+            FROM tbl_invoice_labour i
+            LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch
+            LEFT JOIN tbl_employee e1 ON e1.emp_id = i.inv_advisername
+            LEFT JOIN tbl_employee e2 ON e2.emp_id = i.inv_mechna
+            LEFT JOIN tbl_insurance_company ic ON ic.com_id = i.insurance_id
+            WHERE i.inv_jcard_date BETWEEN ? AND ?
+        `;
         const params = [from_date, to_date];
 
-        if (job_card_no) { query += ' AND i.inv_job_card_no = ?'; params.push(job_card_no); }
         if (branch) { query += ' AND i.inv_branch = ?'; params.push(branch); }
+        if (mechanic && mechanic.length > 0) { query += ' AND i.inv_mechna IN (?)'; params.push(mechanic); }
+        if (advisor && advisor.length > 0) { query += ' AND i.inv_advisername IN (?)'; params.push(advisor); }
+        if (repair_types && repair_types.length > 0) { query += ' AND i.inv_repair_typ IN (?)'; params.push(repair_types); }
+        if (insurance_companies && insurance_companies.length > 0) { query += ' AND i.insurance_id IN (?)'; params.push(insurance_companies); }
+
+        if (service_type) {
+            if (service_type === 'Paid Service') {
+                query += " AND (i.inv_type = 'Paid Service' OR i.inv_type = 'Cash')";
+            } else if (service_type === 'Free Service') {
+                query += " AND (i.inv_type = 'Free Service' OR i.inv_type = 'Free')";
+            } else {
+                query += ' AND i.inv_type = ?'; params.push(service_type);
+            }
+        }
+
         query += ' ORDER BY i.inv_jcard_date DESC';
 
-        const [invoices] = await pool.query(query, params);
-        // Attach items to each invoice
-        for (let inv of invoices) {
-            const [items] = await pool.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [inv.inv_id]);
+        const [rows] = await pool.query(query, params);
+
+        // Attach labour items to each invoice
+        for (let inv of rows) {
+            const [items] = await pool.query(
+                'SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?',
+                [inv.inv_id]
+            );
             inv.items = items;
         }
-        const totalAmount = invoices.reduce((sum, r) => sum + parseFloat(r.inv_total || 0), 0);
-        res.json({ data: invoices, totalAmount });
+
+        // Build totals
+        const parse = (val) => isNaN(parseFloat(val)) ? 0 : parseFloat(val);
+        const totals = rows.reduce((acc, r) => {
+            acc.total_taxable  += parse(r.inv_taxtotal);
+            acc.total_discount += parse(r.inv_disc_total);
+            acc.total_kfc      += parse(r.inv_cesstotal);
+            acc.grand_total    += parse(r.inv_total);
+            return acc;
+        }, { total_taxable: 0, total_discount: 0, total_kfc: 0, grand_total: 0 });
+
+        res.json({ data: rows, totals });
     } catch (err) {
+        console.error('getJobCardStatement error:', err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
+
 
 // Previous Labour Bills
 exports.getPreviousLabourBills = async (req, res) => {

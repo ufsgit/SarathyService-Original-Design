@@ -3,19 +3,160 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 @Component({
-  selector: 'app-job-card-statement', standalone: true,
-  imports: [CommonModule, FormsModule],
+  selector: 'app-job-card-statement',
+  standalone: true,
+  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule],
   templateUrl: './job-card-statement.component.html',
   styleUrls: ['./job-card-statement.component.css']
 })
 export class JobCardStatementComponent implements OnInit {
-  filters:any={from_date:'',to_date:'',job_card_no:'',branch:''}; options:any={}; results:any[]=[]; totalAmount=0; searched=false;
-  constructor(private api:ApiService,private notify:NotificationService){}
-  ngOnInit(){this.api.getFilterOptions().subscribe((d:any)=>this.options=d);const today=new Date().toISOString().split('T')[0];this.filters.from_date=today;this.filters.to_date=today;}
-  search(){
-    if(!this.filters.from_date||!this.filters.to_date){this.notify.error('Select dates');return;}
-    this.api.getJobCardStatement(this.filters).subscribe({next:(d:any)=>{this.results=d.data;this.totalAmount=d.totalAmount;this.searched=true;},error:()=>this.notify.error('Failed')});
+
+  filters: any = {
+    from_date: '',
+    to_date: '',
+    branch: '',
+    service_type: '',
+    view_by: 'Custom Date',
+    labour_codes: [],
+    mechanic: [],
+    advisor: [],
+    repair_types: [],
+    insurance_companies: []
+  };
+
+  options: any = {
+    branches: [],
+    mechanics: [],
+    advisors: [],
+    insuranceCompanies: [],
+    repairTypes: [],
+    labourNames: []
+  };
+
+  results: any[] = [];
+  totals: any = {};
+  searched = false;
+
+  // Pagination
+  pageSize = 10;
+  currentPage = 1;
+
+  get totalPages(): number {
+    return Math.ceil(this.results.length / this.pageSize);
+  }
+
+  get pagedResults(): any[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.results.slice(start, start + this.pageSize);
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const pages: number[] = [];
+    const range = 2;
+    for (let i = 1; i <= total; i++) {
+      if (i === 1 || i === total || (i >= current - range && i <= current + range)) {
+        pages.push(i);
+      }
+    }
+    const withEllipsis: number[] = [];
+    let prev = 0;
+    for (const p of pages) {
+      if (prev && p - prev > 1) withEllipsis.push(-1);
+      withEllipsis.push(p);
+      prev = p;
+    }
+    return withEllipsis;
+  }
+
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
+  onPageSizeChange() {
+    this.currentPage = 1;
+  }
+
+  constructor(private api: ApiService, private notify: NotificationService) {}
+
+  ngOnInit() {
+    this.loadFilters();
+    const today = new Date().toISOString().split('T')[0];
+    this.filters.from_date = today;
+    this.filters.to_date = today;
+  }
+
+  loadFilters() {
+    this.api.getFilterOptions().subscribe({
+      next: (d: any) => {
+        this.options = d;
+        // load labour names if available
+        this.api.getLabourNames().subscribe({
+          next: (names: any[]) => this.options.labourNames = names,
+          error: () => {}
+        });
+      },
+      error: () => this.notify.error('Failed to load filter options')
+    });
+  }
+
+  onViewByChange() {
+    const today = new Date();
+    let from = new Date();
+    let to = new Date();
+    switch (this.filters.view_by) {
+      case 'Month to date':
+        from = new Date(today.getFullYear(), today.getMonth(), 1);
+        break;
+      case 'Previous Month':
+        from = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        to = new Date(today.getFullYear(), today.getMonth(), 0);
+        break;
+      case 'Year to Date':
+        from = new Date(today.getFullYear(), 0, 1);
+        break;
+      case 'Previous Year':
+        from = new Date(today.getFullYear() - 1, 0, 1);
+        to = new Date(today.getFullYear() - 1, 11, 31);
+        break;
+      case 'Custom Date':
+        return;
+    }
+    this.filters.from_date = from.toISOString().split('T')[0];
+    this.filters.to_date = to.toISOString().split('T')[0];
+    this.search();
+  }
+
+  search() {
+    if (!this.filters.from_date || !this.filters.to_date) {
+      this.notify.error('Please select both From and To dates');
+      return;
+    }
+    this.api.getJobCardStatement(this.filters).subscribe({
+      next: (d: any) => {
+        this.results = d.data;
+        this.totals = d.totals || {};
+        this.searched = true;
+        this.currentPage = 1;
+      },
+      error: (err) => {
+        console.error(err);
+        this.notify.error('Failed to fetch statement data');
+      }
+    });
+  }
+
+  get labourCodeCount(): number {
+    return this.results.reduce((sum, r) => sum + (r.items?.length || 0), 0);
+  }
+
+  exportExcel() {
+    this.notify.info('Excel export functionality coming soon');
   }
 }
