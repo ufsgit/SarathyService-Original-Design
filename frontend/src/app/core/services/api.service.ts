@@ -44,7 +44,11 @@ export class ApiService {
   deleteLabour(id: number): Observable<any> { return this.http.delete(`${this.baseUrl}/labours/${id}`); }
 
   // --- Customers ---
-  getCustomers(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/customers`); }
+  getCustomers(branchId?: number): Observable<any[]> {
+    const params: any = {};
+    if (branchId) params['branchId'] = branchId.toString();
+    return this.http.get<any[]>(`${this.baseUrl}/customers`, { params });
+  }
   getCustomer(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/customers/${id}`); }
   getCustomerByReg(regNo: string): Observable<any> { return this.http.get<any>(`${this.baseUrl}/customers/reg/${regNo}`); }
   searchCustomers(q: string): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/customers/search`, { params: { q } }); }

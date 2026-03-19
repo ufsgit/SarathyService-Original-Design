@@ -41,7 +41,8 @@ export class ListCustomerComponent implements OnInit {
 
   load() {
     this.loading = true;
-    this.api.getCustomers().subscribe({
+    const branchId = this.auth.isStaff ? this.auth.currentUser?.branchId : undefined;
+    this.api.getCustomers(branchId).subscribe({
       next: (d: any[]) => {
         this.customers = d;
         this.filtered = d;

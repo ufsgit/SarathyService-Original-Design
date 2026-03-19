@@ -10,10 +10,10 @@ exports.login = async (req, res) => {
 
         // Single unified query to check tbl_login
         const [rows] = await pool.query(
-            `SELECT l.*, e.emp_id, e.e_first_name, e.e_branch, b.branch_name
+            `SELECT l.*, e.emp_id, e.e_first_name, e.e_branch, e.e_designation, e.status, b.b_id as branch_id, b.branch_name
              FROM tbl_login l
              LEFT JOIN tbl_employee e ON e.emp_login_id = l.login_id
-             LEFT JOIN tbl_branch b ON b.b_id = e.e_branch
+             LEFT JOIN tbl_branch b ON (b.b_id = e.e_branch OR b.branch_name = e.e_branch)
              WHERE l.uname = ?`, [username]
         );
 
@@ -39,12 +39,15 @@ exports.login = async (req, res) => {
             username: user.uname,
             name,
             role,
+            roleDes: user.role_des,
+            status: user.status || 'active'
         };
 
         if (role === 'staff') {
             userData.empId = user.emp_id;
-            userData.branchId = user.e_branch;
-            userData.branchName = user.branch_name;
+            userData.branchId = user.branch_id;
+            userData.branchName = user.branch_name || user.e_branch;
+            userData.designation = user.e_designation;
         }
 
         return res.json({
@@ -103,11 +106,11 @@ exports.getProfile = async (req, res) => {
             return res.json(rows[0]);
         }
         const [rows] = await pool.query(
-            `SELECT ld.lg_id, ld.login_id, e.e_first_name, e.e_branch, b.branch_name
-       FROM login_details ld
-       LEFT JOIN tbl_employee e ON e.emp_id = ld.emp_id
-       LEFT JOIN tbl_branch b ON b.b_id = e.e_branch
-       WHERE ld.lg_id = ?`, [req.user.id]
+            `SELECT ld.lg_id, ld.login_id, e.e_first_name, e.e_branch, b.b_id as branch_id, b.branch_name
+             FROM login_details ld
+             LEFT JOIN tbl_employee e ON e.emp_id = ld.emp_id
+             LEFT JOIN tbl_branch b ON (b.b_id = e.e_branch OR b.branch_name = e.e_branch)
+             WHERE ld.lg_id = ?`, [req.user.id]
         );
         res.json(rows[0]);
     } catch (err) {

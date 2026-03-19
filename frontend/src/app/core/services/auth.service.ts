@@ -12,6 +12,9 @@ export interface User {
   branchId?: number;
   branchName?: string;
   empId?: number;
+  designation?: string;
+  status?: string;
+  roleDes?: string;
 }
 
 export interface LoginResponse {
@@ -46,6 +49,10 @@ export class AuthService {
 
   get isAdmin(): boolean {
     return this.currentUser?.role === 'admin';
+  }
+  
+  get isStaff(): boolean {
+    return this.currentUser?.role === 'staff';
   }
 
   login(username: string, password: string): Observable<LoginResponse> {

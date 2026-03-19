@@ -119,8 +119,8 @@ exports.getMechanics = async (req, res) => {
             WHERE e.e_designation = 'Mechanic' AND e.status = 'active'`;
         const params = [];
         if (branchId) {
-            query += ` AND e.e_branch = (SELECT branch_name FROM tbl_branch WHERE b_id = ? LIMIT 1)`;
-            params.push(branchId);
+            query += ` AND (e.e_branch = ? OR e.e_branch = (SELECT branch_name FROM tbl_branch WHERE b_id = ? LIMIT 1))`;
+            params.push(branchId, branchId);
         }
         const [rows] = await pool.query(query, params);
         res.json(rows);
@@ -138,8 +138,8 @@ exports.getAdvisors = async (req, res) => {
             WHERE e.e_designation = 'Service Advisor' AND e.status = 'active'`;
         const params = [];
         if (branchId) {
-            query += ` AND e.e_branch = (SELECT branch_name FROM tbl_branch WHERE b_id = ? LIMIT 1)`;
-            params.push(branchId);
+            query += ` AND (e.e_branch = ? OR e.e_branch = (SELECT branch_name FROM tbl_branch WHERE b_id = ? LIMIT 1))`;
+            params.push(branchId, branchId);
         }
         const [rows] = await pool.query(query, params);
         res.json(rows);

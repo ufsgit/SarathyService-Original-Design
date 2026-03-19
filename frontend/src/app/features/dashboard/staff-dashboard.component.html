@@ -7,9 +7,49 @@
   </div>
 
   <div class="card-body">
-    <div class="welcome-container">
-      <h2 class="staff-welcome">Welcome to Staff Panel</h2>
-      <p class="staff-subtitle">Manage your customers, invoices, and reports from here.</p>
+    <div class="welcome-section">
+      <h1 class="welcome-text">Welcome back, {{ auth.currentUser?.name | uppercase }}!</h1>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-header">
+        <span class="profile-title">Employee Profile</span>
+        <span class="status-badge" [class.active]="auth.currentUser?.status === 'active'">
+          {{ auth.currentUser?.status | uppercase }}
+        </span>
+      </div>
+      <div class="profile-details">
+        <div class="detail-row">
+          <div class="detail-item">
+            <label>Name:</label>
+            <span>{{ auth.currentUser?.name }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Branch:</label>
+            <span>{{ auth.currentUser?.branchName }}</span>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-item">
+            <label>Role:</label>
+            <span>{{ auth.currentUser?.roleDes || auth.currentUser?.role }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Designation:</label>
+            <span>{{ auth.currentUser?.designation }}</span>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-item">
+            <label>Status:</label>
+            <span>{{ auth.currentUser?.status }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Username:</label>
+            <span>{{ auth.currentUser?.username }}</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

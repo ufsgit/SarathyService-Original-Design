@@ -21,9 +21,12 @@
         <div class="grid-col">
           <div class="control-group">
             <label>Branch Name:</label>
-            <select name="branchname" [(ngModel)]="form.inv_branch" (change)="onBranchChange()" required>
-              <option value="">--Select--</option>
-              <option *ngFor="let b of branches" [value]="b.b_id">{{b.branch_name}} [{{b.branch_id}}]</option>
+            <div *ngIf="!auth.isAdmin" class="readonly-value">
+              {{ editMode ? form.branch_name : auth.currentUser?.branchName }}
+            </div>
+            <select *ngIf="auth.isAdmin" name="branchname" [(ngModel)]="form.inv_branch" (change)="onBranchChange()" required>
+               <option value="">--Select--</option>
+               <option *ngFor="let b of branches" [ngValue]="b.b_id">{{b.branch_name}} [{{b.branch_id}}]</option>
             </select>
           </div>
           <div class="control-group">

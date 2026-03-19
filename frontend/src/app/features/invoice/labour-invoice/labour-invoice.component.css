@@ -232,3 +232,15 @@
     border-radius: 4px;
     font-size: 13px;
 }
+
+.readonly-value {
+    flex: 1;
+    height: 22px;
+    padding: 2px 5px;
+    border: 1px solid #ccc;
+    font-size: 11px;
+    background: #f9f9f9;
+    display: flex;
+    align-items: center;
+    color: #333;
+}

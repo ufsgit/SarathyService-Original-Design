@@ -24,6 +24,9 @@ export class AddCustomerComponent implements OnInit {
       this.notify.error('Name, Reg No, Chassis No, and Engine No are required');
       return;
     }
+    if (this.auth.currentUser?.branchId) {
+      this.form.c_branch = this.auth.currentUser.branchId;
+    }
     this.api.createCustomer(this.form).subscribe({next:()=>{this.notify.success('Created');const base = this.auth.isAdmin ? '/admin' : '/staff';this.router.navigate([`${base}/customer/list`]);},error:(e:any)=>this.notify.error(e.error?.message||'Error')});
   }
 }

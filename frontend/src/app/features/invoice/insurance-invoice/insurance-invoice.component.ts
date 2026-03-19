@@ -21,7 +21,7 @@ export class InsuranceInvoiceComponent implements OnInit {
   showAddCustomerModal = false;
   pendingRegNo = '';
 
-  constructor(private api: ApiService, private notify: NotificationService, private router: Router, private auth: AuthService, private route: ActivatedRoute) {}
+  constructor(private api: ApiService, private notify: NotificationService, private router: Router, public auth: AuthService, private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.api.getBranches().subscribe(d => this.branches = d);
