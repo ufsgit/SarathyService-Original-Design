@@ -20,6 +20,7 @@
             <th>Branch</th>
             <th>Jobcard No</th>
             <th>Invoice No</th>
+            <th>Engine No</th>
             <th>Jobcard Date</th>
             <th>Service Type</th>
             <th>Model</th>
@@ -42,6 +43,7 @@
             <td>{{e.branch_name || e.inv_branch}}</td>
             <td class="text-center">{{e.inv_job_card_no}}</td>
             <td class="text-center">{{e.inv_no}}</td>
+            <td class="text-center">{{e.inv_engine || e.in_engine}}</td>
             <td class="text-center">{{e.inv_jcard_date | date:'dd-MM-yyyy'}}</td>
             <td>{{e.inv_repair_typ || e.inv_service_typ}}</td>
             <td>{{e.inv_modl}}</td>

@@ -179,7 +179,7 @@ exports.getJobCardStatement = async (req, res) => {
 exports.getPreviousLabourBills = async (req, res) => {
     try {
         const [rows] = await pool.query(
-            'SELECT * FROM tbl_invoice_labour WHERE status = 1 ORDER BY inv_id DESC'
+            'SELECT * FROM tbl_invoice_labour WHERE status = 1 AND ready_status = 0 ORDER BY inv_id DESC'
         );
         res.json(rows);
     } catch (err) {
@@ -191,7 +191,7 @@ exports.getPreviousLabourBills = async (req, res) => {
 exports.getPreviousInsuranceBills = async (req, res) => {
     try {
         const [rows] = await pool.query(
-            'SELECT * FROM tbl_invoice_labour WHERE status = 2 ORDER BY inv_id DESC'
+            'SELECT * FROM tbl_invoice_labour WHERE status = 2 AND ready_status = 0 ORDER BY inv_id DESC'
         );
         res.json(rows);
     } catch (err) {

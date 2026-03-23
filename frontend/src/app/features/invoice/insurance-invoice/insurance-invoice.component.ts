@@ -53,6 +53,10 @@ export class InsuranceInvoiceComponent implements OnInit {
     this.api.getInvoice(id).subscribe({
       next: (res: any) => {
         this.form = res.invoice;
+        // Normalize types and fields for legacy records
+        if (this.form.inv_branch) this.form.inv_branch = +this.form.inv_branch;
+        this.form.inv_engine = this.form.inv_engine || this.form.in_engine;
+
         if (this.form.inv_inv_date) this.form.inv_inv_date = this.form.inv_inv_date.split('T')[0];
         if (this.form.inv_jcard_date) this.form.inv_jcard_date = this.form.inv_jcard_date.split('T')[0];
         if (this.form.inv_sale_date) this.form.inv_sale_date = this.form.inv_sale_date.split('T')[0];
@@ -220,8 +224,8 @@ export class InsuranceInvoiceComponent implements OnInit {
   }
 
   onAddToReadyForBill() {
-    if (!this.form.in_registr || !this.form.inv_cus || !this.form.inv_branch || !this.form.inv_no) {
-      this.notify.error('Please fill Registration No, Customer Name, Branch and Invoice No');
+    if (!this.form.in_registr || !this.form.inv_cus || !this.form.inv_branch) {
+      this.notify.error('Please fill Registration No, Customer Name, Branch.');
       return;
     }
     if (this.items.length === 0 || !this.items[0].ic_particular) {
@@ -260,7 +264,22 @@ export class InsuranceInvoiceComponent implements OnInit {
   }
 
   onPrint() {
-    this.notify.info('Print functionality will be triggered here');
+    if (!this.invoiceId) {
+      this.notify.error('Please save the invoice first');
+      return;
+    }
+    const url = this.api.getInvoicePDFUrl(this.invoiceId);
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+    const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
+    
+    window.open(pdfUrl, '_blank');
+
+    if (this.editMode) {
+      this.notify.success('Invoice finalized and print triggered. Redirecting...');
+      setTimeout(() => {
+        this.router.navigate(['/admin/reports/previous-bills/insurance']);
+      }, 1500);
+    }
   }
 
 
