@@ -31,6 +31,7 @@ exports.create = async (req, res) => {
         );
         res.status(201).json({ message: 'Branch created', id: result.insertId });
     } catch (err) {
+        console.log(err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };

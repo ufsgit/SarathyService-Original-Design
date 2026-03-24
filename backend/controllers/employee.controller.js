@@ -4,7 +4,7 @@ const pool = require('../config/db');
 exports.getAll = async (req, res) => {
     try {
         const [rows] = await pool.query(
-            `SELECT e.*, b.branch_name FROM tbl_employee e 
+            `SELECT e.*, COALESCE(b.branch_name, e.e_branch) AS branch_name FROM tbl_employee e 
        LEFT JOIN tbl_branch b ON b.b_id = e.e_branch 
        ORDER BY e.emp_id DESC`
         );
@@ -18,7 +18,7 @@ exports.getAll = async (req, res) => {
 exports.getById = async (req, res) => {
     try {
         const [rows] = await pool.query(
-            `SELECT e.*, b.branch_name FROM tbl_employee e 
+            `SELECT e.*, COALESCE(b.branch_name, e.e_branch) AS branch_name FROM tbl_employee e 
        LEFT JOIN tbl_branch b ON b.b_id = e.e_branch 
        WHERE e.emp_id = ?`, [req.params.id]
         );
@@ -34,20 +34,25 @@ exports.create = async (req, res) => {
     try {
         const { e_first_name, emp_intial, e_address, e_mobile, e_email, e_designation, e_branch, e_code, login_id, login_password } = req.body;
         const [result] = await pool.query(
-            'INSERT INTO tbl_employee (e_first_name, emp_intial, e_address, e_mobile, e_email, e_designation, e_branch, e_code, status) VALUES (?,?,?,?,?,?,?,?,1)',
-            [e_first_name, emp_intial || null, e_address || null, e_mobile || null, e_email || null, e_designation || null, e_branch || null, e_code || null]
+            'INSERT INTO tbl_employee (e_first_name, emp_intial, e_address, e_mobile, e_email, e_designation, e_branch, e_code, status) VALUES (?,?,?,?,?,?,?,?,?)',
+            [e_first_name, emp_intial || null, e_address || null, e_mobile || null, e_email || null, e_designation || null, e_branch || null, e_code || null, 'active']
         );
         // Create login if login_id provided
         if (login_id && login_password) {
             const bcrypt = require('bcryptjs');
             const hashed = await bcrypt.hash(login_password, 10);
+            const [loginResult] = await pool.query(
+                'INSERT INTO tbl_login (uname, pwd, role, role_des) VALUES (?, ?, 2, ?)',
+                [login_id, hashed, 'employee']
+            );
             await pool.query(
-                'INSERT INTO login_details (login_id, login_password, emp_id, login_status, login_type, login_branch) VALUES (?,?,?,1,?,?)',
-                [login_id, hashed, result.insertId, 'staff', e_branch || null]
+                'UPDATE tbl_employee SET emp_login_id = ? WHERE emp_id = ?',
+                [loginResult.insertId, result.insertId]
             );
         }
         res.status(201).json({ message: 'Employee created', id: result.insertId });
     } catch (err) {
+        console.log(err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
@@ -155,7 +160,7 @@ exports.getPaginated = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const search = req.query.search || '';
         
-        let query = `SELECT e.*, b.branch_name FROM tbl_employee e LEFT JOIN tbl_branch b ON b.b_id = e.e_branch`;
+        let query = `SELECT e.*, COALESCE(b.branch_name, e.e_branch) AS branch_name FROM tbl_employee e LEFT JOIN tbl_branch b ON b.b_id = e.e_branch`;
         let countQuery = `SELECT COUNT(*) as total FROM tbl_employee e LEFT JOIN tbl_branch b ON b.b_id = e.e_branch`;
         let params = [];
         

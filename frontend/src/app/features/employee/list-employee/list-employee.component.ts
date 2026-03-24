@@ -79,7 +79,7 @@ export class ListEmployeeComponent implements OnInit {
 
   openStatusModal(employee: any) {
     this.selectedEmployee = employee;
-    this.statusToUpdate = employee.status == 1 ? 'active' : 'inactive';
+    this.statusToUpdate = employee.status === 'active' || employee.status == 1 ? 'active' : 'inactive';
     this.showStatusModal = true;
   }
 
@@ -90,7 +90,7 @@ export class ListEmployeeComponent implements OnInit {
 
   updateStatus() {
     if (!this.selectedEmployee) return;
-    const statusValue = this.statusToUpdate === 'active' ? 1 : 0;
+    const statusValue = this.statusToUpdate;
     this.api.updateEmployeeStatus(this.selectedEmployee.emp_id, statusValue).subscribe({
       next: () => {
         this.notify.success('Status updated');

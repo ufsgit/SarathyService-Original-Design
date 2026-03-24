@@ -23,7 +23,7 @@ export class ApiService {
   getEmployee(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/employees/${id}`); }
   createEmployee(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/employees`, data); }
   updateEmployee(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/employees/${id}`, data); }
-  updateEmployeeStatus(id: number, status: number): Observable<any> { return this.http.put(`${this.baseUrl}/employees/${id}/status`, { status }); }
+  updateEmployeeStatus(id: number, status: any): Observable<any> { return this.http.put(`${this.baseUrl}/employees/${id}/status`, { status }); }
   updateEmployeeLogin(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/employees/${id}/login`, data); }
   getEmployeeLogin(id: number): Observable<any> { return this.http.get(`${this.baseUrl}/employees/${id}/login`); }
   deleteEmployee(id: number): Observable<any> { return this.http.delete(`${this.baseUrl}/employees/${id}`); }

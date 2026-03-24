@@ -40,8 +40,8 @@
             <td>{{ e.e_code }}</td>
             <td>{{ e.e_designation }}</td>
             <td>
-              <span class="status-text" [class.active]="e.status == 1">
-                {{ e.status == 1 ? 'active' : 'Inactive' }}
+              <span class="status-text" [class.active]="e.status === 'active' || e.status == 1">
+                {{ (e.status === 'active' || e.status == 1) ? 'active' : 'inactive' }}
               </span>
             </td>
             <td>
