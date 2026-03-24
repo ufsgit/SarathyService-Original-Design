@@ -52,6 +52,7 @@ export const routes: Routes = [
       { path: 'reports/job-card-statement', loadComponent: () => import('./features/reports/job-card-statement/job-card-statement.component').then(m => m.JobCardStatementComponent) },
       { path: 'reports/previous-bills/labour', loadComponent: () => import('./features/reports/previous-bills/previous-bills.component').then(m => m.PreviousBillsComponent), data: { type: 'labour' } },
       { path: 'reports/previous-bills/insurance', loadComponent: () => import('./features/reports/previous-bills/previous-bills.component').then(m => m.PreviousBillsComponent), data: { type: 'insurance' } },
+      { path: 'reports/job-card-detail/:id', loadComponent: () => import('./features/reports/job-card-detail/job-card-detail.component').then(m => m.JobCardDetailComponent) },
       // Vehicle History
       { path: 'vehicle-history', loadComponent: () => import('./features/vehicle-history/vehicle-history.component').then(m => m.VehicleHistoryComponent) },
     ]
@@ -84,6 +85,7 @@ export const routes: Routes = [
       { path: 'reports/job-card-statement', loadComponent: () => import('./features/reports/job-card-statement/job-card-statement.component').then(m => m.JobCardStatementComponent) },
       { path: 'reports/previous-bills/labour', loadComponent: () => import('./features/reports/previous-bills/previous-bills.component').then(m => m.PreviousBillsComponent), data: { type: 'labour' } },
       { path: 'reports/previous-bills/insurance', loadComponent: () => import('./features/reports/previous-bills/previous-bills.component').then(m => m.PreviousBillsComponent), data: { type: 'insurance' } },
+      { path: 'reports/job-card-detail/:id', loadComponent: () => import('./features/reports/job-card-detail/job-card-detail.component').then(m => m.JobCardDetailComponent) },
       // Vehicle History
       { path: 'vehicle-history', loadComponent: () => import('./features/vehicle-history/vehicle-history.component').then(m => m.VehicleHistoryComponent) },
     ]
