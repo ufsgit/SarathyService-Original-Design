@@ -15,8 +15,8 @@ export class AddEmployeeComponent implements OnInit {
     add_as_user: true
   };
   branches: any[] = [];
-  titles: string[] = ['Mr.', 'Ms.', 'Mrs.', 'Dr.'];
-  designations: string[] = ['Admin', 'Service Advisor', 'Mechanic', 'Accountant', 'Manager', 'Other'];
+  titles: string[] = ['Mr.', 'Ms.'];
+  designations: string[] = ['Technician', 'Service Advisor', 'Billing Staff', 'Floor Supervisor'];
 
   constructor(private api: ApiService, private notify: NotificationService, private router: Router) {}
   ngOnInit() { this.api.getBranches().subscribe((d: any[]) => this.branches = d); }
