@@ -52,8 +52,8 @@
     <!-- Action Bar -->
     <div class="action-bar">
       <div class="btn-group">
-        <button class="btn-small">CSV</button>
-        <button class="btn-small">Excel</button>
+        <button class="btn-small" (click)="exportCurrentCSV()">CSV</button>
+        <button class="btn-small" (click)="exportCurrentExcel()">Excel</button>
       </div>
       <div class="show-entries">
         Show
@@ -120,7 +120,9 @@
         </thead>
         <tbody>
           <tr *ngFor="let r of pagedResults">
-            <td class="link">{{r.inv_job_card_no}}</td>
+            <td class="link">
+              <a [routerLink]="[isAdmin ? '/admin' : '/staff', 'reports', 'job-card-detail', r.inv_id]">{{r.inv_job_card_no}}</a>
+            </td>
             <td>{{r.inv_jcard_date | date:'yyyy-MM-dd'}}</td>
             <td>{{r.branch_name}}</td>
             <td>{{r.mechanic_name}}</td>

@@ -274,6 +274,25 @@ export class LabourInvoiceComponent implements OnInit {
     }
   }
 
+  onWordExport() {
+    if (!this.invoiceId) {
+      this.notify.error('Please save the invoice first');
+      return;
+    }
+    const url = this.api.getInvoiceWordUrl(this.invoiceId);
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+    const wordUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
+    
+    window.location.href = wordUrl;
+
+    if (this.editMode) {
+      this.notify.success('Invoice finalized and Word export triggered. Redirecting...');
+      setTimeout(() => {
+        this.router.navigate(['/admin/reports/previous-bills/labour']);
+      }, 1500);
+    }
+  }
+
 
   scrollTableUp() {
     const el = document.getElementById('tableScrollContainer');

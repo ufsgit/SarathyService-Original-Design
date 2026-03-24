@@ -1,0 +1,138 @@
+.job-card-detail-container {
+  background: #fff;
+  padding: 0;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.detail-header {
+  background: #0056b3;
+  color: #fff;
+  padding: 12px 20px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.icon-menu {
+  cursor: pointer;
+  font-style: normal;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px;
+  background: #f8f9fa;
+}
+
+.btn-export {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-export:hover {
+  opacity: 0.9;
+}
+
+.btn-excel, .btn-pdf, .btn-word {
+  background: #c00; /* Matching the red color in the image */
+}
+
+.btn-email {
+  background: #0056b3;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px 40px;
+  padding: 30px 50px;
+  background: #fff;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 0.95rem;
+}
+
+.detail-item label {
+  font-weight: 500;
+  color: #333;
+  min-width: 140px;
+}
+
+.detail-item .value {
+  color: #666;
+  background: #fcfcfc;
+  padding: 4px 10px;
+  border-radius: 2px;
+  flex-grow: 1;
+}
+
+.table-container {
+  padding: 20px 50px;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  border: 1px solid #ddd;
+}
+
+.detail-table th {
+  background: #f8f9fa;
+  padding: 12px 15px;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid #ddd;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.detail-table td {
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.detail-table tr:nth-child(even) {
+  background: #fcfcfc;
+}
+
+.loading-state {
+  padding: 50px;
+  text-align: center;
+  color: #666;
+}
+
+@media (max-width: 1024px) {
+  .details-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  .detail-header {
+    font-size: 1rem;
+  }
+}

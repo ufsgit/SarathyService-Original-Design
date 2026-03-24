@@ -1,0 +1,121 @@
+<div class="job-card-detail-container">
+  <div class="detail-header">
+    <i class="icon-menu">≡</i>
+    <span>JOBCARD & INVOICE DETAILS</span>
+  </div>
+
+  <div class="action-buttons">
+    <button class="btn-export btn-excel" (click)="exportExcel()">
+      <i class="icon-excel">📊</i> Excel
+    </button>
+    <button class="btn-export btn-pdf" (click)="exportPdf()">
+      <i class="icon-pdf">📄</i> Pdf
+    </button>
+    <button class="btn-export btn-word" (click)="exportWord()">
+      <i class="icon-word">📝</i> Word
+    </button>
+    <button class="btn-export btn-email" (click)="sendEmail()">
+      <i class="icon-email">✉️</i> Email
+    </button>
+  </div>
+
+  <div class="details-grid" *ngIf="data">
+    <div class="detail-item">
+      <label>Jobcard No :</label>
+      <span class="value">{{data.invoice.inv_job_card_no}}</span>
+    </div>
+    <div class="detail-item">
+      <label>Jobcard Date :</label>
+      <span class="value">{{data.invoice.inv_jcard_date | date:'dd-MM-yyyy'}}</span>
+    </div>
+    <div class="detail-item">
+      <label>Invoice No :</label>
+      <span class="value">{{data.invoice.inv_no}}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Invoice Date :</label>
+      <span class="value">{{data.invoice.inv_inv_date | date:'dd-MM-yyyy'}}</span>
+    </div>
+    <div class="detail-item">
+      <label>Invoice Type :</label>
+      <span class="value">{{data.invoice.inv_type}}</span>
+    </div>
+    <div class="detail-item">
+      <label>Registration No:</label>
+      <span class="value">{{data.invoice.in_registr}}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Customer Name:</label>
+      <span class="value">{{data.invoice.inv_cus}}</span>
+    </div>
+    <div class="detail-item">
+      <label>Mobile Number:</label>
+      <span class="value">{{data.invoice.inv_pho}}</span>
+    </div>
+    <div class="detail-item">
+      <label>Customer GSTIN:</label>
+      <span class="value">{{data.invoice.inv_cus_gstin}}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Model Name:</label>
+      <span class="value">{{data.invoice.inv_modl}}</span>
+    </div>
+    <div class="detail-item">
+      <label>KM Reading:</label>
+      <span class="value">{{data.invoice.inv_km}}</span>
+    </div>
+    <div class="detail-item">
+      <label>Repair Type:</label>
+      <span class="value">{{data.invoice.inv_repair_typ}}</span>
+    </div>
+
+    <div class="detail-item">
+      <label>Advisor Name:</label>
+      <span class="value">{{data.invoice.inv_advisername}}</span>
+    </div>
+    <div class="detail-item">
+      <label>Mechanic Name:</label>
+      <span class="value">{{data.invoice.inv_mechna}}</span>
+    </div>
+    <div class="detail-item">
+      <label>Branch Name:</label>
+      <span class="value">{{data.invoice.branch_name}}</span>
+    </div>
+  </div>
+
+  <div class="table-container" *ngIf="data">
+    <table class="detail-table">
+      <thead>
+        <tr>
+          <th>Labour Code</th>
+          <th>Labour Name</th>
+          <th>Rate</th>
+          <th>Discount</th>
+          <th>Tax</th>
+          <th>UTGST</th>
+          <th>CGST</th>
+          <th>Total Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of data.items">
+          <td>{{item.lc_lab_code}}</td>
+          <td>{{item.lc_lb_name}}</td>
+          <td>{{item.lc_rate}}</td>
+          <td>{{item.lc_disc}}</td>
+          <td>{{item.lc_tax_amunt}}</td>
+          <td>{{item.lc_sgst_a}}</td>
+          <td>{{item.lc_cgst_a}}</td>
+          <td>{{item.lc_amount}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    Loading job card details...
+  </div>
+</div>

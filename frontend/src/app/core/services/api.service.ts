@@ -90,6 +90,7 @@ export class ApiService {
   getNextInvoiceNo(branchId: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/next-no`, { params: { branchId: branchId.toString() } }); }
   getLabourNames(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/invoices/labour-names`); }
   getInvoicePDFUrl(id: number): string { return `${this.baseUrl}/invoices/${id}/pdf`; }
+  getInvoiceWordUrl(id: number): string { return `${this.baseUrl}/invoices/${id}/word`; }
 
   // --- Job Cards ---
   createJobCard(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/jobcards`, data); }

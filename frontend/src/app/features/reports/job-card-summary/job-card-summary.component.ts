@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { MatSelectModule } from '@angular/material/select';
@@ -9,7 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 @Component({
   selector: 'app-job-card-summary',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule],
+  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule, RouterModule],
   templateUrl: './job-card-summary.component.html',
   styleUrls: ['./job-card-summary.component.css']
 })
@@ -37,6 +38,7 @@ export class JobCardSummaryComponent implements OnInit {
   results: any[] = [];
   totals: any = {};
   searched = false;
+  isAdmin = false;
 
   // Pagination
   pageSize = 10;
@@ -81,9 +83,150 @@ export class JobCardSummaryComponent implements OnInit {
     this.currentPage = 1;
   }
 
-  constructor(private api: ApiService, private notify: NotificationService) {}
+  private formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      return d.toISOString().split('T')[0];
+    } catch {
+      return dateStr;
+    }
+  }
+
+  private exportToExcel(data: any[], filename: string) {
+    if (!data || data.length === 0) {
+      this.notify.error('No data to export');
+      return;
+    }
+
+    const headers = [
+      'JobCard', 'JobCard Date', 'Branch Name', 'Mechanic', 'Advisor',
+      'Repair Type', 'Insurance Company', 'Model Name', 'HSN/SAC',
+      'Invoice no', 'Invoice Customer', 'Mobile Number', 'Invoice Date',
+      'Register No', 'Chassis Number', 'Engine Number', 'KM Reading',
+      'Insurance Surveyor', 'Paid Service Amount', 'Free Service Amount',
+      'Expense Service Amount', 'Customer GSTN', 'Discount', 'Taxable Amount',
+      'SGST/UTGST(9)', 'CGST(9)', 'KFC(1)', 'Invoice Type', 'Invoice Amount'
+    ];
+
+    const rows = data.map(r => [
+      r.inv_job_card_no || '',
+      this.formatDate(r.inv_jcard_date),
+      r.branch_name || '',
+      r.mechanic_name || '',
+      r.advisor_name || '',
+      r.inv_repair_typ || '',
+      r.icompany_name || '',
+      r.inv_modl || '',
+      '998729',
+      r.inv_no || '',
+      r.inv_cus || '',
+      r.inv_pho || '',
+      this.formatDate(r.inv_inv_date),
+      r.in_registr || '',
+      r.inv_chassis || '',
+      r.in_engine || '',
+      r.inv_km || '',
+      r.insurance_serveyor || '',
+      (r.inv_type === 'Paid Service' || r.inv_type === 'Cash') ? r.inv_total : '0',
+      (r.inv_type === 'Free Service' || r.inv_type === 'Free') ? r.inv_total : '0',
+      r.inv_type === 'Expense' ? r.inv_total : '0',
+      r.inv_cus_gstin || '',
+      r.inv_disc_total || '0',
+      r.inv_taxtotal || '0',
+      r.inv_sgstotal || '0',
+      r.inv_gsttotal || '0',
+      r.inv_cesstotal || '0',
+      r.inv_type || '',
+      r.inv_total || '0'
+    ]);
+
+    // Create a simple HTML table for Excel
+    let html = '<table border="1"><thead><tr>';
+    headers.forEach(h => html += `<th>${h}</th>`);
+    html += '</tr></thead><tbody>';
+    rows.forEach(row => {
+      html += '<tr>';
+      row.forEach(cell => html += `<td>${cell}</td>`);
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+
+    const blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private exportToCSV(data: any[], filename: string) {
+    if (!data || data.length === 0) {
+      this.notify.error('No data to export');
+      return;
+    }
+
+    const headers = [
+      'JobCard', 'JobCard Date', 'Branch Name', 'Mechanic', 'Advisor',
+      'Repair Type', 'Insurance Company', 'Model Name', 'HSN/SAC',
+      'Invoice no', 'Invoice Customer', 'Mobile Number', 'Invoice Date',
+      'Register No', 'Chassis Number', 'Engine Number', 'KM Reading',
+      'Insurance Surveyor', 'Paid Service Amount', 'Free Service Amount',
+      'Expense Service Amount', 'Customer GSTN', 'Discount', 'Taxable Amount',
+      'SGST/UTGST(9)', 'CGST(9)', 'KFC(1)', 'Invoice Type', 'Invoice Amount'
+    ];
+
+    const rows = data.map(r => [
+      r.inv_job_card_no || '',
+      this.formatDate(r.inv_jcard_date),
+      r.branch_name || '',
+      r.mechanic_name || '',
+      r.advisor_name || '',
+      r.inv_repair_typ || '',
+      r.icompany_name || '',
+      r.inv_modl || '',
+      '998729',
+      r.inv_no || '',
+      r.inv_cus || '',
+      r.inv_pho || '',
+      this.formatDate(r.inv_inv_date),
+      r.in_registr || '',
+      r.inv_chassis || '',
+      r.in_engine || '',
+      r.inv_km || '',
+      r.insurance_serveyor || '',
+      (r.inv_type === 'Paid Service' || r.inv_type === 'Cash') ? r.inv_total : '0',
+      (r.inv_type === 'Free Service' || r.inv_type === 'Free') ? r.inv_total : '0',
+      r.inv_type === 'Expense' ? r.inv_total : '0',
+      r.inv_cus_gstin || '',
+      r.inv_disc_total || '0',
+      r.inv_taxtotal || '0',
+      r.inv_sgstotal || '0',
+      r.inv_gsttotal || '0',
+      r.inv_cesstotal || '0',
+      r.inv_type || '',
+      r.inv_total || '0'
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff', csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  constructor(private api: ApiService, private notify: NotificationService, private router: Router) {}
 
   ngOnInit() {
+    this.isAdmin = this.router.url.includes('/admin/');
     this.loadFilters();
     const today = new Date().toISOString().split('T')[0];
     this.filters.from_date = today;
@@ -149,7 +292,14 @@ export class JobCardSummaryComponent implements OnInit {
   }
 
   exportExcel() {
-    // Logic for excel export could be added here
-    this.notify.info('Excel export functionality coming soon');
+    this.exportToExcel(this.results, 'JobCardSummary_All.xls');
+  }
+
+  exportCurrentExcel() {
+    this.exportToExcel(this.pagedResults, 'JobCardSummary_Visible.xls');
+  }
+
+  exportCurrentCSV() {
+    this.exportToCSV(this.pagedResults, 'JobCardSummary_Visible.csv');
   }
 }

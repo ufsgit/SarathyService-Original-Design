@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { generateInvoiceWord } = require('../utils/wordGenerator');
 
 // Create labour invoice
 exports.createLabourInvoice = async (req, res) => {
@@ -367,6 +368,82 @@ exports.generatePDF = async (req, res) => {
     } catch (err) {
         await conn.rollback();
         console.error('PDF error:', err);
+        res.status(500).json({ message: 'Server error', error: err.message });
+    } finally {
+        conn.release();
+    }
+};
+
+// Generate Word and Finalize Bill
+exports.generateWord = async (req, res) => {
+    const conn = await pool.getConnection();
+    try {
+        await conn.beginTransaction();
+
+        // 1. Find the invoice (Prefer Ready table)
+        const [readyInvoices] = await conn.query(
+            'SELECT i.*, b.branch_name, b.branch_address, b.branch_ph FROM tbl_readyfor_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE i.inv_id = ? AND i.ready_status = 1',
+            [req.params.id]
+        );
+
+        let invoice;
+        let isFromReadyTable = false;
+
+        if (readyInvoices.length > 0) {
+            invoice = readyInvoices[0];
+            isFromReadyTable = true;
+        } else {
+            const [invoices] = await conn.query(
+                'SELECT i.*, b.branch_name, b.branch_address, b.branch_ph FROM tbl_invoice_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE i.inv_id = ?',
+                [req.params.id]
+            );
+            if (invoices.length === 0) {
+                conn.release();
+                return res.status(404).json({ message: 'Not found' });
+            }
+            invoice = invoices[0];
+        }
+
+        // 2. Fetch items (Check both tables)
+        let [items] = await conn.query('SELECT * FROM tbl_readyfor_bill WHERE ic_inv_id = ?', [req.params.id]);
+        if (items.length === 0) {
+            [items] = await conn.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [req.params.id]);
+        }
+
+        // 3. If it's from Ready table, finalize it (same logic as PDF)
+        if (isFromReadyTable) {
+             const [rows] = await conn.query('SELECT MAX(inv_id) as maxId FROM tbl_invoice_labour');
+            const nextId = (rows[0].maxId || 0) + 1;
+            const today = new Date();
+            const ymd = today.getFullYear().toString() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
+            const newInvNo = `CI${ymd}${nextId}`;
+
+            const finalizedStatus = (invoice.status === 0) ? 1 : 2;
+
+            await conn.query(
+                'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [newInvNo, invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0]
+            );
+
+            for (const item of items) {
+                await conn.query(
+                    'INSERT INTO tbl_invoice_labour_cost (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt, lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [req.params.id, item.lc_lab_code, item.lc_type, item.lc_lb_name, item.lc_sacode, item.lc_rate, item.lc_disc_p, item.lc_disc, item.lc_tax_amunt, item.lc_sgst_p, item.lc_sgst_a, item.lc_cgst_p, item.lc_cgst_a, item.lc_amount]
+                );
+            }
+            await conn.query('UPDATE tbl_readyfor_labour SET ready_status = 0, inv_no = ? WHERE inv_id = ?', [newInvNo, req.params.id]);
+            invoice.inv_no = newInvNo;
+        }
+
+        const wordBuffer = await generateInvoiceWord(invoice, items);
+
+        await conn.commit();
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        res.setHeader('Content-Disposition', 'attachment; filename=invoice_' + req.params.id + '.docx');
+        res.send(wordBuffer);
+    } catch (err) {
+        await conn.rollback();
+        console.error('Word error:', err);
         res.status(500).json({ message: 'Server error', error: err.message });
     } finally {
         conn.release();
