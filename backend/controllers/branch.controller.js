@@ -25,9 +25,18 @@ exports.getById = async (req, res) => {
 exports.create = async (req, res) => {
     try {
         const { branch_name, branch_address, branch_ph, branch_id } = req.body;
+        if (!branch_id) return res.status(400).json({ message: 'Branch ID is required' });
+        if (!branch_name) return res.status(400).json({ message: 'Branch Name is required' });
+
+        const [existing] = await pool.query(
+            'SELECT b_id FROM tbl_branch WHERE branch_id = ? OR branch_name = ?',
+            [branch_id, branch_name]
+        );
+        if (existing.length > 0) return res.status(409).json({ message: 'Branch ID or Branch Name already exists' });
+
         const [result] = await pool.query(
             'INSERT INTO tbl_branch (branch_name, branch_address, branch_ph, branch_id) VALUES (?, ?, ?, ?)',
-            [branch_name, branch_address || null, branch_ph || null, branch_id || null]
+            [branch_name, branch_address || null, branch_ph || null, branch_id]
         );
         res.status(201).json({ message: 'Branch created', id: result.insertId });
     } catch (err) {

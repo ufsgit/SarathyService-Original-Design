@@ -48,11 +48,18 @@ exports.getById = async (req, res) => {
 exports.create = async (req, res) => {
     try {
         const d = req.body;
-        if (!d.l_name) return res.status(400).json({ message: 'Labour name is required' });
+        if (!d.l_code) return res.status(400).json({ message: 'Labour Code is required' });
+        if (!d.l_name) return res.status(400).json({ message: 'Labour Name is required' });
+
+        const [existing] = await pool.query(
+            'SELECT labour_id FROM tbl_labour_code WHERE labour_code = ?',
+            [d.l_code]
+        );
+        if (existing.length > 0) return res.status(409).json({ message: 'Labour Code already exists' });
 
         const [result] = await pool.query(
             'INSERT INTO tbl_labour_code (labour_title, labour_code, sale_price, discription, repair_type) VALUES (?, ?, ?, ?, ?)',
-            [d.l_name, d.l_code || '', d.l_amount || 0, d.l_descr || '', d.l_repair_type || 'Paid Service']
+            [d.l_name, d.l_code, d.l_amount || 0, d.l_descr || '', d.l_repair_type || 'Paid Service']
         );
         res.status(201).json({ message: 'Labour created successfully', id: result.insertId });
     } catch (error) {

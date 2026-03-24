@@ -25,7 +25,16 @@ exports.getById = async (req, res) => {
 exports.create = async (req, res) => {
     try {
         const { mod_name, mod_code } = req.body;
-        const [result] = await pool.query('INSERT INTO tbl_model (mod_name, mod_code) VALUES (?, ?)', [mod_name, mod_code || null]);
+        if (!mod_name) return res.status(400).json({ message: 'Model Name is required' });
+        if (!mod_code) return res.status(400).json({ message: 'Model Code is required' });
+
+        const [existing] = await pool.query(
+            'SELECT model_id FROM tbl_model WHERE mod_code = ?',
+            [mod_code]
+        );
+        if (existing.length > 0) return res.status(409).json({ message: 'Model Code already exists' });
+
+        const [result] = await pool.query('INSERT INTO tbl_model (mod_name, mod_code) VALUES (?, ?)', [mod_name, mod_code]);
         res.status(201).json({ message: 'Model created', id: result.insertId });
     } catch (err) {
         res.status(500).json({ message: 'Server error', error: err.message });

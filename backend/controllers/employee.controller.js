@@ -33,6 +33,22 @@ exports.getById = async (req, res) => {
 exports.create = async (req, res) => {
     try {
         const { e_first_name, emp_intial, e_address, e_mobile, e_email, e_designation, e_branch, e_code, login_id, login_password } = req.body;
+
+        if (!e_first_name) return res.status(400).json({ message: 'Name is required' });
+        if (!e_branch) return res.status(400).json({ message: 'Branch Name is required' });
+        if (!e_code) return res.status(400).json({ message: 'Employee Code is required' });
+        if (!e_designation) return res.status(400).json({ message: 'Employee Designation is required' });
+        if (!login_id) return res.status(400).json({ message: 'Username is required' });
+        if (!login_password) return res.status(400).json({ message: 'Password is required' });
+
+        // Check duplicate employee code
+        const [codeCheck] = await pool.query('SELECT emp_id FROM tbl_employee WHERE e_code = ?', [e_code]);
+        if (codeCheck.length > 0) return res.status(409).json({ message: 'Employee Code already exists' });
+
+        // Check duplicate username in tbl_login
+        const [userCheck] = await pool.query('SELECT login_id FROM tbl_login WHERE uname = ?', [login_id]);
+        if (userCheck.length > 0) return res.status(409).json({ message: 'Username already exists' });
+
         const [result] = await pool.query(
             'INSERT INTO tbl_employee (e_first_name, emp_intial, e_address, e_mobile, e_email, e_designation, e_branch, e_code, status) VALUES (?,?,?,?,?,?,?,?,?)',
             [e_first_name, emp_intial || null, e_address || null, e_mobile || null, e_email || null, e_designation || null, e_branch || null, e_code || null, 'active']

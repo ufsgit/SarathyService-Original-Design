@@ -25,12 +25,17 @@ exports.getById = async (req, res) => {
 exports.create = async (req, res) => {
     try {
         const { icompany_name, icompany_address, icompany_gst } = req.body;
+        if (!icompany_name) return res.status(400).json({ message: 'Company Name is required' });
+        if (!icompany_gst) return res.status(400).json({ message: 'GSTIN is required' });
+        if (!icompany_address) return res.status(400).json({ message: 'Address is required' });
+
         const [result] = await pool.query(
             'INSERT INTO tbl_insurance_company (icompany_name, icompany_address, icompany_gst) VALUES (?, ?, ?)',
-            [icompany_name, icompany_address || null, icompany_gst || null]
+            [icompany_name, icompany_address || null, icompany_gst]
         );
         res.status(201).json({ message: 'Insurance company created', id: result.insertId });
     } catch (err) {
+        console.log(err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
