@@ -12,11 +12,11 @@ import { NotificationService } from '../../../core/services/notification.service
 })
 export class AddEmployeeComponent implements OnInit {
   form: any = {
-    add_as_user: true
+    add_as_user: false
   };
   branches: any[] = [];
-  titles: string[] = ['Mr.', 'Ms.', 'Mrs.', 'Dr.'];
-  designations: string[] = ['Admin', 'Service Advisor', 'Mechanic', 'Accountant', 'Manager', 'Other'];
+  titles: string[] = ['Mr.', 'Ms.'];
+  designations: string[] = ['Mechanic', 'Service Advisor', 'Billing Staff', 'Floor Supervisor'];
 
   constructor(private api: ApiService, private notify: NotificationService, private router: Router) {}
   ngOnInit() { this.api.getBranches().subscribe((d: any[]) => this.branches = d); }

@@ -27,6 +27,11 @@ exports.login = async (req, res) => {
         }
 
         const role = user.role_des === 'admin' ? 'admin' : 'staff';
+
+        if (role === 'staff' && user.status !== 'active' && user.status != 1) {
+            return res.status(403).json({ message: 'Your account is inactive. Please contact the administrator.' });
+        }
+
         const name = user.e_first_name || (role === 'admin' ? 'Admin' : 'Staff');
 
         const token = jwt.sign(

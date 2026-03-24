@@ -206,7 +206,7 @@ exports.generatePDF = async (req, res) => {
 
             y += 10;
             doc.font(FONT_REG).fontSize(8).text(`Supervisor Name : ${inv.advisor_name || '-'}`, L, y);
-            doc.text(`Technician Name : ${inv.mechanic_name || '-'}`, col2 + 40, y);
+            doc.text(`Mechanic Name : ${inv.mechanic_name || '-'}`, col2 + 40, y);
             y += 20;
             doc.moveTo(L, y).lineTo(R, y).lineWidth(0.5).stroke();
             y += 20;

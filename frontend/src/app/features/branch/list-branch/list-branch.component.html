@@ -8,23 +8,28 @@
   </div>
 
   <div class="card-body">
+    <div class="search-container" style="margin-bottom: 15px; display: flex; gap: 10px;">
+      <input type="text" [(ngModel)]="search" placeholder="Search by branch name, branch id..." class="form-control" style="max-width: 300px; padding: 5px;" (keyup.enter)="onSearch()">
+      <button class="btn-action" style="padding: 5px 15px;" (click)="onSearch()">Search</button>
+    </div>
+
     <div class="table-container">
       <table class="legacy-table">
         <thead>
           <tr>
             <th>#</th>
-            <th>Branch Name</th>
-            <th>Branch ID</th>
-            <th>Phone</th>
-            <th>Actions</th>
+            <th>Branch Id</th>
+            <th>branch name</th>
+            <th>branch address</th>
+            <th>action</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let e of branches; let i = index">
-            <td>{{ i + 1 }}</td>
-            <td>{{ e.branch_name }}</td>
+            <td>{{ (page - 1) * limit + i + 1 }}</td>
             <td>{{ e.branch_id }}</td>
-            <td>{{ e.branch_ph }}</td>
+            <td>{{ e.branch_name }}</td>
+            <td>{{ e.branch_address }}</td>
             <td>
               <div class="action-dropdown">
                 <button class="btn-action">Action▾</button>
@@ -40,6 +45,26 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="pagination-container" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;" *ngIf="total > 0">
+      <div style="color: #666; font-size: 14px;">
+        Showing {{ (page - 1) * limit + 1 }} to {{ page * limit < total ? page * limit : total }} of {{ total }} entries
+      </div>
+      <div style="display: inline-flex; align-items: center; border-radius: 4px;">
+        <button (click)="prevPage()" [disabled]="page === 1" style="background: transparent; border: none; padding: 6px 12px; color: #337ab7; cursor: pointer; font-size: 14px;">Previous</button>
+        
+        <ng-container *ngFor="let p of getPages()">
+          <span *ngIf="p === '...'" style="padding: 6px 12px; color: #777;">...</span>
+          <button *ngIf="p !== '...'" 
+                  (click)="goToPage(p)" 
+                  [ngStyle]="{'background': p === page ? '#e9ecef' : '#fff', 'color': p === page ? '#333' : '#337ab7', 'border': '1px solid #ddd', 'padding': '6px 12px', 'margin': '0 -1px 0 0', 'cursor': 'pointer', 'font-size': '14px'}">
+            {{ p }}
+          </button>
+        </ng-container>
+
+        <button (click)="nextPage()" [disabled]="page >= getLastPage()" style="background: transparent; border: none; padding: 6px 12px; color: #337ab7; cursor: pointer; font-size: 14px; margin-left: 1px;">Next</button>
+      </div>
     </div>
   </div>
 </div>

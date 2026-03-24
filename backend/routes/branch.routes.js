@@ -4,6 +4,7 @@ const branchController = require('../controllers/branch.controller');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
 router.get('/', verifyToken, branchController.getAll);
+router.get('/list', verifyToken, branchController.getPaginated);
 router.get('/:id', verifyToken, branchController.getById);
 router.post('/', verifyToken, isAdmin, branchController.create);
 router.put('/:id', verifyToken, isAdmin, branchController.update);

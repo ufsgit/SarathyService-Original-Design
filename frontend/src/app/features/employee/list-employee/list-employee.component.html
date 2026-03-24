@@ -8,25 +8,30 @@
   </div>
 
   <div class="card-body">
+    <div class="search-container" style="margin-bottom: 15px; display: flex; gap: 10px;">
+      <input type="text" [(ngModel)]="search" placeholder="Search by name, code, email, branch..." class="form-control" style="max-width: 300px; padding: 5px;" (keyup.enter)="onSearch()">
+      <button class="btn-action" style="padding: 5px 15px;" (click)="onSearch()">Search</button>
+    </div>
+
     <div class="table-container">
       <table class="legacy-table">
         <thead>
           <tr>
-            <th>Sl No</th>
-            <th>Full Name</th>
-            <th>Branch</th>
-            <th>Email</th>
-            <th>Mobile Number</th>
-            <th>Address</th>
-            <th>Employee Code</th>
-            <th>Employee Designation</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th>#</th>
+            <th>name</th>
+            <th>branch</th>
+            <th>email</th>
+            <th>mobile number</th>
+            <th>address</th>
+            <th>employee code</th>
+            <th>employee designation</th>
+            <th>status</th>
+            <th>actions</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let e of employees; let i = index">
-            <td>{{ i + 1 }}</td>
+            <td>{{ (page - 1) * limit + i + 1 }}</td>
             <td>{{ e.emp_intial }} {{ e.e_first_name }}</td>
             <td>{{ e.branch_name }}</td>
             <td>{{ e.e_email }}</td>
@@ -35,8 +40,8 @@
             <td>{{ e.e_code }}</td>
             <td>{{ e.e_designation }}</td>
             <td>
-              <span class="status-text" [class.active]="e.status == 1">
-                {{ e.status == 1 ? 'active' : 'Inactive' }}
+              <span class="status-text" [class.active]="e.status === 'active' || e.status == 1">
+                {{ (e.status === 'active' || e.status == 1) ? 'active' : 'inactive' }}
               </span>
             </td>
             <td>
@@ -54,6 +59,26 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="pagination-container" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;" *ngIf="total > 0">
+      <div style="color: #666; font-size: 14px;">
+        Showing {{ (page - 1) * limit + 1 }} to {{ page * limit < total ? page * limit : total }} of {{ total }} entries
+      </div>
+      <div style="display: inline-flex; align-items: center; border-radius: 4px;">
+        <button (click)="prevPage()" [disabled]="page === 1" style="background: transparent; border: none; padding: 6px 12px; color: #337ab7; cursor: pointer; font-size: 14px;">Previous</button>
+        
+        <ng-container *ngFor="let p of getPages()">
+          <span *ngIf="p === '...'" style="padding: 6px 12px; color: #777;">...</span>
+          <button *ngIf="p !== '...'" 
+                  (click)="goToPage(p)" 
+                  [ngStyle]="{'background': p === page ? '#e9ecef' : '#fff', 'color': p === page ? '#333' : '#337ab7', 'border': '1px solid #ddd', 'padding': '6px 12px', 'margin': '0 -1px 0 0', 'cursor': 'pointer', 'font-size': '14px'}">
+            {{ p }}
+          </button>
+        </ng-container>
+
+        <button (click)="nextPage()" [disabled]="page >= getLastPage()" style="background: transparent; border: none; padding: 6px 12px; color: #337ab7; cursor: pointer; font-size: 14px; margin-left: 1px;">Next</button>
+      </div>
     </div>
   </div>
 </div>
@@ -79,5 +104,3 @@
     </div>
   </div>
 </div>
-
-

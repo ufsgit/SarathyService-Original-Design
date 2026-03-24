@@ -4,6 +4,7 @@ const labourController = require('../controllers/labour.controller');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
 router.get('/', verifyToken, labourController.getAll);
+router.get('/list', verifyToken, labourController.getPaginated);
 router.get('/:id', verifyToken, labourController.getById);
 router.post('/', verifyToken, isAdmin, labourController.create);
 router.put('/:id', verifyToken, isAdmin, labourController.update);

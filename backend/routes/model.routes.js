@@ -4,6 +4,7 @@ const modelController = require('../controllers/model.controller');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
 router.get('/', verifyToken, modelController.getAll);
+router.get('/list', verifyToken, modelController.getPaginated);
 router.get('/:id', verifyToken, modelController.getById);
 router.post('/', verifyToken, isAdmin, modelController.create);
 router.put('/:id', verifyToken, isAdmin, modelController.update);
