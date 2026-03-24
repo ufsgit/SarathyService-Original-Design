@@ -58,3 +58,39 @@ exports.remove = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
+
+// Get paginated branches
+exports.getPaginated = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        
+        let query = 'SELECT * FROM tbl_branch';
+        let countQuery = 'SELECT COUNT(*) as total FROM tbl_branch';
+        let params = [];
+        
+        if (search) {
+            query += ' WHERE branch_name LIKE ? OR branch_id LIKE ?';
+            countQuery += ' WHERE branch_name LIKE ? OR branch_id LIKE ?';
+            const searchTerm = `%${search}%`;
+            params.push(searchTerm, searchTerm);
+        }
+        
+        query += ' ORDER BY b_id DESC LIMIT ? OFFSET ?';
+        const offset = (page - 1) * limit;
+        params.push(limit, offset);
+
+        const [rows] = await pool.query(query, params);
+        const [countResult] = await pool.query(countQuery, params.slice(0, search ? 2 : 0));
+        
+        res.json({
+            data: rows,
+            total: countResult[0].total,
+            page: page,
+            limit: limit
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};
