@@ -14,14 +14,14 @@
     <div class="centered-filter-container">
       <div class="filter-row">
         <label>Branch</label>
-        <select [(ngModel)]="filters.branch" (change)="search()">
+        <select [ngModel]="branch()" (ngModelChange)="branch.set($event)">
           <option value="">--Select Branch--</option>
-          <option *ngFor="let b of options.branches" [value]="b.b_id">{{b.branch_name}}({{b.branch_id}})</option>
+          <option *ngFor="let b of options().branches" [value]="b.b_id">{{b.branch_name}}({{b.branch_id}})</option>
         </select>
       </div>
       <div class="filter-row">
         <label>Service</label>
-        <select [(ngModel)]="filters.service_type" (change)="search()">
+        <select [ngModel]="serviceType()" (ngModelChange)="serviceType.set($event)">
           <option value="Paid Service">Paid Service</option>
           <option value="Free Service">Free Service</option>
           <option value="Expense">Expense</option>
@@ -29,7 +29,7 @@
       </div>
       <div class="filter-row">
         <label>Search Option</label>
-        <select [(ngModel)]="filters.view_by" (change)="onViewByChange()">
+        <select [ngModel]="viewBy()" (ngModelChange)="viewBy.set($event)">
           <option value="Custom Date">Custom Date</option>
           <option value="Month to date">Month to date</option>
           <option value="Previous Month">Previous Month</option>
@@ -40,11 +40,11 @@
       <div class="date-row">
         <div class="date-group">
           <label>Date From</label>
-          <input type="date" [(ngModel)]="filters.from_date" [readOnly]="filters.view_by !== 'Custom Date'" (change)="search()">
+          <input type="date" [ngModel]="fromDate()" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="fromDate.set($event)">
         </div>
         <div class="date-group">
           <label>Date To</label>
-          <input type="date" [(ngModel)]="filters.to_date" [readOnly]="filters.view_by !== 'Custom Date'" (change)="search()">
+          <input type="date" [ngModel]="toDate()" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="toDate.set($event)">
         </div>
       </div>
     </div>
@@ -57,7 +57,7 @@
       </div>
       <div class="show-entries">
         Show
-        <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+        <select [ngModel]="pageSize()" (ngModelChange)="onPageSizeChange(+$event)">
           <option [value]="10">10</option>
           <option [value]="25">25</option>
           <option [value]="50">50</option>
@@ -75,23 +75,23 @@
             <th><input type="text" class="th-input" value="JobCard Date" readonly></th>
             <th><input type="text" class="th-input th-wide" value="Branch Name" readonly></th>
             <th>
-              <mat-select placeholder="--Select Mechanic--" multiple [(ngModel)]="filters.mechanic" (selectionChange)="search()" panelClass="legacy-select-panel">
-                <mat-option *ngFor="let m of options.mechanics" [value]="m.emp_id">{{m.e_first_name}} [{{m.e_code}}]</mat-option>
+              <mat-select placeholder="--Select Mechanic--" multiple [ngModel]="mechanic()" (selectionChange)="mechanic.set($event.value)" panelClass="legacy-select-panel">
+                <mat-option *ngFor="let m of options().mechanics" [value]="m.emp_id">{{m.e_first_name}} [{{m.e_code}}]</mat-option>
               </mat-select>
             </th>
             <th>
-              <mat-select placeholder="--Select Advisor--" multiple [(ngModel)]="filters.advisor" (selectionChange)="search()" panelClass="legacy-select-panel">
-                <mat-option *ngFor="let a of options.advisors" [value]="a.emp_id">{{a.e_first_name}} [{{a.e_code}}]</mat-option>
+              <mat-select placeholder="--Select Advisor--" multiple [ngModel]="advisor()" (selectionChange)="advisor.set($event.value)" panelClass="legacy-select-panel">
+                <mat-option *ngFor="let a of options().advisors" [value]="a.emp_id">{{a.e_first_name}} [{{a.e_code}}]</mat-option>
               </mat-select>
             </th>
             <th>
-              <mat-select placeholder="--Select Repair Type--" multiple [(ngModel)]="filters.repair_types" (selectionChange)="search()" panelClass="legacy-select-panel">
-                <mat-option *ngFor="let t of options.repairTypes" [value]="t">{{t}}</mat-option>
+              <mat-select placeholder="--Select Repair Type--" multiple [ngModel]="repairTypes()" (selectionChange)="repairTypes.set($event.value)" panelClass="legacy-select-panel">
+                <mat-option *ngFor="let t of options().repairTypes" [value]="t">{{t}}</mat-option>
               </mat-select>
             </th>
             <th>
-              <mat-select placeholder="--Select Insurance Company--" multiple [(ngModel)]="filters.insurance_companies" (selectionChange)="search()" panelClass="legacy-select-panel">
-                <mat-option *ngFor="let c of options.insuranceCompanies" [value]="c.com_id">{{c.icompany_name}}</mat-option>
+              <mat-select placeholder="--Select Insurance Company--" multiple [ngModel]="insuranceCompanies()" (selectionChange)="insuranceCompanies.set($event.value)" panelClass="legacy-select-panel">
+                <mat-option *ngFor="let c of options().insuranceCompanies" [value]="c.com_id">{{c.icompany_name}}</mat-option>
               </mat-select>
             </th>
             <th><input type="text" class="th-input" value="Model Name" readonly></th>
@@ -119,9 +119,9 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of pagedResults">
+          <tr *ngFor="let r of results(); trackBy: trackByInvId">
             <td class="link">
-              <a [routerLink]="[isAdmin ? '/admin' : '/staff', 'reports', 'job-card-detail', r.inv_id]">{{r.inv_job_card_no}}</a>
+              <a [routerLink]="[isAdmin() ? '/admin' : '/staff', 'reports', 'job-card-detail', r.inv_id]">{{r.inv_job_card_no}}</a>
             </td>
             <td>{{r.inv_jcard_date | date:'yyyy-MM-dd'}}</td>
             <td>{{r.branch_name}}</td>
@@ -156,61 +156,67 @@
             <td>{{r.inv_type}}</td>
             <td>{{r.inv_total}}</td>
           </tr>
-          <tr *ngIf="results.length === 0">
+          <tr *ngIf="results().length === 0 && !loading()">
             <td colspan="29" class="no-data">No data available in table</td>
           </tr>
         </tbody>
       </table>
+      
+      <!-- Loading Overlay -->
+      <div class="loading-overlay" *ngIf="loading()">
+        <div class="spinner"></div>
+        <span>Loading report data...</span>
+      </div>
     </div>
 
     <!-- Pagination Footer -->
-    <div class="pagination-bar" *ngIf="results.length > 0">
+    <div class="pagination-bar" *ngIf="results().length > 0">
       <span class="pagination-info">
-        Showing {{(currentPage - 1) * pageSize + 1}} –
-        {{currentPage * pageSize > results.length ? results.length : currentPage * pageSize}}
-        of {{results.length}} entries
+        Showing {{(currentPage() - 1) * pageSize() + 1}} –
+        {{currentPage() * pageSize() > totalItems() ? totalItems() : currentPage() * pageSize()}}
+        of {{totalItems()}} entries
       </span>
       <div class="pagination-controls">
-        <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">← Prev</button>
-        <ng-container *ngFor="let p of pageNumbers">
+        <button class="page-btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">← Prev</button>
+        <ng-container *ngFor="let p of pageNumbersInner()">
           <span *ngIf="p === -1" class="page-ellipsis">…</span>
           <button *ngIf="p !== -1"
                   class="page-btn"
-                  [class.active]="p === currentPage"
+                  [class.active]="p === currentPage()"
                   (click)="goToPage(p)">{{p}}</button>
         </ng-container>
-        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">Next →</button>
+        <button class="page-btn" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">Next →</button>
       </div>
     </div>
 
     <!-- Footer Totals — 4-column grid matching reference image -->
-    <div class="footer-totals-grid" *ngIf="searched">
+    <div class="footer-totals-grid" *ngIf="searched()">
       <!-- col1: SGST | col2: Taxable | col3: Discount | col4: CGST -->
       <div class="total-field">
         <label>Total SGST/UTGST(9) Amount</label>
-        <input type="text" readonly [value]="(totals.total_sgst || 0) | number:'1.2-2'">
+        <input type="text" readonly [value]="(totals().total_sgst || 0) | number:'1.2-2'">
       </div>
       <div class="total-field">
         <label>Total Taxable Amount</label>
-        <input type="text" readonly [value]="(totals.total_taxable || 0) | number:'1.2-2'">
+        <input type="text" readonly [value]="(totals().total_taxable || 0) | number:'1.2-2'">
       </div>
       <div class="total-field">
         <label>Total Discount</label>
-        <input type="text" readonly [value]="(totals.total_discount || 0) | number:'1.2-2'">
+        <input type="text" readonly [value]="(totals().total_discount || 0) | number:'1.2-2'">
       </div>
       <div class="total-field">
         <label>Total CGST Amount</label>
-        <input type="text" readonly [value]="(totals.total_cgst || 0) | number:'1.2-2'">
+        <input type="text" readonly [value]="(totals().total_cgst || 0) | number:'1.2-2'">
       </div>
       <!-- col4 only: KFC under CGST -->
       <div class="total-field total-field--col4">
         <label>Total KFC Amount</label>
-        <input type="text" readonly [value]="(totals.total_kfc || 0) | number:'1.2-2'">
+        <input type="text" readonly [value]="(totals().total_kfc || 0) | number:'1.2-2'">
       </div>
       <!-- col4 only: Invoice Amount under KFC -->
       <div class="total-field total-field--col4">
         <label>Total Invoice Amount</label>
-        <input type="text" readonly [value]="(totals.grand_total || 0) | number:'1.2-2'">
+        <input type="text" readonly [value]="(totals().grand_total || 0) | number:'1.2-2'">
       </div>
     </div>
 

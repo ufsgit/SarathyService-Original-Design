@@ -4,31 +4,13 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { Pipe, PipeTransform } from '@angular/core';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
-@Pipe({
-  name: 'filterBills',
-  standalone: true
-})
-export class FilterBillsPipe implements PipeTransform {
-  transform(items: any[], searchText: string): any[] {
-    if (!items) return [];
-    if (!searchText) return items;
-    searchText = searchText.toLowerCase();
-    return items.filter(it => {
-      return (it.in_registr?.toLowerCase().includes(searchText)) ||
-        (it.inv_cus?.toLowerCase().includes(searchText)) ||
-        (it.inv_job_card_no?.toString().includes(searchText)) ||
-        (it.inv_no?.toLowerCase().includes(searchText));
-    });
-  }
-}
 
 @Component({
   selector: 'app-previous-bills', standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, FilterBillsPipe],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './previous-bills.component.html',
   styleUrls: ['./previous-bills.component.css']
 })
@@ -90,17 +72,23 @@ export class PreviousBillsComponent implements OnInit {
   }
 
   getPageArray(): number[] {
-    const pages = [];
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, this.currentPage - 2);
-    let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
-    
-    if (endPage - startPage < maxVisiblePages - 1) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const pages: number[] = [];
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+    } else {
+      if (current <= 4) {
+        for (let i = 1; i <= 5; i++) pages.push(i);
+        pages.push(-1); pages.push(total);
+      } else if (current >= total - 3) {
+        pages.push(1); pages.push(-1);
+        for (let i = total - 4; i <= total; i++) pages.push(i);
+      } else {
+        pages.push(1); pages.push(-1);
+        for (let i = current - 1; i <= current + 1; i++) pages.push(i);
+        pages.push(-1); pages.push(total);
+      }
     }
     return pages;
   }

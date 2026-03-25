@@ -263,21 +263,73 @@ exports.markReady = async (req, res) => {
     }
 };
 
-// Get ready labour bills
+// Get ready labour bills with pagination
 exports.getReadyLabourBills = async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, i.inv_branch FROM tbl_readyfor_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE i.status = 0 AND i.ready_status = 1 ORDER BY i.inv_id DESC');
-        res.json(rows);
+        const { page = 1, pageSize = 10, search = '' } = req.query;
+        const offset = (parseInt(page) - 1) * parseInt(pageSize);
+        const limit = parseInt(pageSize);
+
+        let whereClause = 'WHERE i.status = 0 AND i.ready_status = 1';
+        const params = [];
+
+        if (search) {
+            whereClause += ' AND (i.in_registr LIKE ? OR i.inv_cus LIKE ? OR i.inv_job_card_no LIKE ? OR i.inv_no LIKE ?)';
+            const s = `%${search}%`;
+            params.push(s, s, s, s);
+        }
+
+        const countQuery = `SELECT COUNT(*) as total FROM tbl_readyfor_labour i ${whereClause}`;
+        const [countResult] = await pool.query(countQuery, params);
+        const total = countResult[0].total;
+
+        const dataQuery = `
+            SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, i.inv_branch 
+            FROM tbl_readyfor_labour i 
+            LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+            ${whereClause} 
+            ORDER BY i.inv_id DESC 
+            LIMIT ? OFFSET ?
+        `;
+        const [rows] = await pool.query(dataQuery, [...params, limit, offset]);
+
+        res.json({ data: rows, total, page: parseInt(page), pageSize: limit });
     } catch (err) {
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
 
-// Get ready insurance bills
+// Get ready insurance bills with pagination
 exports.getReadyInsuranceBills = async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, i.inv_branch FROM tbl_readyfor_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE i.status = 1 AND i.ready_status = 1 ORDER BY i.inv_id DESC');
-        res.json(rows);
+        const { page = 1, pageSize = 10, search = '' } = req.query;
+        const offset = (parseInt(page) - 1) * parseInt(pageSize);
+        const limit = parseInt(pageSize);
+
+        let whereClause = 'WHERE i.status = 1 AND i.ready_status = 1';
+        const params = [];
+
+        if (search) {
+            whereClause += ' AND (i.in_registr LIKE ? OR i.inv_cus LIKE ? OR i.inv_job_card_no LIKE ? OR i.inv_no LIKE ?)';
+            const s = `%${search}%`;
+            params.push(s, s, s, s);
+        }
+
+        const countQuery = `SELECT COUNT(*) as total FROM tbl_readyfor_labour i ${whereClause}`;
+        const [countResult] = await pool.query(countQuery, params);
+        const total = countResult[0].total;
+
+        const dataQuery = `
+            SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, i.inv_branch 
+            FROM tbl_readyfor_labour i 
+            LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+            ${whereClause} 
+            ORDER BY i.inv_id DESC 
+            LIMIT ? OFFSET ?
+        `;
+        const [rows] = await pool.query(dataQuery, [...params, limit, offset]);
+
+        res.json({ data: rows, total, page: parseInt(page), pageSize: limit });
     } catch (err) {
         res.status(500).json({ message: 'Server error', error: err.message });
     }

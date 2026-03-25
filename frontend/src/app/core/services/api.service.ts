@@ -85,8 +85,8 @@ export class ApiService {
   getInvoice(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/${id}`); }
   updateInvoice(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/invoices/${id}`, data); }
   markInvoiceReady(id: number): Observable<any> { return this.http.put(`${this.baseUrl}/invoices/${id}/ready`, {}); }
-  getReadyLabourBills(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/invoices/ready/labour`); }
-  getReadyInsuranceBills(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/invoices/ready/insurance`); }
+  getReadyLabourBills(params?: any): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/ready/labour`, { params }); }
+  getReadyInsuranceBills(params?: any): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/ready/insurance`, { params }); }
   getNextInvoiceNo(branchId: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/next-no`, { params: { branchId: branchId.toString() } }); }
   getLabourNames(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/invoices/labour-names`); }
   getInvoicePDFUrl(id: number): string { return `${this.baseUrl}/invoices/${id}/pdf`; }
