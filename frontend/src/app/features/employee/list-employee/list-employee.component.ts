@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+
 @Component({
   selector: 'app-list-employee', standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
@@ -12,14 +13,40 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrls: ['./list-employee.component.css']
 })
 export class ListEmployeeComponent implements OnInit {
-  employees: any[] = [];
+  employees = signal<any[]>([]);
+  searchTerm = signal<string>('');
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
+  totalItems = signal<number>(0);
+
   showStatusModal = false;
   selectedEmployee: any = null;
   statusToUpdate = 'active';
 
-  constructor(private api: ApiService, private notify: NotificationService, public auth: AuthService) {}
-  ngOnInit() { this.load(); }
-  load() { this.api.getEmployees().subscribe({ next: (d: any[]) => this.employees = d, error: () => this.notify.error('Failed') }); }
+  constructor(private api: ApiService, private notify: NotificationService, public auth: AuthService) {
+    effect(() => {
+      const page = this.currentPage();
+      const size = this.pageSize();
+      const search = this.searchTerm();
+      untracked(() => this.load());
+    });
+  }
+
+  ngOnInit() {}
+
+  load() {
+    this.api.getPaginatedEmployees(this.currentPage(), this.pageSize(), this.searchTerm()).subscribe({
+      next: (res: any) => {
+        this.employees.set(res.data);
+        this.totalItems.set(res.total);
+      },
+      error: () => this.notify.error('Failed to load employees')
+    });
+  }
+
+  onSearch() {
+    this.currentPage.set(1);
+  }
   
   openStatusModal(employee: any) {
     this.selectedEmployee = employee;
@@ -45,8 +72,25 @@ export class ListEmployeeComponent implements OnInit {
     });
   }
 
+  goToPage(page: number) {
+    this.currentPage.set(page);
+  }
+
+  get pageNumbers(): number[] {
+    const totalPages = Math.ceil(this.totalItems() / this.pageSize());
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
   del(id: number) { 
-    if (confirm('Delete?')) this.api.deleteEmployee(id).subscribe({ next: () => { this.notify.success('Deleted'); this.load(); }, error: (e: any) => this.notify.error(e.error?.message || 'Error') }); 
+    if (confirm('Delete?')) {
+      this.api.deleteEmployee(id).subscribe({ 
+        next: () => { 
+          this.notify.success('Deleted'); 
+          this.load(); 
+        }, 
+        error: (e: any) => this.notify.error(e.error?.message || 'Error deleting employee') 
+      }); 
+    }
   }
 }
 

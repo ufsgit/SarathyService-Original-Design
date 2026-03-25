@@ -4,6 +4,7 @@ const employeeController = require('../controllers/employee.controller');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
+router.get('/paginated', verifyToken, employeeController.getPaginated);
 router.get('/', verifyToken, employeeController.getAll);
 router.get('/mechanics', verifyToken, employeeController.getMechanics);
 router.get('/advisors', verifyToken, employeeController.getAdvisors);

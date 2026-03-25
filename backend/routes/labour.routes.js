@@ -3,6 +3,7 @@ const router = express.Router();
 const labourController = require('../controllers/labour.controller');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
+router.get('/paginated', verifyToken, labourController.getPaginated);
 router.get('/', verifyToken, labourController.getAll);
 router.get('/:id', verifyToken, labourController.getById);
 router.post('/', verifyToken, isAdmin, labourController.create);

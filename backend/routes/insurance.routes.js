@@ -3,6 +3,7 @@ const router = express.Router();
 const insuranceController = require('../controllers/insurance.controller');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
+router.get('/paginated', verifyToken, insuranceController.getPaginated);
 router.get('/', verifyToken, insuranceController.getAll);
 router.get('/:id', verifyToken, insuranceController.getById);
 router.post('/', verifyToken, isAdmin, insuranceController.create);

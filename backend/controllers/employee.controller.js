@@ -51,7 +51,7 @@ exports.create = async (req, res) => {
 
         const [result] = await pool.query(
             'INSERT INTO tbl_employee (e_first_name, emp_intial, e_address, e_mobile, e_email, e_designation, e_branch, e_code, status) VALUES (?,?,?,?,?,?,?,?,?)',
-            [e_first_name, emp_intial || null, e_address || null, e_mobile || null, e_email || null, e_designation || null, e_branch || null, e_code || null, 'active']
+            [e_first_name, emp_intial || '', e_address || '', e_mobile || '', e_email || '', e_designation || '', e_branch || '', e_code || '', 'active']
         );
         // Create login if login_id provided
         if (login_id && login_password) {
