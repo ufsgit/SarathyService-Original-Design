@@ -124,3 +124,52 @@
 .text-center {
   text-align: center;
 }
+
+.pagination-section {
+  padding: 10px 15px;
+  background: #f9f9f9;
+  border-top: 1px solid #ddd;
+  font-size: 13px;
+}
+
+.pagination-info {
+  color: #666;
+}
+
+.pagination {
+  display: flex;
+  padding-left: 0;
+  list-style: none;
+  border-radius: 2px;
+}
+
+.page-item .page-link {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #cc1212;
+  text-decoration: none;
+  margin-left: -1px;
+}
+
+.page-item.active .page-link {
+  background: #cc1212;
+  color: #fff;
+  border-color: #cc1212;
+}
+
+.page-item.disabled .page-link {
+  color: #999;
+  pointer-events: none;
+  background: #fdfdfd;
+}
+
+.page-item:first-child .page-link {
+  border-top-left-radius: 2px;
+  border-bottom-left-radius: 2px;
+}
+
+.page-item:last-child .page-link {
+  border-top-right-radius: 2px;
+  border-bottom-right-radius: 2px;
+}

@@ -63,39 +63,3 @@ exports.remove = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
-
-// Get paginated insurance companies
-exports.getPaginated = async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const search = req.query.search || '';
-        
-        let query = 'SELECT * FROM tbl_insurance_company';
-        let countQuery = 'SELECT COUNT(*) as total FROM tbl_insurance_company';
-        let params = [];
-        
-        if (search) {
-            query += ' WHERE icompany_name LIKE ? OR icompany_gst LIKE ?';
-            countQuery += ' WHERE icompany_name LIKE ? OR icompany_gst LIKE ?';
-            const searchTerm = `%${search}%`;
-            params.push(searchTerm, searchTerm);
-        }
-        
-        query += ' ORDER BY com_id DESC LIMIT ? OFFSET ?';
-        const offset = (page - 1) * limit;
-        params.push(limit, offset);
-
-        const [rows] = await pool.query(query, params);
-        const [countResult] = await pool.query(countQuery, params.slice(0, search ? 2 : 0));
-        
-        res.json({
-            data: rows,
-            total: countResult[0].total,
-            page: page,
-            limit: limit
-        });
-    } catch (err) {
-        res.status(500).json({ message: 'Server error', error: err.message });
-    }
-};

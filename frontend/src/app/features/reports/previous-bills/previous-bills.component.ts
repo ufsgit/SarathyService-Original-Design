@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Pipe, PipeTransform } from '@angular/core';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Pipe({
   name: 'filterBills',
@@ -33,12 +35,74 @@ export class FilterBillsPipe implements PipeTransform {
 export class PreviousBillsComponent implements OnInit {
   bills: any[] = []; type = 'labour'; searchText = '';
   isAdmin = false;
-  constructor(public api: ApiService, private notify: NotificationService, private route: ActivatedRoute, private router: Router) { }
+  Math = Math;
+  
+  currentPage = 1;
+  pageSize = 10;
+  totalItems = 0;
+  totalPages = 0;
+
+  private searchSubject = new Subject<string>();
+
+  constructor(public api: ApiService, private notify: NotificationService, private route: ActivatedRoute, private router: Router) { 
+    this.searchSubject.pipe(
+      debounceTime(500),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      this.currentPage = 1;
+      this.fetchBills();
+    });
+  }
   ngOnInit() {
     this.isAdmin = this.router.url.includes('/admin/');
     this.type = this.route.snapshot.data['type'] || 'labour';
-    if (this.type === 'labour') this.api.getPreviousLabourBills().subscribe({ next: (d: any[]) => this.bills = d, error: () => this.notify.error('Failed') });
-    else this.api.getPreviousInsuranceBills().subscribe({ next: (d: any[]) => this.bills = d, error: () => this.notify.error('Failed') });
+    this.fetchBills();
+  }
+
+  fetchBills(): void {
+    const obs = this.type === 'labour' 
+      ? this.api.getPreviousLabourBills(this.currentPage, this.pageSize, this.searchText)
+      : this.api.getPreviousInsuranceBills(this.currentPage, this.pageSize, this.searchText);
+
+    obs.subscribe({
+      next: (res: any) => {
+        this.bills = res.data;
+        this.totalItems = res.total;
+        this.totalPages = Math.ceil(this.totalItems / this.pageSize);
+      },
+      error: () => this.notify.error('Failed to load bills')
+    });
+  }
+
+  onPageChange(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.fetchBills();
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+    this.fetchBills();
+  }
+
+  onSearch(): void {
+    this.searchSubject.next(this.searchText);
+  }
+
+  getPageArray(): number[] {
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, this.currentPage - 2);
+    let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 
   openPdf(bill: any): void {

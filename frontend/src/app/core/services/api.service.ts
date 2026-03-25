@@ -11,7 +11,6 @@ export class ApiService {
 
   // --- Branches ---
   getBranches(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/branches`); }
-  getBranchesPaginated(page: number, limit: number, search: string): Observable<any> { return this.http.get<any>(`${this.baseUrl}/branches/list`, { params: { page: page.toString(), limit: limit.toString(), search } }); }
   getBranch(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/branches/${id}`); }
   createBranch(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/branches`, data); }
   updateBranch(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/branches/${id}`, data); }
@@ -19,7 +18,6 @@ export class ApiService {
 
   // --- Employees ---
   getEmployees(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/employees`); }
-  getEmployeesPaginated(page: number, limit: number, search: string): Observable<any> { return this.http.get<any>(`${this.baseUrl}/employees/list`, { params: { page: page.toString(), limit: limit.toString(), search } }); }
   getEmployee(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/employees/${id}`); }
   createEmployee(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/employees`, data); }
   updateEmployee(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/employees/${id}`, data); }
@@ -40,7 +38,6 @@ export class ApiService {
 
   // --- Labours ---
   getLabours(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/labours`); }
-  getLaboursPaginated(page: number, limit: number, search: string): Observable<any> { return this.http.get<any>(`${this.baseUrl}/labours/list`, { params: { page: page.toString(), limit: limit.toString(), search } }); }
   getLabour(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/labours/${id}`); }
   createLabour(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/labours`, data); }
   updateLabour(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/labours/${id}`, data); }
@@ -62,7 +59,6 @@ export class ApiService {
 
   // --- Vehicle Models ---
   getModels(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/models`); }
-  getModelsPaginated(page: number, limit: number, search: string): Observable<any> { return this.http.get<any>(`${this.baseUrl}/models/list`, { params: { page: page.toString(), limit: limit.toString(), search } }); }
   getModel(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/models/${id}`); }
   createModel(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/models`, data); }
   updateModel(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/models/${id}`, data); }
@@ -70,7 +66,6 @@ export class ApiService {
 
   // --- Insurance Companies ---
   getInsuranceCompanies(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/insurance-companies`); }
-  getInsuranceCompaniesPaginated(page: number, limit: number, search: string): Observable<any> { return this.http.get<any>(`${this.baseUrl}/insurance-companies/list`, { params: { page: page.toString(), limit: limit.toString(), search } }); }
   getInsuranceCompany(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/insurance-companies/${id}`); }
   createInsuranceCompany(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/insurance-companies`, data); }
   updateInsuranceCompany(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/insurance-companies/${id}`, data); }
@@ -108,8 +103,12 @@ export class ApiService {
   // --- Reports ---
   getJobCardSummary(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/reports/job-card-summary`, data); }
   getJobCardStatement(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/reports/job-card-statement`, data); }
-  getPreviousLabourBills(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/reports/previous-bills/labour`); }
-  getPreviousInsuranceBills(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/reports/previous-bills/insurance`); }
+  getPreviousLabourBills(page: number = 1, pageSize: number = 10, search: string = ''): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/reports/previous-bills/labour`, { params: { page: page.toString(), pageSize: pageSize.toString(), search } });
+  }
+  getPreviousInsuranceBills(page: number = 1, pageSize: number = 10, search: string = ''): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/reports/previous-bills/insurance`, { params: { page: page.toString(), pageSize: pageSize.toString(), search } });
+  }
   getFilterOptions(): Observable<any> { return this.http.get<any>(`${this.baseUrl}/reports/filter-options`); }
 
   // --- Vehicle History ---

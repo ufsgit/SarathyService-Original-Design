@@ -175,25 +175,67 @@ exports.getJobCardStatement = async (req, res) => {
 };
 
 
-// Previous Labour Bills
+// Previous Labour Bills (with Pagination)
 exports.getPreviousLabourBills = async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+        const search = req.query.search || '';
+        const offset = (page - 1) * pageSize;
+
+        let whereClause = "WHERE ((status = 0) OR (status = 1 AND (insurance_id IS NULL OR insurance_id = 0) AND inv_repair_typ != 'Accidental Repair')) AND ready_status = 0";
+        const params = [];
+
+        if (search) {
+            whereClause += " AND (in_registr LIKE ? OR inv_cus LIKE ? OR inv_pho LIKE ? OR inv_no LIKE ? OR inv_job_card_no LIKE ?)";
+            const s = `%${search}%`;
+            params.push(s, s, s, s, s);
+        }
+
+        // Count total records
+        const [countResult] = await pool.query(`SELECT COUNT(*) as total FROM tbl_invoice_labour ${whereClause}`, params);
+        const total = countResult[0].total;
+
+        // Fetch paginated data
         const [rows] = await pool.query(
-            'SELECT * FROM tbl_invoice_labour WHERE status = 1 AND ready_status = 0 ORDER BY inv_id DESC'
+            `SELECT * FROM tbl_invoice_labour ${whereClause} ORDER BY inv_id DESC LIMIT ? OFFSET ?`,
+            [...params, pageSize, offset]
         );
-        res.json(rows);
+
+        res.json({ data: rows, total, page, pageSize });
     } catch (err) {
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
 
-// Previous Insurance Bills
+// Previous Insurance Bills (with Pagination)
 exports.getPreviousInsuranceBills = async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+        const search = req.query.search || '';
+        const offset = (page - 1) * pageSize;
+
+        let whereClause = "WHERE (status = 1 AND (insurance_id > 0 OR inv_repair_typ = 'Accidental Repair')) AND ready_status = 0";
+        const params = [];
+
+        if (search) {
+            whereClause += " AND (in_registr LIKE ? OR inv_cus LIKE ? OR inv_pho LIKE ? OR inv_no LIKE ? OR inv_job_card_no LIKE ?)";
+            const s = `%${search}%`;
+            params.push(s, s, s, s, s);
+        }
+
+        // Count total records
+        const [countResult] = await pool.query(`SELECT COUNT(*) as total FROM tbl_invoice_labour ${whereClause}`, params);
+        const total = countResult[0].total;
+
+        // Fetch paginated data
         const [rows] = await pool.query(
-            'SELECT * FROM tbl_invoice_labour WHERE status = 2 AND ready_status = 0 ORDER BY inv_id DESC'
+            `SELECT * FROM tbl_invoice_labour ${whereClause} ORDER BY inv_id DESC LIMIT ? OFFSET ?`,
+            [...params, pageSize, offset]
         );
-        res.json(rows);
+
+        res.json({ data: rows, total, page, pageSize });
     } catch (err) {
         res.status(500).json({ message: 'Server error', error: err.message });
     }

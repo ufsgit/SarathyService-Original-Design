@@ -113,7 +113,7 @@ exports.createInsuranceInvoice = async (req, res) => {
 // Get labour invoices
 exports.getLabourInvoices = async (req, res) => {
     try {
-        let query = 'SELECT i.*, b.branch_name FROM tbl_invoice_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE i.status = 1';
+        let query = "SELECT i.*, b.branch_name FROM tbl_invoice_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE (i.status = 0 OR (i.status = 1 AND (i.insurance_id IS NULL OR i.insurance_id = 0) AND i.inv_repair_typ != 'Accidental Repair'))";
         const params = [];
         if (req.query.branchId) { query += ' AND i.inv_branch = ?'; params.push(req.query.branchId); }
         query += ' ORDER BY i.inv_id DESC';
@@ -127,7 +127,7 @@ exports.getLabourInvoices = async (req, res) => {
 // Get insurance invoices
 exports.getInsuranceInvoices = async (req, res) => {
     try {
-        let query = 'SELECT i.*, b.branch_name FROM tbl_invoice_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE i.status = 2';
+        let query = "SELECT i.*, b.branch_name FROM tbl_invoice_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE (i.status = 1 AND (i.insurance_id > 0 OR i.inv_repair_typ = 'Accidental Repair'))";
         const params = [];
         if (req.query.branchId) { query += ' AND i.inv_branch = ?'; params.push(req.query.branchId); }
         query += ' ORDER BY i.inv_id DESC';
@@ -201,8 +201,23 @@ exports.updateInvoice = async (req, res) => {
         const itemsTable = isReadyTable ? 'tbl_readyfor_bill' : 'tbl_invoice_labour_cost';
 
         await conn.query(
-            `UPDATE ${mainTable} SET inv_disc_total=?, inv_taxtotal=?, inv_sgstotal=?, inv_gsttotal=?, inv_total=? WHERE inv_id=?`,
-            [d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0, req.params.id]
+            `UPDATE ${mainTable} SET 
+                inv_cus=?, inv_cus_addres=?, inv_pho=?, inv_cus_gstin=?, 
+                inv_job_card_no=?, inv_jcard_date=?, inv_repair_typ=?, inv_km=?, 
+                in_registr=?, inv_chassis=?, in_engine=?, inv_modl=?,
+                inv_advisername=?, inv_mechna=?, inv_branch=?,
+                inv_disc_total=?, inv_taxtotal=?, inv_sgstotal=?, inv_gsttotal=?, inv_total=?,
+                insurance_id=?, insurance_serveyor=?
+            WHERE inv_id=?`,
+            [
+                d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '',
+                d.inv_job_card_no || '', d.inv_jcard_date, d.inv_repair_typ || '', d.inv_km || '',
+                d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
+                d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || null,
+                d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0,
+                d.inv_insurance_company || d.insurance_id || null, d.inv_surveyor || d.insurance_serveyor || '',
+                req.params.id
+            ]
         );
 
         // Delete old items and re-insert
@@ -336,8 +351,8 @@ exports.generatePDF = async (req, res) => {
             // Insert into tbl_invoice_labour (Finalized)
             // Note: Map status 0/1 from ready table to 1/2 in invoice table if needed, 
             // but for simplicity we keep it as is or match legacy. 
-            // Legacy tbl_invoice_labour status: 1=Labour, 2=Insurance.
-            const finalizedStatus = (invoice.status === 0) ? 1 : 2;
+            // Legacy tbl_invoice_labour status: 0=Labour, 1=Insurance.
+            const finalizedStatus = (invoice.status === 0) ? 0 : 1;
 
             await conn.query(
                 'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',

@@ -26,7 +26,13 @@ export class InsuranceInvoiceComponent implements OnInit {
   ngOnInit() {
     this.api.getBranches().subscribe(d => this.branches = d);
     this.api.getLabourNames().subscribe(d => this.labourNames = d);
-    this.api.getInsuranceCompanies().subscribe(d => this.companies = d);
+    this.api.getInsuranceCompanies().subscribe(d => {
+      this.companies = d;
+      // If editing, trigger change once companies are loaded to fill GST/Address
+      if (this.editMode && this.form.inv_insurance_company) {
+        this.onInsuranceChange();
+      }
+    });
     // Load all advisors & mechanics initially
     this.api.getMechanics().subscribe(d => this.mechanics = d);
     this.api.getAdvisors().subscribe(d => this.advisors = d);
@@ -60,6 +66,13 @@ export class InsuranceInvoiceComponent implements OnInit {
         if (this.form.inv_inv_date) this.form.inv_inv_date = this.form.inv_inv_date.split('T')[0];
         if (this.form.inv_jcard_date) this.form.inv_jcard_date = this.form.inv_jcard_date.split('T')[0];
         if (this.form.inv_sale_date) this.form.inv_sale_date = this.form.inv_sale_date.split('T')[0];
+
+        // Map insurance fields from DB columns
+        this.form.inv_insurance_company = this.form.insurance_id;
+        this.form.inv_surveyor = this.form.insurance_serveyor;
+        if (this.companies.length > 0) {
+          this.onInsuranceChange();
+        }
 
         this.items = res.items.map((it: any) => ({
           ic_labour_code: it.lc_lab_code,
