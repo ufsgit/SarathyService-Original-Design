@@ -63,6 +63,8 @@
 
 .widget-content {
     padding: 15px;
+    min-height: 600px; /* Increased height to give plenty of room for dropdowns */
+    overflow: visible;
 }
 
 /* 4-column Grid */
@@ -126,12 +128,17 @@
 /* Table scroll wrapper */
 .table-scroll-outer {
     margin-top: 10px;
+    overflow: visible;
 }
 
 .table-responsive {
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: 250px;
+    overflow: visible !important; /* Completely remove overflow restrictions */
+    max-height: none;
+}
+
+.items-table td, .items-table tr {
+    overflow: visible !important;
+    position: relative; /* Ensure stacking context for dropdowns if needed */
 }
 
 .items-table {

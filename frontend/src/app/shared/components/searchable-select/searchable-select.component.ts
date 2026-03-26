@@ -21,6 +21,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
   @Input() placeholder: string = 'Select Option';
   @Input() searchPlaceholder: string = 'Search...';
   @Input() customClass: string = '';
+  @Input() displayFormatter?: (option: string) => string;
 
   selectedValue: string = '';
   searchQuery: string = '';
@@ -31,6 +32,11 @@ export class SearchableSelectComponent implements ControlValueAccessor {
   onTouched: any = () => {};
 
   @ViewChild('searchInput') searchInput!: ElementRef;
+
+  getDisplayValue(): string {
+    if (!this.selectedValue) return '';
+    return this.displayFormatter ? this.displayFormatter(this.selectedValue) : this.selectedValue;
+  }
 
   filteredOptions(): string[] {
     if (!this.searchQuery) return this.options;

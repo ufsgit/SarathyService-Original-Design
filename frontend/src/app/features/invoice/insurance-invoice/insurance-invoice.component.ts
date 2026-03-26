@@ -35,10 +35,18 @@ export class InsuranceInvoiceComponent implements OnInit {
   ];
 
   // Selected Labels
+  // Selected Labels
   selectedBranchLabel = '';
   selectedAdvisorLabel = '';
   selectedMechanicLabel = '';
   selectedCompanyLabel = '';
+
+  labourCodeOptions: string[] = [];
+  jobTypeOptions: string[] = ['Paid Service', 'Expense', 'Free Service'];
+
+  formatLabourCode = (option: string) => {
+    return option ? option.split(' - ')[0] : option;
+  };
 
   constructor(private api: ApiService, private notify: NotificationService, private router: Router, public auth: AuthService, private route: ActivatedRoute) {}
 
@@ -47,7 +55,10 @@ export class InsuranceInvoiceComponent implements OnInit {
       this.branches = d;
       this.updateBranchOptions();
     });
-    this.api.getLabourNames().subscribe(d => this.labourNames = d);
+    this.api.getLabourNames().subscribe(d => {
+      this.labourNames = d;
+      this.updateLabourCodeOptions();
+    });
     this.api.getInsuranceCompanies().subscribe(d => {
       this.companies = d;
       this.updateCompanyOptions();
@@ -126,6 +137,7 @@ export class InsuranceInvoiceComponent implements OnInit {
         if (this.advisors.length > 0) this.updateAdvisorOptions();
         if (this.mechanics.length > 0) this.updateMechanicOptions();
         if (this.companies.length > 0) this.updateCompanyOptions();
+        if (this.labourNames.length > 0) this.updateLabourCodeOptions();
       },
       error: () => this.notify.error('Failed to load invoice')
     });
@@ -161,6 +173,18 @@ export class InsuranceInvoiceComponent implements OnInit {
       const c = this.companies.find(x => x.com_id == this.form.inv_insurance_company);
       this.selectedCompanyLabel = c ? (c.ic_name || c.ic_company_name || c.icompany_name) : '';
     }
+  }
+
+  updateLabourCodeOptions() {
+    this.labourCodeOptions = this.labourNames.map(l => `${l.l_code} - ${l.l_name}`);
+    this.items.forEach(item => {
+      if (item.ic_labour_code) {
+        const match = this.labourNames.find(x => x.l_code === item.ic_labour_code);
+        if (match) {
+          item.ic_labour_label = `${match.l_code} - ${match.l_name}`;
+        }
+      }
+    });
   }
 
   onBranchSelect(label: string) {
@@ -278,6 +302,7 @@ export class InsuranceInvoiceComponent implements OnInit {
 
   newItem() {
     return {
+      ic_labour_label: '',
       ic_labour_code: '',
       ic_particular: '',
       ic_hsn: '998729',
@@ -299,8 +324,17 @@ export class InsuranceInvoiceComponent implements OnInit {
   removeItem(i: number) { this.items.splice(i, 1); this.calcTotals(); }
 
   onLabourCodeSelect(i: number) {
-    const found = this.labourNames.find(l => l.l_code === this.items[i].ic_labour_code);
+    const label = this.items[i].ic_labour_label;
+    if (!label) {
+      this.items[i].ic_labour_code = '';
+      this.items[i].ic_particular = '';
+      this.items[i].ic_rate = 0;
+      this.calcItem(i);
+      return;
+    }
+    const found = this.labourNames.find(l => `${l.l_code} - ${l.l_name}` === label);
     if (found) {
+      this.items[i].ic_labour_code = found.l_code;
       this.items[i].ic_particular = found.l_name;
       this.items[i].ic_hsn = found.l_hsn || '998729'; 
       this.items[i].ic_rate = found.l_amount; 

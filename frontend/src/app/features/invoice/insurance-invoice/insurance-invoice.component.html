@@ -186,19 +186,25 @@
             <tbody>
               <tr *ngFor="let item of items; let i = index">
                 <td>
-                  <select [(ngModel)]="item.ic_labour_code" (change)="onLabourCodeSelect(i)">
-                    <option value="">-Select-</option>
-                    <option *ngFor="let l of labourNames" [value]="l.l_code">{{l.l_code}} - {{l.l_name}}</option>
-                  </select>
+                  <app-searchable-select 
+                    [options]="labourCodeOptions"
+                    [(ngModel)]="item.ic_labour_label"
+                    (ngModelChange)="onLabourCodeSelect(i)"
+                    [displayFormatter]="formatLabourCode"
+                    placeholder="-Select-"
+                    customClass="very-compact">
+                  </app-searchable-select>
                 </td>
                 <td><input type="text" [(ngModel)]="item.ic_particular" readonly /></td>
                 <td><input type="text" [(ngModel)]="item.ic_hsn" readonly /></td>
                 <td>
-                  <select [(ngModel)]="item.ic_type" (change)="calcItem(i)">
-                    <option value="Paid Service">Paid Service</option>
-                    <option value="Expense">Expense</option>
-                    <option value="Free Service">Free Service</option>
-                  </select>
+                  <app-searchable-select 
+                    [options]="jobTypeOptions"
+                    [(ngModel)]="item.ic_type"
+                    (ngModelChange)="calcItem(i)"
+                    placeholder="-Select-"
+                    customClass="very-compact">
+                  </app-searchable-select>
                 </td>
                 <td><input type="number" [(ngModel)]="item.ic_rate" (keyup)="calcItem(i)" /></td>
                 <td><input type="number" [(ngModel)]="item.ic_disc_per" (keyup)="calcItem(i)" /></td>

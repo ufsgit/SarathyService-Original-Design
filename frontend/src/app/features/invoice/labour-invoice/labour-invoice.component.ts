@@ -41,6 +41,10 @@ export class LabourInvoiceComponent implements OnInit {
   labourCodeOptions: string[] = [];
   jobTypeOptions: string[] = ['Paid Service', 'Expense', 'Free Service'];
   
+  formatLabourCode = (option: string) => {
+    return option ? option.split(' - ')[0] : option;
+  };
+
   constructor(private api: ApiService, private notify: NotificationService, private router: Router, public auth: AuthService, private route: ActivatedRoute) {}
   
   ngOnInit() {
@@ -50,7 +54,7 @@ export class LabourInvoiceComponent implements OnInit {
     });
     this.api.getLabourNames().subscribe(d => {
       this.labourNames = d;
-      this.labourCodeOptions = d.map((l: any) => l.l_code);
+      this.updateLabourCodeOptions();
     });
     // Load all advisors & mechanics initially (no branch filter)
     this.api.getMechanics().subscribe(d => {
@@ -114,6 +118,7 @@ export class LabourInvoiceComponent implements OnInit {
         if (this.branches.length > 0) this.updateBranchOptions();
         if (this.advisors.length > 0) this.updateAdvisorOptions();
         if (this.mechanics.length > 0) this.updateMechanicOptions();
+        if (this.labourNames.length > 0) this.updateLabourCodeOptions();
       },
       error: () => this.notify.error('Failed to load invoice')
     });
@@ -141,6 +146,18 @@ export class LabourInvoiceComponent implements OnInit {
       const m = this.mechanics.find(x => x.e_first_name == this.form.inv_mechna);
       this.selectedMechanicLabel = m ? `${m.e_first_name} [${m.e_code}]` : '';
     }
+  }
+
+  updateLabourCodeOptions() {
+    this.labourCodeOptions = this.labourNames.map(l => `${l.l_code} - ${l.l_name}`);
+    this.items.forEach(item => {
+      if (item.ic_labour_code) {
+        const match = this.labourNames.find(x => x.l_code === item.ic_labour_code);
+        if (match) {
+          item.ic_labour_label = `${match.l_code} - ${match.l_name}`;
+        }
+      }
+    });
   }
 
   onBranchSelect(label: string) {
@@ -227,6 +244,7 @@ export class LabourInvoiceComponent implements OnInit {
 
   newItem() { 
     return { 
+      ic_labour_label: '',
       ic_labour_code: '', 
       ic_particular: '', 
       ic_hsn: '998729', 
@@ -248,8 +266,17 @@ export class LabourInvoiceComponent implements OnInit {
   removeItem(i: number) { this.items.splice(i, 1); this.calcTotals(); }
 
   onLabourCodeSelect(i: number) {
-    const found = this.labourNames.find(l => l.l_code === this.items[i].ic_labour_code);
+    const label = this.items[i].ic_labour_label;
+    if (!label) {
+      this.items[i].ic_labour_code = '';
+      this.items[i].ic_particular = '';
+      this.items[i].ic_rate = 0;
+      this.calcItem(i);
+      return;
+    }
+    const found = this.labourNames.find(l => `${l.l_code} - ${l.l_name}` === label);
     if (found) { 
+      this.items[i].ic_labour_code = found.l_code;
       this.items[i].ic_particular = found.l_name;
       this.items[i].ic_hsn = found.l_hsn || '998729'; 
       this.items[i].ic_rate = found.l_amount; 
