@@ -75,8 +75,8 @@ exports.getPaginated = async (req, res) => {
         let where = '';
         const params = [];
         if (search) {
-            where = ' WHERE icompany_name LIKE ?';
-            params.push(`%${search}%`);
+            where = ' WHERE icompany_name LIKE ? OR icompany_address LIKE ?';
+            params.push(`%${search}%`, `%${search}%`);
         }
 
         const [[{ total }]] = await pool.query(`SELECT COUNT(*) as total FROM tbl_insurance_company${where}`, params);

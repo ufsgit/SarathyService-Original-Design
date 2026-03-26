@@ -41,7 +41,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let e of employees(); let i = index">
-            <td>{{ i + 1 }}</td>
+            <td>{{ i + (currentPage() - 1) * pageSize() + 1 }}</td>
             <td>{{ e.emp_intial }} {{ e.e_first_name }}</td>
             <td>{{ e.branch_name }}</td>
             <td>{{ e.e_email }}</td>

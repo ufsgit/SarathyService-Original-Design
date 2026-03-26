@@ -27,16 +27,18 @@
       <table class="legacy-table">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Company Name</th>
-            <th>GSTIN</th>
-            <th>Actions</th>
+            <th>Sl No</th>
+            <th>Insurance Company Name</th>
+            <th>Address</th>
+            <th>GST IN</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let e of companies(); let i = index">
-            <td>{{ i + 1 }}</td>
+            <td>{{ i + (currentPage() - 1) * pageSize() + 1 }}</td>
             <td>{{ e.icompany_name }}</td>
+            <td>{{ e.icompany_address }}</td>
             <td>{{ e.icompany_gst }}</td>
             <td>
               <div class="action-dropdown">
@@ -49,7 +51,7 @@
             </td>
           </tr>
           <tr *ngIf="companies().length === 0">
-            <td colspan="4" class="no-data">No companies found</td>
+            <td colspan="5" class="no-data">No companies found</td>
           </tr>
         </tbody>
       </table>

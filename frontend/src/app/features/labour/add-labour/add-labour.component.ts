@@ -13,7 +13,7 @@ import { SearchableSelectComponent } from '../../../shared/components/searchable
   styleUrls: ['./add-labour.component.css']
 })
 export class AddLabourComponent {
-  repairTypes: string[] = ['Paid Service', 'Free Service', 'Accident', 'Warranty'];
+  repairTypes: string[] = ['Paid Service', 'Free Service'];
   form: any = {
     l_repair_type: 'Paid Service'
   };

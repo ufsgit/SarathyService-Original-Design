@@ -27,7 +27,7 @@
       <table class="legacy-table">
         <thead>
           <tr>
-            <th>#</th>
+            <th>Sl No</th>
             <th>Model Name</th>
             <th>Code</th>
             <th>Actions</th>
@@ -35,7 +35,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let e of models(); let i = index">
-            <td>{{ i + 1 }}</td>
+            <td>{{ i + (currentPage() - 1) * pageSize() + 1 }}</td>
             <td>{{ e.mod_name }}</td>
             <td>{{ e.mod_code }}</td>
             <td>

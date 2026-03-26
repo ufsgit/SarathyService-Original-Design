@@ -27,7 +27,7 @@
       <table class="legacy-table">
         <thead>
           <tr>
-            <th>#</th>
+            <th>Sl No</th>
             <th>Branch Name</th>
             <th>Branch ID</th>
             <th>Phone</th>
@@ -36,7 +36,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let e of branches(); let i = index">
-            <td>{{ i + 1 }}</td>
+            <td>{{ i + (currentPage() - 1) * pageSize() + 1 }}</td>
             <td>{{ e.branch_name }}</td>
             <td>{{ e.branch_id }}</td>
             <td>{{ e.branch_ph }}</td>
