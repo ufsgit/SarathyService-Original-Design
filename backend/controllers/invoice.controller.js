@@ -7,7 +7,18 @@ exports.createLabourInvoice = async (req, res) => {
     try {
         await conn.beginTransaction();
         const d = req.body;
-        
+
+        if (d.inv_no) {
+            const [exists] = await conn.query(
+                'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_no = ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_no = ?',
+                [d.inv_no, d.inv_no]
+            );
+            if (exists.length > 0) {
+                conn.release();
+                return res.status(400).json({ message: 'Invoice number already exists (' + d.inv_no + ')' });
+            }
+        }
+
         const query = `INSERT INTO tbl_readyfor_labour (
             inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type,
             inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl,
@@ -17,7 +28,7 @@ exports.createLabourInvoice = async (req, res) => {
         ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
         const values = [
-            '', d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '', d.inv_inv_date, 'labour',
+            d.inv_no || '', d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '', d.inv_inv_date, 'labour',
             d.inv_job_card_no || '', d.inv_jcard_date, d.inv_repair_typ || '', d.inv_km || d.inv_km_in || '', d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
             d.inv_sale_date || '', d.inv_taxpay || '', d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || '',
             d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0,
@@ -62,6 +73,17 @@ exports.createInsuranceInvoice = async (req, res) => {
         await conn.beginTransaction();
         const d = req.body;
 
+        if (d.inv_no) {
+            const [exists] = await conn.query(
+                'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_no = ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_no = ?',
+                [d.inv_no, d.inv_no]
+            );
+            if (exists.length > 0) {
+                conn.release();
+                return res.status(400).json({ message: 'Invoice number already exists (' + d.inv_no + ')' });
+            }
+        }
+
         const query = `INSERT INTO tbl_readyfor_labour (
             inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type,
             inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl,
@@ -71,7 +93,7 @@ exports.createInsuranceInvoice = async (req, res) => {
         ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
         const values = [
-            '', d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '', d.inv_inv_date, 'insurance',
+            d.inv_no || '', d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '', d.inv_inv_date, 'insurance',
             d.inv_job_card_no || '', d.inv_jcard_date, d.inv_repair_typ || '', d.inv_km || d.inv_km_in || '', d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
             d.inv_sale_date || '', d.inv_taxpay || '', d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || '',
             d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0,
@@ -172,7 +194,7 @@ exports.getInvoice = async (req, res) => {
         if (invoices.length === 0) return res.status(404).json({ message: 'Not found' });
 
         const [items] = await pool.query(`SELECT * FROM ${itemsTable} WHERE ${itemsIdCol} = ?`, [req.params.id]);
-        
+
         // Normalize item fields for frontend if from tbl_readyfor_bill
         const normalizedItems = items.map(it => ({
             ...it,
@@ -194,9 +216,38 @@ exports.updateInvoice = async (req, res) => {
         await conn.beginTransaction();
         const d = req.body;
 
+        if (d.inv_no) {
+            // Refined check: allow same inv_no if it's the finalized counterpart
+            let duplicateQuery = '';
+            let duplicateParams = [];
+
+            if (d.isFinalized === true) {
+                // Updating finalized bill: check ready bills (status 1) and other finalized bills
+                duplicateQuery = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_no = ? AND ready_status = 1 UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_no = ? AND inv_id != ?';
+                duplicateParams = [d.inv_no, d.inv_no, req.params.id];
+            } else {
+                // Updating ready bill: check other ready bills and all finalized bills
+                duplicateQuery = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_no = ? AND inv_id != ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_no = ?';
+                duplicateParams = [d.inv_no, req.params.id, d.inv_no];
+            }
+
+            const [exists] = await conn.query(duplicateQuery, duplicateParams);
+            if (exists.length > 0) {
+                conn.release();
+                return res.status(400).json({ message: 'Invoice number already exists (' + d.inv_no + ')' });
+            }
+        }
+
+
         // Determine which table to update
-        const [readyRows] = await conn.query('SELECT inv_id FROM tbl_readyfor_labour WHERE inv_id = ?', [req.params.id]);
-        const isReadyTable = readyRows.length > 0;
+        let isReadyTable = true;
+        if (d.isFinalized === true) {
+            isReadyTable = false;
+        } else {
+            const [readyRows] = await conn.query('SELECT inv_id FROM tbl_readyfor_labour WHERE inv_id = ? AND ready_status = 1', [req.params.id]);
+            isReadyTable = readyRows.length > 0;
+        }
+
         const mainTable = isReadyTable ? 'tbl_readyfor_labour' : 'tbl_invoice_labour';
         const itemsTable = isReadyTable ? 'tbl_readyfor_bill' : 'tbl_invoice_labour_cost';
 
@@ -207,7 +258,7 @@ exports.updateInvoice = async (req, res) => {
                 in_registr=?, inv_chassis=?, in_engine=?, inv_modl=?,
                 inv_advisername=?, inv_mechna=?, inv_branch=?,
                 inv_disc_total=?, inv_taxtotal=?, inv_sgstotal=?, inv_gsttotal=?, inv_total=?,
-                insurance_id=?, insurance_serveyor=?
+                insurance_id=?, insurance_serveyor=?, inv_sale_date=?, inv_type=?, inv_cesstotal=?
             WHERE inv_id=?`,
             [
                 d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '',
@@ -216,6 +267,7 @@ exports.updateInvoice = async (req, res) => {
                 d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || null,
                 d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0,
                 d.inv_insurance_company || d.insurance_id || null, d.inv_surveyor || d.insurance_serveyor || '',
+                d.inv_sale_date || '', d.inv_type || '', d.inv_cesstotal || 0,
                 req.params.id
             ]
         );
@@ -226,15 +278,15 @@ exports.updateInvoice = async (req, res) => {
             for (const item of d.items) {
                 await conn.query(
                     `INSERT INTO ${itemsTable} (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
-            lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount)
-          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+            lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
                     [req.params.id, item.ic_labour_code || item.lc_lab_code || '', item.ic_type || item.lc_type || 'labour',
                     item.ic_particular || item.lc_lb_name || '', item.ic_hsn || item.lc_sacode || '998729',
                     String(item.ic_rate || item.lc_rate || 0), String(item.ic_disc_per || item.lc_disc_p || 0), String(item.lc_disc || item.ic_disc || 0),
                     String(item.ic_taxable_amt || item.lc_tax_amunt || 0),
                     String(item.ic_sgst_p || item.lc_sgst_p || 9), String(item.ic_sgst_amt || item.lc_sgst_a || 0),
                     String(item.ic_cgst_p || item.lc_cgst_p || 9), String(item.ic_cgst_amt || item.lc_cgst_a || 0),
-                    String(item.ic_total || item.lc_amount || 0)]
+                    String(item.ic_total || item.lc_amount || 0), String(item.lc_cess || 0)]
                 );
             }
         }
@@ -247,6 +299,7 @@ exports.updateInvoice = async (req, res) => {
         conn.release();
     }
 };
+
 
 // Mark invoice as ready
 exports.markReady = async (req, res) => {
@@ -286,7 +339,7 @@ exports.getReadyInsuranceBills = async (req, res) => {
 // Get next sequential counter (MAX(inv_id) + 1)
 exports.getNextInvoiceNo = async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT MAX(inv_id) as maxId FROM tbl_invoice_labour');
+        const [rows] = await pool.query('SELECT MAX(inv_id) as maxId FROM tbl_readyfor_labour');
         res.json({ nextNo: (rows[0].maxId || 0) + 1 });
     } catch (err) {
         res.status(500).json({ message: 'Server error', error: err.message });
@@ -349,27 +402,25 @@ exports.generatePDF = async (req, res) => {
             const newInvNo = `CI${ymd}${nextId}`;
 
             // Insert into tbl_invoice_labour (Finalized)
-            // Note: Map status 0/1 from ready table to 1/2 in invoice table if needed, 
-            // but for simplicity we keep it as is or match legacy. 
-            // Legacy tbl_invoice_labour status: 0=Labour, 1=Insurance.
             const finalizedStatus = (invoice.status === 0) ? 0 : 1;
 
-            await conn.query(
-                'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [newInvNo, invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0]
+            const [insertResult] = await conn.query(
+                'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status, insurance_id, insurance_serveyor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [newInvNo, invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0, invoice.insurance_id || null, invoice.insurance_serveyor || '']
             );
+            const newInvId = insertResult.insertId;
 
             // Insert items into tbl_invoice_labour_cost
             for (const item of items) {
                 await conn.query(
                     'INSERT INTO tbl_invoice_labour_cost (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt, lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    [req.params.id, item.lc_lab_code, item.lc_type, item.lc_lb_name, item.lc_sacode, item.lc_rate, item.lc_disc_p, item.lc_disc, item.lc_tax_amunt, item.lc_sgst_p, item.lc_sgst_a, item.lc_cgst_p, item.lc_cgst_a, item.lc_amount]
+                    [newInvId, item.lc_lab_code, item.lc_type, item.lc_lb_name, item.lc_sacode, item.lc_rate, item.lc_disc_p, item.lc_disc, item.lc_tax_amunt, item.lc_sgst_p, item.lc_sgst_a, item.lc_cgst_p, item.lc_cgst_a, item.lc_amount]
                 );
             }
 
             // Update ready table
             await conn.query('UPDATE tbl_readyfor_labour SET ready_status = 0, inv_no = ? WHERE inv_id = ?', [newInvNo, req.params.id]);
-            
+
             invoice.inv_no = newInvNo; // For PDF generation
         }
 
@@ -427,23 +478,24 @@ exports.generateWord = async (req, res) => {
 
         // 3. If it's from Ready table, finalize it (same logic as PDF)
         if (isFromReadyTable) {
-             const [rows] = await conn.query('SELECT MAX(inv_id) as maxId FROM tbl_invoice_labour');
+            const [rows] = await conn.query('SELECT MAX(inv_id) as maxId FROM tbl_invoice_labour');
             const nextId = (rows[0].maxId || 0) + 1;
             const today = new Date();
             const ymd = today.getFullYear().toString() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
             const newInvNo = `CI${ymd}${nextId}`;
 
-            const finalizedStatus = (invoice.status === 0) ? 1 : 2;
+            const finalizedStatus = (invoice.status === 0) ? 0 : 1;
 
-            await conn.query(
-                'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [newInvNo, invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0]
+            const [insertResult] = await conn.query(
+                'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status, insurance_id, insurance_serveyor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [newInvNo, invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0, invoice.insurance_id || null, invoice.insurance_serveyor || '']
             );
+            const newInvId = insertResult.insertId;
 
             for (const item of items) {
                 await conn.query(
                     'INSERT INTO tbl_invoice_labour_cost (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt, lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    [req.params.id, item.lc_lab_code, item.lc_type, item.lc_lb_name, item.lc_sacode, item.lc_rate, item.lc_disc_p, item.lc_disc, item.lc_tax_amunt, item.lc_sgst_p, item.lc_sgst_a, item.lc_cgst_p, item.lc_cgst_a, item.lc_amount]
+                    [newInvId, item.lc_lab_code, item.lc_type, item.lc_lb_name, item.lc_sacode, item.lc_rate, item.lc_disc_p, item.lc_disc, item.lc_tax_amunt, item.lc_sgst_p, item.lc_sgst_a, item.lc_cgst_p, item.lc_cgst_a, item.lc_amount]
                 );
             }
             await conn.query('UPDATE tbl_readyfor_labour SET ready_status = 0, inv_no = ? WHERE inv_id = ?', [newInvNo, req.params.id]);

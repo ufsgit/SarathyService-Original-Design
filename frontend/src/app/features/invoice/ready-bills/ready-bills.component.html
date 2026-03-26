@@ -31,7 +31,7 @@
           <tr *ngFor="let e of bills | filterBills:searchText; let i = index">
             <td class="text-center">{{i+1}}</td>
             <td>
-              <a [routerLink]="['/admin/invoice', type, e.inv_id]" class="reg-no-link">
+              <a [routerLink]="['/admin/invoice', type, e.inv_id]" [queryParams]="{from: 'ready'}" class="reg-no-link">
                 <span class="reg-no">{{e.in_registr}}</span>
               </a>
               <div class="customer-info">

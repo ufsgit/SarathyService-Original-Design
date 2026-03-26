@@ -11,7 +11,8 @@
     <div class="widget-title">
       <span class="icon"> <i class="icon-align-justify"></i> </span>
       <h5>INVOICE (Insurance)</h5>
-      <button type="button" class="btn-ready-bill" (click)="onAddToReadyForBill()">Add to Ready for Bill</button>
+      <button *ngIf="!isFromPreviousBills" type="button" class="btn-ready-bill" (click)="onAddToReadyForBill()">Add to Ready for Bill</button>
+      <button *ngIf="isFromPreviousBills" type="button" class="btn-ready-bill" style="background-color: #e74c3c;" (click)="onSaveBill()">Save Bill</button>
     </div>
 
     <div class="widget-content">
@@ -143,7 +144,7 @@
         <div class="total-amount-display">
           Total Payable Amount : Rs {{ form.inv_total | number:'1.2-2' }}
         </div>
-        <button type="button" class="btn-print" (click)="onPrint()">Print</button>
+        <button *ngIf="!isFromPreviousBills" type="button" class="btn-print" (click)="onPrint()">Print</button>
       </div>
 
       <!-- Line Items Table with scroll arrows like legacy system -->
@@ -175,7 +176,7 @@
                 <td>
                   <select [(ngModel)]="item.ic_labour_code" (change)="onLabourCodeSelect(i)">
                     <option value="">-Select-</option>
-                    <option *ngFor="let l of labourNames" [value]="l.l_code">{{l.l_code}}</option>
+                    <option *ngFor="let l of labourNames" [value]="l.l_code">{{l.l_code}} - {{l.l_name}}</option>
                   </select>
                 </td>
                 <td><input type="text" [(ngModel)]="item.ic_particular" readonly /></td>

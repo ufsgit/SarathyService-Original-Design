@@ -58,7 +58,7 @@
             <td>{{e.inv_modl}}</td>
             <td class="amount-cell">{{e.inv_total || e.inv_final_amount | number:'1.2-2'}}</td>
             <td class="text-center">
-              <a class="btn-edit-bill" [routerLink]="[isAdmin ? '/admin' : '/staff', 'invoice', type, e.inv_id]">Edit Bill</a>
+              <a class="btn-edit-bill" [routerLink]="[isAdmin ? '/admin' : '/staff', 'invoice', type, e.inv_id]" [queryParams]="{from: 'previous'}">Edit Bill</a>
             </td>
           </tr>
           <tr *ngIf="bills.length===0">

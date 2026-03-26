@@ -18,6 +18,7 @@ export class LabourInvoiceComponent implements OnInit {
   items: any[] = [this.newItem()];
   branches: any[] = []; mechanics: any[] = []; advisors: any[] = []; labourNames: any[] = [];
   editMode = false; invoiceId: number | null = null;
+  isFromPreviousBills = false; isFinalizing = false;
   showAddCustomerModal = false;
   pendingRegNo = '';
   
@@ -30,6 +31,7 @@ export class LabourInvoiceComponent implements OnInit {
     this.api.getMechanics().subscribe(d => this.mechanics = d);
     this.api.getAdvisors().subscribe(d => this.advisors = d);
     
+    this.isFromPreviousBills = this.route.snapshot.queryParams['from'] === 'previous';
     this.invoiceId = this.route.snapshot.params['id'] ? +this.route.snapshot.params['id'] : null;
     if (this.invoiceId) {
       this.editMode = true;
@@ -216,8 +218,12 @@ export class LabourInvoiceComponent implements OnInit {
   }
 
   onAddToReadyForBill() {
-    if (!this.form.in_registr || !this.form.inv_cus || !this.form.inv_branch ) {
+    if (!this.form.in_registr || !this.form.inv_cus || !this.form.inv_branch) {
       this.notify.error('Please fill Registration No, Customer Name, Branch.');
+      return;
+    }
+    if (!this.form.inv_job_card_no) {
+      this.notify.error('Jobcard No is required.');
       return;
     }
     if (this.items.length === 0 || !this.items[0].ic_particular) {
@@ -232,7 +238,6 @@ export class LabourInvoiceComponent implements OnInit {
           this.api.markInvoiceReady(this.invoiceId!).subscribe({
             next: () => {
               this.notify.success('Invoice updated and marked as Ready for Bill');
-              this.router.navigate(['/admin/invoice/ready-bills']);
             },
             error: (e: any) => this.notify.error('Invoice updated but failed to mark as ready')
           });
@@ -242,10 +247,10 @@ export class LabourInvoiceComponent implements OnInit {
     } else {
       this.api.createLabourInvoice(this.form).subscribe({
         next: (res: any) => {
+          this.invoiceId = res.id; // Store ID for subsequent actions
           this.api.markInvoiceReady(res.id).subscribe({
             next: () => {
               this.notify.success('Invoice saved and marked as Ready for Bill');
-              this.router.navigate(['/admin/invoice/ready-bills']);
             },
             error: (e: any) => this.notify.error('Invoice saved but failed to mark as ready')
           });
@@ -255,42 +260,104 @@ export class LabourInvoiceComponent implements OnInit {
     }
   }
 
-  onPrint() {
-    if (!this.invoiceId) {
-      this.notify.error('Please save the invoice first');
+  onSaveBill() {
+    if (!this.form.in_registr || !this.form.inv_cus || !this.form.inv_branch) {
+      this.notify.error('Please fill Registration No, Customer Name, Branch.');
       return;
     }
-    const url = this.api.getInvoicePDFUrl(this.invoiceId);
+    if (!this.form.inv_job_card_no) {
+      this.notify.error('Jobcard No is required.');
+      return;
+    }
+    if (this.items.length === 0 || !this.items[0].ic_particular) {
+      this.notify.error('Please add at least one line item');
+      return;
+    }
+    this.form.items = this.items;
+
+    if (this.editMode && this.invoiceId) {
+      if (this.isFromPreviousBills) this.form.isFinalized = true;
+      this.api.updateInvoice(this.invoiceId, this.form).subscribe({
+        next: () => {
+          this.notify.success('Invoice updated successfully');
+          setTimeout(() => {
+            this.router.navigate(['/admin/reports/previous-bills/labour']);
+          }, 1500);
+        },
+        error: (e: any) => this.notify.error(e.error?.message || 'Error updating invoice')
+      });
+    }
+  }
+
+  saveBeforeAction(callback: Function) {
+    if (!this.form.in_registr || !this.form.inv_cus || !this.form.inv_branch || !this.form.inv_job_card_no) {
+      this.notify.error('Please fill Registration No, Customer Name, Branch and Jobcard No.');
+      return;
+    }
+    this.form.items = this.items;
+
+    if (this.editMode && this.invoiceId) {
+      this.api.updateInvoice(this.invoiceId, this.form).subscribe({
+        next: () => {
+          this.api.markInvoiceReady(this.invoiceId!).subscribe({
+            next: () => callback(),
+            error: () => this.notify.error('Failed to prepare invoice for action')
+          });
+        },
+        error: (e: any) => this.notify.error(e.error?.message || 'Error updating invoice')
+      });
+    } else {
+      this.api.createLabourInvoice(this.form).subscribe({
+        next: (res: any) => {
+          this.invoiceId = res.id;
+          this.api.markInvoiceReady(res.id).subscribe({
+            next: () => callback(),
+            error: () => this.notify.error('Failed to prepare invoice for action')
+          });
+        },
+        error: (e: any) => this.notify.error(e.error?.message || 'Error saving invoice')
+      });
+    }
+  }
+
+  onPrint() {
+    if (!this.invoiceId) {
+      this.saveBeforeAction(() => this.triggerPrint());
+    } else {
+      this.triggerPrint();
+    }
+  }
+
+  private triggerPrint() {
+    const url = this.api.getInvoicePDFUrl(this.invoiceId!);
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
-    
     window.open(pdfUrl, '_blank');
 
-    if (this.editMode) {
-      this.notify.success('Invoice finalized and print triggered. Redirecting...');
-      setTimeout(() => {
-        this.router.navigate(['/admin/reports/previous-bills/labour']);
-      }, 1500);
-    }
+    this.notify.success('Invoice finalized and print triggered.');
+    setTimeout(() => {
+      this.router.navigate(['/admin/reports/previous-bills/labour']);
+    }, 1500);
   }
 
   onWordExport() {
     if (!this.invoiceId) {
-      this.notify.error('Please save the invoice first');
-      return;
+      this.saveBeforeAction(() => this.triggerWord());
+    } else {
+      this.triggerWord();
     }
-    const url = this.api.getInvoiceWordUrl(this.invoiceId);
+  }
+
+  private triggerWord() {
+    const url = this.api.getInvoiceWordUrl(this.invoiceId!);
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     const wordUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
-    
     window.location.href = wordUrl;
 
-    if (this.editMode) {
-      this.notify.success('Invoice finalized and Word export triggered. Redirecting...');
-      setTimeout(() => {
-        this.router.navigate(['/admin/reports/previous-bills/labour']);
-      }, 1500);
-    }
+    this.notify.success('Invoice finalized and Word export triggered.');
+    setTimeout(() => {
+      this.router.navigate(['/admin/reports/previous-bills/labour']);
+    }, 1500);
   }
 
 
