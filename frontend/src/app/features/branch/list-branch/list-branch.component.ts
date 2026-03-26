@@ -62,6 +62,14 @@ export class ListBranchComponent implements OnInit {
 
   get pageNumbers(): number[] {
     const totalPages = Math.ceil(this.totalItems() / this.pageSize());
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const current = this.currentPage();
+    const maxVisible = 5;
+    let start = Math.max(1, current - Math.floor(maxVisible / 2));
+    let end = Math.min(totalPages, start + maxVisible - 1);
+    if (end - start + 1 < maxVisible) start = Math.max(1, end - maxVisible + 1);
+    const pages = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
   }
+
 }
