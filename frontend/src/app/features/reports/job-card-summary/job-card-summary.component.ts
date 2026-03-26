@@ -19,7 +19,7 @@ export class JobCardSummaryComponent implements OnInit {
   // Signals for Filters
   fromDate = signal<string>('');
   toDate = signal<string>('');
-  branch = signal<string>('');
+  branch = signal<number[]>([]);
   serviceType = signal<string>('Paid Service');
   viewBy = signal<string>('Custom Date');
   
@@ -321,10 +321,10 @@ export class JobCardSummaryComponent implements OnInit {
 
   onBranchSelect(label: string) {
     if (!label || label === '--Select Branch--') {
-      this.branch.set('');
+      this.branch.set([]);
     } else {
       const branch = this.options().branches.find((b: any) => `${b.branch_name}(${b.branch_id})` === label);
-      this.branch.set(branch ? branch.branch_id : '');
+      this.branch.set(branch ? [branch.b_id] : []);
     }
   }
 
@@ -406,7 +406,7 @@ export class JobCardSummaryComponent implements OnInit {
     this.exportToCSV(this.results(), 'JobCardSummary_Visible.csv');
   }
 
-  getSelectedLabel(ids: any[], type: 'mechanics' | 'advisors' | 'insuranceCompanies' | 'repairTypes'): string {
+  getSelectedLabel(ids: any[], type: 'mechanics' | 'advisors' | 'insuranceCompanies' | 'repairTypes' | 'branches'): string {
     if (!ids || ids.length === 0) return '';
     if (ids.length > 1) return `${ids.length} Selected`;
     
@@ -425,6 +425,9 @@ export class JobCardSummaryComponent implements OnInit {
       case 'insuranceCompanies':
         const c = opts.insuranceCompanies.find((x: any) => x.com_id === id);
         return c ? c.icompany_name : id;
+      case 'branches':
+        const b = opts.branches.find((x: any) => x.b_id === id);
+        return b ? b.branch_name : id;
       default:
         return id;
     }

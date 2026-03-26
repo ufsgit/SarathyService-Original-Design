@@ -10,7 +10,10 @@ exports.getJobCardSummary = async (req, res) => {
         let whereClause = 'WHERE i.inv_jcard_date BETWEEN ? AND ?';
         const params = [from_date, to_date];
 
-        if (branch) { whereClause += ' AND i.inv_branch = ?'; params.push(branch); }
+        if (branch && branch.length > 0) {
+            whereClause += ' AND i.inv_branch IN (?)';
+            params.push(branch);
+        }
         if (mechanic && mechanic.length > 0) { whereClause += ' AND i.inv_mechna IN (?)'; params.push(mechanic); }
         if (advisor && advisor.length > 0) { whereClause += ' AND i.inv_advisername IN (?)'; params.push(advisor); }
         if (repair_types && repair_types.length > 0) { whereClause += ' AND i.inv_repair_typ IN (?)'; params.push(repair_types); }
@@ -116,14 +119,17 @@ exports.getJobCardStatement = async (req, res) => {
         let whereClause = 'WHERE i.inv_jcard_date BETWEEN ? AND ?';
         const params = [from_date, to_date];
 
-        if (branch) { whereClause += ' AND i.inv_branch = ?'; params.push(branch); }
+        if (branch && branch.length > 0) {
+            whereClause += ' AND i.inv_branch IN (?)';
+            params.push(branch);
+        }
         if (mechanic && mechanic.length > 0) { whereClause += ' AND i.inv_mechna IN (?)'; params.push(mechanic); }
         if (advisor && advisor.length > 0) { whereClause += ' AND i.inv_advisername IN (?)'; params.push(advisor); }
         if (repair_types && repair_types.length > 0) { whereClause += ' AND i.inv_repair_typ IN (?)'; params.push(repair_types); }
         if (insurance_companies && insurance_companies.length > 0) { whereClause += ' AND i.insurance_id IN (?)'; params.push(insurance_companies); }
 
         if (labour_codes && labour_codes.length > 0) {
-            whereClause += ' AND i.inv_id IN (SELECT ic_inv_id FROM tbl_invoice_labour_cost WHERE lc_sacode IN (?))';
+            whereClause += ' AND i.inv_id IN (SELECT ic_inv_id FROM tbl_invoice_labour_cost WHERE lc_lab_code IN (?))';
             params.push(labour_codes);
         }
 
@@ -198,7 +204,7 @@ exports.getJobCardStatement = async (req, res) => {
             // Map items back to invoices
             for (let inv of rows) {
                 inv.items = allItems.filter(it => it.ic_inv_id === inv.inv_id);
-                inv.labour_code = inv.items.map(it => it.lc_sacode).join(', ');
+                inv.labour_code = inv.items.map(it => `${it.lc_lb_name}(${it.lc_lab_code})`).join(', ');
             }
         }
 

@@ -165,6 +165,7 @@
   padding: 4px 5px;
   text-align: left;
   white-space: nowrap;
+  /* max-width: 220px; */
 }
 
 /* Grey header row with input-box style headers */
