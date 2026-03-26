@@ -31,7 +31,7 @@ exports.create = async (req, res) => {
 
         const [result] = await pool.query(
             'INSERT INTO tbl_insurance_company (icompany_name, icompany_address, icompany_gst) VALUES (?, ?, ?)',
-            [icompany_name, icompany_address || null, icompany_gst]
+            [icompany_name, icompany_address, icompany_gst]
         );
         res.status(201).json({ message: 'Insurance company created', id: result.insertId });
     } catch (err) {
@@ -59,6 +59,30 @@ exports.remove = async (req, res) => {
     try {
         await pool.query('DELETE FROM tbl_insurance_company WHERE com_id = ?', [req.params.id]);
         res.json({ message: 'Insurance company deleted' });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};
+
+// Get paginated insurance companies with search
+exports.getPaginated = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+        const search = req.query.search || '';
+        const offset = (page - 1) * pageSize;
+
+        let where = '';
+        const params = [];
+        if (search) {
+            where = ' WHERE icompany_name LIKE ?';
+            params.push(`%${search}%`);
+        }
+
+        const [[{ total }]] = await pool.query(`SELECT COUNT(*) as total FROM tbl_insurance_company${where}`, params);
+        const [rows] = await pool.query(`SELECT * FROM tbl_insurance_company${where} ORDER BY com_id DESC LIMIT ? OFFSET ?`, [...params, pageSize, offset]);
+
+        res.json({ data: rows, total, page, pageSize });
     } catch (err) {
         res.status(500).json({ message: 'Server error', error: err.message });
     }

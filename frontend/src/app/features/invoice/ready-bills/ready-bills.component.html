@@ -1,59 +1,102 @@
+
 <div class="legacy-card">
   <div class="card-header">
     <div class="header-title">
-      <span>Ready for Bill List({{type==='labour'?'Labour':'Insurance'}})</span>
+      <span>Ready for Bill List({{type() === 'labour' ? 'Labour' : 'Insurance'}})</span>
     </div>
   </div>
 
   <div class="card-body">
-    <div class="search-section">
-      <label>Search:</label>
-      <input type="text" [(ngModel)]="searchText" name="search">
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="search-section">
+        <label>Search:</label>
+        <input type="text" [ngModel]="searchText()" (input)="onSearchChange($any($event.target).value)" name="search" placeholder="Search customer, registration...">
+      </div>
+      <div class="show-entries">
+        Show
+        <select [ngModel]="pageSize()" (change)="onPageSizeChange(+$any($event.target).value)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+        entries
+      </div>
     </div>
 
-    <div class="table-container">
-      <table class="legacy-table">
-        <thead>
-          <tr>
-            <th style="width: 50px;">Sl:No</th>
-            <th>Customer Details</th>
-            <th>Branch</th>
-            <th>Jobcard No</th>
-            <th>Invoice No</th>
-            <th>Engine No</th>
-            <th>Jobcard Date</th>
-            <th>Service Type</th>
-            <th>Model</th>
-            <th style="width: 120px;">Total Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let e of bills | filterBills:searchText; let i = index">
-            <td class="text-center">{{i+1}}</td>
-            <td>
-              <a [routerLink]="['/admin/invoice', type, e.inv_id]" class="reg-no-link">
-                <span class="reg-no">{{e.in_registr}}</span>
-              </a>
-              <div class="customer-info">
-                {{e.inv_cus}}<br>
-                {{e.inv_pho}}<br>
-                {{e.inv_cus_addres}}
-              </div>
-            </td>
-            <td>{{e.branch_name || e.inv_branch}}</td>
-            <td class="text-center">{{e.inv_job_card_no}}</td>
-            <td class="text-center">{{e.inv_no}}</td>
-            <td class="text-center">{{e.inv_engine || e.in_engine}}</td>
-            <td class="text-center">{{e.inv_jcard_date | date:'dd-MM-yyyy'}}</td>
-            <td>{{e.inv_repair_typ || e.inv_service_typ}}</td>
-            <td>{{e.inv_modl}}</td>
-            <td class="amount-cell">{{e.inv_total || e.inv_final_amount | number:'1.2-2'}}</td>
-          </tr>
-          <tr *ngIf="bills.length===0">
-            <td colspan="9" class="no-data">No records found</td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Table Section -->
+    <div class="table-outer-wrapper">
+      <div class="table-container">
+        <table class="legacy-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">Sl:No</th>
+              <th>Customer Details</th>
+              <th>Branch</th>
+              <th>Jobcard No</th>
+              <th>Invoice No</th>
+              <th>Engine No</th>
+              <th>Jobcard Date</th>
+              <th>Service Type</th>
+              <th>Model</th>
+              <th style="width: 120px;">Total Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of bills(); let i = index">
+              <td class="text-center">{{(currentPage() - 1) * pageSize() + i + 1}}</td>
+              <td>
+                <a [routerLink]="['/admin/invoice', type(), e.inv_id]" class="reg-no-link">
+                  <span class="reg-no">{{e.in_registr}}</span>
+                </a>
+                <div class="customer-info">
+                  {{e.inv_cus}}<br>
+                  {{e.inv_pho}}<br>
+                  {{e.inv_cus_addres}}
+                </div>
+              </td>
+              <td>{{e.branch_name || e.inv_branch}}</td>
+              <td class="text-center">{{e.inv_job_card_no}}</td>
+              <td class="text-center">{{e.inv_no}}</td>
+              <td class="text-center">{{e.inv_engine || e.in_engine}}</td>
+              <td class="text-center">{{e.inv_jcard_date | date:'dd-MM-yyyy'}}</td>
+              <td>{{e.inv_repair_typ || e.inv_service_typ}}</td>
+              <td>{{e.inv_modl}}</td>
+              <td class="amount-cell">{{e.inv_total || e.inv_final_amount | number:'1.2-2'}}</td>
+            </tr>
+            <tr *ngIf="bills().length===0 && !loading()">
+              <td colspan="10" class="no-data">No records found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Loading Overlay -->
+      <div class="loading-overlay" *ngIf="loading()">
+        <div class="spinner"></div>
+        <span>Loading bills...</span>
+      </div>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="pagination-bar" *ngIf="totalItems() > 0">
+      <span class="pagination-info">
+        Showing {{(currentPage() - 1) * pageSize() + 1}} –
+        {{currentPage() * pageSize() > totalItems() ? totalItems() : currentPage() * pageSize()}}
+        of {{totalItems()}} entries
+      </span>
+      <div class="pagination-controls">
+        <button class="page-btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">← Prev</button>
+        <ng-container *ngFor="let p of pageNumbersInner()">
+          <span *ngIf="p === -1" class="page-ellipsis">…</span>
+          <button *ngIf="p !== -1"
+                  class="page-btn"
+                  [class.active]="p === currentPage()"
+                  (click)="goToPage(p)">{{p}}</button>
+        </ng-container>
+        <button class="page-btn" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">Next →</button>
+      </div>
     </div>
   </div>
 </div>

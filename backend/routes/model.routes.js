@@ -3,6 +3,7 @@ const router = express.Router();
 const modelController = require('../controllers/model.controller');
 const { verifyToken, isAdmin } = require('../middleware/auth');
 
+router.get('/paginated', verifyToken, modelController.getPaginated);
 router.get('/', verifyToken, modelController.getAll);
 router.get('/:id', verifyToken, modelController.getById);
 router.post('/', verifyToken, isAdmin, modelController.create);

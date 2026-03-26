@@ -36,7 +36,7 @@ exports.create = async (req, res) => {
 
         const [result] = await pool.query(
             'INSERT INTO tbl_branch (branch_name, branch_address, branch_ph, branch_id) VALUES (?, ?, ?, ?)',
-            [branch_name, branch_address || null, branch_ph || null, branch_id]
+            [branch_name, branch_address || '', branch_ph || '', branch_id]
         );
         res.status(201).json({ message: 'Branch created', id: result.insertId });
     } catch (err) {
@@ -64,6 +64,30 @@ exports.remove = async (req, res) => {
     try {
         await pool.query('DELETE FROM tbl_branch WHERE b_id = ?', [req.params.id]);
         res.json({ message: 'Branch deleted' });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};
+
+// Get paginated branches with search
+exports.getPaginated = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+        const search = req.query.search || '';
+        const offset = (page - 1) * pageSize;
+
+        let where = '';
+        const params = [];
+        if (search) {
+            where = ' WHERE branch_name LIKE ? OR branch_id LIKE ?';
+            params.push(`%${search}%`, `%${search}%`);
+        }
+
+        const [[{ total }]] = await pool.query(`SELECT COUNT(*) as total FROM tbl_branch${where}`, params);
+        const [rows] = await pool.query(`SELECT * FROM tbl_branch${where} ORDER BY b_id DESC LIMIT ? OFFSET ?`, [...params, pageSize, offset]);
+
+        res.json({ data: rows, total, page, pageSize });
     } catch (err) {
         res.status(500).json({ message: 'Server error', error: err.message });
     }

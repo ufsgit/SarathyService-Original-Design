@@ -19,7 +19,8 @@ export class AddLabourComponent {
   };
   constructor(private api: ApiService, private notify: NotificationService, private router: Router) {}
   onSubmit() {
-    if (!this.form.l_name) { this.notify.error('Labour name required'); return; }
+    if (!this.form.l_code) { this.notify.error('Labour code is required'); return; }
+    if (!this.form.l_name) { this.notify.error('Labour name is required'); return; }
     this.api.createLabour(this.form).subscribe({ 
       next: () => { this.notify.success('Created'); this.router.navigate(['/admin/labour/list']); }, 
       error: (e:any) => this.notify.error(e.error?.message||'Error') 

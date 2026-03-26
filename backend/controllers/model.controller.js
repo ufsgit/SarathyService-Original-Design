@@ -61,3 +61,27 @@ exports.remove = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
+
+// Get paginated models with search
+exports.getPaginated = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+        const search = req.query.search || '';
+        const offset = (page - 1) * pageSize;
+
+        let where = '';
+        const params = [];
+        if (search) {
+            where = ' WHERE mod_name LIKE ? OR mod_code LIKE ?';
+            params.push(`%${search}%`, `%${search}%`);
+        }
+
+        const [[{ total }]] = await pool.query(`SELECT COUNT(*) as total FROM tbl_model${where}`, params);
+        const [rows] = await pool.query(`SELECT * FROM tbl_model${where} ORDER BY model_id DESC LIMIT ? OFFSET ?`, [...params, pageSize, offset]);
+
+        res.json({ data: rows, total, page, pageSize });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};

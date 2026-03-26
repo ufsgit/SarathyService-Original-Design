@@ -8,6 +8,21 @@
   </div>
 
   <div class="card-body">
+    <div class="table-actions">
+      <div class="search-box">
+        <label>Search:</label>
+        <input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event); onSearch()" placeholder="Search name/code/branch...">
+      </div>
+      <div class="pageSize-selector">
+        <label>Show:</label>
+        <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); currentPage.set(1)">
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+        </select>
+        <span>entries</span>
+      </div>
+    </div>
     <div class="table-container">
       <table class="legacy-table">
         <thead>
@@ -25,7 +40,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let e of employees; let i = index">
+          <tr *ngFor="let e of employees(); let i = index">
             <td>{{ i + 1 }}</td>
             <td>{{ e.emp_intial }} {{ e.e_first_name }}</td>
             <td>{{ e.branch_name }}</td>
@@ -49,11 +64,27 @@
               </div>
             </td>
           </tr>
-          <tr *ngIf="employees.length === 0">
+          <tr *ngIf="employees().length === 0">
             <td colspan="10" class="no-data">No employees found</td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar" *ngIf="totalItems() > 0">
+      <span class="pagination-info">
+        Showing {{(currentPage() - 1) * pageSize() + 1}} – 
+        {{currentPage() * pageSize() > totalItems() ? totalItems() : currentPage() * pageSize()}} 
+        of {{totalItems()}} entries
+      </span>
+      <div class="pagination-controls">
+        <button class="page-btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">← Prev</button>
+        <button class="page-btn" *ngFor="let p of pageNumbers" 
+                [class.active]="p === currentPage()" 
+                (click)="goToPage(p)">{{p}}</button>
+        <button class="page-btn" [disabled]="currentPage() * pageSize() >= totalItems()" (click)="goToPage(currentPage() + 1)">Next →</button>
+      </div>
     </div>
   </div>
 </div>

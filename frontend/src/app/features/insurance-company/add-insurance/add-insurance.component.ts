@@ -13,8 +13,10 @@ import { NotificationService } from '../../../core/services/notification.service
 export class AddInsuranceComponent {
   form:any={};
   constructor(private api:ApiService,private notify:NotificationService,private router:Router){}
-  onSubmit(){
-    if(!this.form.icompany_name){this.notify.error('Name required');return;}
+  onSubmit() {
+    if (!this.form.icompany_name) { this.notify.error('Company name is required'); return; }
+    if (!this.form.icompany_gst) { this.notify.error('GSTIN is required'); return; }
+    if (!this.form.icompany_address) { this.notify.error('Address is required'); return; }
     this.api.createInsuranceCompany(this.form).subscribe({
       next:()=>{this.notify.success('Created');this.router.navigate(['/admin/insurance/list']);},
       error:(e:any)=>this.notify.error(e.error?.message||'Error')
