@@ -4,13 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+
 @Component({
   selector: 'app-add-labour', standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, SearchableSelectComponent],
   templateUrl: './add-labour.component.html',
   styleUrls: ['./add-labour.component.css']
 })
 export class AddLabourComponent {
+  repairTypes: string[] = ['Paid Service', 'Free Service', 'Accident', 'Warranty'];
   form: any = {
     l_repair_type: 'Paid Service'
   };

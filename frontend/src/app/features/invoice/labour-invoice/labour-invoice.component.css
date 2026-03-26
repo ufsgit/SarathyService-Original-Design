@@ -78,6 +78,8 @@
 
 .widget-content {
     padding: 15px;
+    min-height: 600px; /* Increased height to give plenty of room for dropdowns */
+    overflow: visible;
 }
 
 /* 4-column Grid */
@@ -102,13 +104,21 @@
     margin-right: 8px;
 }
 
-.control-group input, .control-group select, .control-group textarea {
+.control-group input, .control-group select, .control-group textarea, .control-group app-searchable-select {
     flex: 1;
     height: 22px;
     padding: 2px 5px;
     border: 1px solid #ccc;
     font-size: 11px;
     background: #fff;
+    display: flex;
+    align-items: center;
+}
+
+.control-group app-searchable-select {
+    padding: 0;
+    border: none;
+    background: transparent;
 }
 
 .control-group input[readonly], .control-group textarea[readonly] {
@@ -133,12 +143,17 @@
 /* Table scroll wrapper */
 .table-scroll-outer {
     margin-top: 10px;
+    overflow: visible;
 }
 
 .table-responsive {
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: 250px;
+    overflow: visible !important; /* Completely remove overflow restrictions */
+    max-height: none;
+}
+
+.items-table td, .items-table tr {
+    overflow: visible !important;
+    position: relative; /* Ensure stacking context for dropdowns if needed */
 }
 
 .items-table {

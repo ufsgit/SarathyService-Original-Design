@@ -6,10 +6,11 @@ import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { AddCustomerModalComponent } from '../../../shared/components/add-customer-modal/add-customer-modal.component';
+import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-labour-invoice', standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AddCustomerModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AddCustomerModalComponent, SearchableSelectComponent],
   templateUrl: './labour-invoice.component.html',
   styleUrls: ['./labour-invoice.component.css']
 })
@@ -20,15 +21,45 @@ export class LabourInvoiceComponent implements OnInit {
   editMode = false; invoiceId: number | null = null;
   showAddCustomerModal = false;
   pendingRegNo = '';
+
+  // Searchable Select Options
+  branchOptions: string[] = [];
+  advisorOptions: string[] = [];
+  mechanicOptions: string[] = [];
+  repairTypeOptions: string[] = [
+    'First free service', 'Second free service', 'Third free service',
+    'Paid service', 'AMC service', 'Accidental Repair',
+    'Other Repairs(within warranty)', 'Other Repairs(outside warranty)'
+  ];
+
+  // Selected Labels for Searchable Select
+  selectedBranchLabel = '';
+  selectedAdvisorLabel = '';
+  selectedMechanicLabel = '';
+
+  labourCodeOptions: string[] = [];
+  jobTypeOptions: string[] = ['Paid Service', 'Expense', 'Free Service'];
   
   constructor(private api: ApiService, private notify: NotificationService, private router: Router, public auth: AuthService, private route: ActivatedRoute) {}
   
   ngOnInit() {
-    this.api.getBranches().subscribe(d => this.branches = d);
-    this.api.getLabourNames().subscribe(d => this.labourNames = d);
+    this.api.getBranches().subscribe(d => {
+      this.branches = d;
+      this.updateBranchOptions();
+    });
+    this.api.getLabourNames().subscribe(d => {
+      this.labourNames = d;
+      this.labourCodeOptions = d.map((l: any) => l.l_code);
+    });
     // Load all advisors & mechanics initially (no branch filter)
-    this.api.getMechanics().subscribe(d => this.mechanics = d);
-    this.api.getAdvisors().subscribe(d => this.advisors = d);
+    this.api.getMechanics().subscribe(d => {
+      this.mechanics = d;
+      this.updateMechanicOptions();
+    });
+    this.api.getAdvisors().subscribe(d => {
+      this.advisors = d;
+      this.updateAdvisorOptions();
+    });
     
     this.invoiceId = this.route.snapshot.params['id'] ? +this.route.snapshot.params['id'] : null;
     if (this.invoiceId) {
@@ -76,9 +107,75 @@ export class LabourInvoiceComponent implements OnInit {
           ic_type: it.lc_type
         }));
         this.calcTotals();
+        
+        // Update selected labels for Edit Mode
+        if (this.branches.length > 0) this.updateBranchOptions();
+        if (this.advisors.length > 0) this.updateAdvisorOptions();
+        if (this.mechanics.length > 0) this.updateMechanicOptions();
       },
       error: () => this.notify.error('Failed to load invoice')
     });
+  }
+
+  updateBranchOptions() {
+    this.branchOptions = this.branches.map(b => `${b.branch_name} [${b.branch_id}]`);
+    if (this.form.inv_branch) {
+      const b = this.branches.find(x => x.b_id == this.form.inv_branch);
+      this.selectedBranchLabel = b ? `${b.branch_name} [${b.branch_id}]` : '';
+    }
+  }
+
+  updateAdvisorOptions() {
+    this.advisorOptions = this.advisors.map(a => `${a.e_first_name} [${a.e_code}]`);
+    if (this.form.inv_advisername) {
+      const a = this.advisors.find(x => x.e_first_name == this.form.inv_advisername);
+      this.selectedAdvisorLabel = a ? `${a.e_first_name} [${a.e_code}]` : '';
+    }
+  }
+
+  updateMechanicOptions() {
+    this.mechanicOptions = this.mechanics.map(m => `${m.e_first_name} [${m.e_code}]`);
+    if (this.form.inv_mechna) {
+      const m = this.mechanics.find(x => x.e_first_name == this.form.inv_mechna);
+      this.selectedMechanicLabel = m ? `${m.e_first_name} [${m.e_code}]` : '';
+    }
+  }
+
+  onBranchSelect(label: string) {
+    if (!label) {
+      this.form.inv_branch = '';
+      this.selectedBranchLabel = '';
+    } else {
+      const b = this.branches.find(x => `${x.branch_name} [${x.branch_id}]` === label);
+      if (b) {
+        this.form.inv_branch = b.b_id;
+        this.onBranchChange();
+      }
+    }
+  }
+
+  onAdvisorSelect(label: string) {
+    if (!label) {
+      this.form.inv_advisername = '';
+      this.selectedAdvisorLabel = '';
+    } else {
+      const a = this.advisors.find(x => `${x.e_first_name} [${x.e_code}]` === label);
+      if (a) {
+        this.form.inv_advisername = a.e_first_name;
+      }
+    }
+  }
+
+  onMechanicSelect(label: string) {
+    if (!label) {
+      this.form.inv_mechna = '';
+      this.selectedMechanicLabel = '';
+    } else {
+      const m = this.mechanics.find(x => `${x.e_first_name} [${x.e_code}]` === label);
+      if (m) {
+        this.form.inv_mechna = m.e_first_name;
+      }
+    }
   }
 
   loadNextNo() {
@@ -97,8 +194,16 @@ export class LabourInvoiceComponent implements OnInit {
   loadBranchEmployees(branchId: number) {
     this.form.inv_advisername = '';
     this.form.inv_mechna = '';
-    this.api.getMechanics(branchId).subscribe(d => this.mechanics = d);
-    this.api.getAdvisors(branchId).subscribe(d => this.advisors = d);
+    this.selectedAdvisorLabel = '';
+    this.selectedMechanicLabel = '';
+    this.api.getMechanics(branchId).subscribe(d => {
+      this.mechanics = d;
+      this.updateMechanicOptions();
+    });
+    this.api.getAdvisors(branchId).subscribe(d => {
+      this.advisors = d;
+      this.updateAdvisorOptions();
+    });
   }
 
   onBranchChange() {
@@ -107,8 +212,14 @@ export class LabourInvoiceComponent implements OnInit {
       this.loadBranchEmployees(this.form.inv_branch);
     } else {
       // Branch cleared — reload all
-      this.api.getMechanics().subscribe(d => this.mechanics = d);
-      this.api.getAdvisors().subscribe(d => this.advisors = d);
+      this.api.getMechanics().subscribe(d => {
+        this.mechanics = d;
+        this.updateMechanicOptions();
+      });
+      this.api.getAdvisors().subscribe(d => {
+        this.advisors = d;
+        this.updateAdvisorOptions();
+      });
     }
   }
 

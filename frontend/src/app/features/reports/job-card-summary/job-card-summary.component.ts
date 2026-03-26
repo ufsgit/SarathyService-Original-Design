@@ -6,11 +6,12 @@ import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-job-card-summary',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule, RouterModule],
+  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule, RouterModule, SearchableSelectComponent],
   templateUrl: './job-card-summary.component.html',
   styleUrls: ['./job-card-summary.component.css']
 })
@@ -34,6 +35,9 @@ export class JobCardSummaryComponent implements OnInit {
     insuranceCompanies: [],
     repairTypes: []
   };
+
+  branchOptions: string[] = [];
+  serviceOptions: string[] = ['Paid Service', 'Free Service', 'Expense'];
 
   results: any[] = [];
   totals: any = {};
@@ -237,9 +241,25 @@ export class JobCardSummaryComponent implements OnInit {
     this.api.getFilterOptions().subscribe({
       next: (d: any) => {
         this.options = d;
+        this.branchOptions = ['--Select Branch--', ...this.options.branches.map((b: any) => `${b.branch_name}(${b.branch_id})`)];
       },
       error: () => this.notify.error('Failed to load filter options')
     });
+  }
+
+  onBranchSelect(label: string) {
+    if (!label || label === '--Select Branch--') {
+      this.filters.branch = '';
+    } else {
+      const branch = this.options.branches.find((b: any) => `${b.branch_name}(${b.branch_id})` === label);
+      this.filters.branch = branch ? branch.b_id : '';
+    }
+    this.search();
+  }
+
+  onServiceSelect(value: string) {
+    this.filters.service_type = value;
+    this.search();
   }
 
   onViewByChange() {

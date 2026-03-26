@@ -6,11 +6,12 @@ import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-job-card-statement',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule, RouterModule],
+  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule, RouterModule, SearchableSelectComponent],
   templateUrl: './job-card-statement.component.html',
   styleUrls: ['./job-card-statement.component.css']
 })
@@ -37,6 +38,9 @@ export class JobCardStatementComponent implements OnInit {
     repairTypes: [],
     labourNames: []
   };
+
+  branchOptions: string[] = [];
+  serviceOptions: string[] = ['Paid Service', 'Free Service', 'Expense'];
 
   results: any[] = [];
   totals: any = {};
@@ -234,6 +238,7 @@ export class JobCardStatementComponent implements OnInit {
     this.api.getFilterOptions().subscribe({
       next: (d: any) => {
         this.options = d;
+        this.branchOptions = ['--Select Branch--', ...this.options.branches.map((b: any) => `${b.branch_name}(${b.branch_id})`)];
         // load labour names if available
         this.api.getLabourNames().subscribe({
           next: (names: any[]) => this.options.labourNames = names,
@@ -242,6 +247,21 @@ export class JobCardStatementComponent implements OnInit {
       },
       error: () => this.notify.error('Failed to load filter options')
     });
+  }
+
+  onBranchSelect(label: string) {
+    if (!label || label === '--Select Branch--') {
+      this.filters.branch = '';
+    } else {
+      const branch = this.options.branches.find((b: any) => `${b.branch_name}(${b.branch_id})` === label);
+      this.filters.branch = branch ? branch.b_id : '';
+    }
+    this.search();
+  }
+
+  onServiceSelect(value: string) {
+    this.filters.service_type = value;
+    this.search();
   }
 
   onViewByChange() {

@@ -14,19 +14,23 @@
     <div class="centered-filter-container">
       <div class="filter-row">
         <label>Branch</label>
-        <select [(ngModel)]="filters.branch" (change)="search()">
-          <option value="">--Select Branch--</option>
-          <option *ngFor="let b of options.branches" [value]="b.b_id">{{b.branch_name}}({{b.branch_id}})</option>
-        </select>
+        <app-searchable-select 
+          [options]="branchOptions" 
+          [(ngModel)]="filters.branch_label" 
+          (ngModelChange)="onBranchSelect($event)"
+          placeholder="--Select Branch--"
+          customClass="compact">
+        </app-searchable-select>
       </div>
       <div class="filter-row">
         <label>Service</label>
-        <select [(ngModel)]="filters.service_type" (change)="search()">
-          <option value="">--Select Service--</option>
-          <option value="Paid Service">Paid Service</option>
-          <option value="Free Service">Free Service</option>
-          <option value="Expense">Expense</option>
-        </select>
+        <app-searchable-select 
+          [options]="serviceOptions" 
+          [(ngModel)]="filters.service_type" 
+          (ngModelChange)="onServiceSelect($event)"
+          placeholder="--Select Service--"
+          customClass="compact">
+        </app-searchable-select>
       </div>
       <div class="filter-row">
         <label>Search Option</label>

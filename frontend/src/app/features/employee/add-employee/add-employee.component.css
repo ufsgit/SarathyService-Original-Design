@@ -110,6 +110,26 @@
     cursor: not-allowed;
 }
 
+.form-group app-searchable-select {
+    flex: 1;
+}
+
+.form-group app-searchable-select ::ng-deep .select-box {
+    padding: 6px 10px;
+    min-height: 29px; /* Matches input height with 6px padding and 13px font */
+    height: 29px;
+    border-radius: 2px;
+}
+
+.form-group app-searchable-select ::ng-deep .selected-text {
+    font-size: 13px;
+    line-height: 15px;
+}
+
+.form-group app-searchable-select ::ng-deep .arrow {
+    padding: 2px;
+}
+
 /* Row inline for Name (Initial + First Name) */
 .row-inline .input-group-inline {
     flex: 1;

@@ -87,13 +87,21 @@
     margin-right: 8px;
 }
 
-.control-group input, .control-group select, .control-group textarea {
+.control-group input, .control-group select, .control-group textarea, .control-group app-searchable-select {
     flex: 1;
     height: 22px;
     padding: 2px 5px;
     border: 1px solid #ccc;
     font-size: 11px;
     background: #fff;
+    display: flex;
+    align-items: center;
+}
+
+.control-group app-searchable-select {
+    padding: 0;
+    border: none;
+    background: transparent;
 }
 
 .control-group input[readonly], .control-group textarea[readonly] {

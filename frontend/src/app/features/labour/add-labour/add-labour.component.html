@@ -34,12 +34,12 @@
         <div class="form-group row-group">
           <label>Repair Type :</label>
           <div class="form-input">
-            <select [(ngModel)]="form.l_repair_type" name="repair_type">
-              <option value="Paid Service">Paid Service</option>
-              <option value="Free Service">Free Service</option>
-              <option value="Accident">Accident</option>
-              <option value="Warranty">Warranty</option>
-            </select>
+            <app-searchable-select 
+              [(ngModel)]="form.l_repair_type" 
+              name="repair_type"
+              [options]="repairTypes"
+              placeholder="Select Repair Type">
+            </app-searchable-select>
           </div>
         </div>
 
