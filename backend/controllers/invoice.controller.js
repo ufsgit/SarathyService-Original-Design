@@ -28,7 +28,7 @@ exports.createLabourInvoice = async (req, res) => {
         ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
         const values = [
-            d.inv_no || '', d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '', d.inv_inv_date, 'labour',
+            d.inv_no || '', d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '', d.inv_inv_date, d.inv_type || 'Cash',
             d.inv_job_card_no || '', d.inv_jcard_date, d.inv_repair_typ || '', d.inv_km || d.inv_km_in || '', d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
             d.inv_sale_date || '', d.inv_taxpay || '', d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || '',
             d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0,
@@ -93,7 +93,7 @@ exports.createInsuranceInvoice = async (req, res) => {
         ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
         const values = [
-            d.inv_no || '', d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '', d.inv_inv_date, 'insurance',
+            d.inv_no || '', d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '', d.inv_inv_date, d.inv_type || 'Cash',
             d.inv_job_card_no || '', d.inv_jcard_date, d.inv_repair_typ || '', d.inv_km || d.inv_km_in || '', d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
             d.inv_sale_date || '', d.inv_taxpay || '', d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || '',
             d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0,
