@@ -27,6 +27,44 @@ exports.getJobCardSummary = async (req, res) => {
             }
         }
 
+        // SQL Queries
+        const totalsQuery = `
+            SELECT 
+                COUNT(*) as total_count,
+                COALESCE(SUM(CASE WHEN i.inv_repair_typ LIKE '%Free%' THEN 1 ELSE 0 END), 0) as total_free_service,
+                COALESCE(SUM(CASE WHEN i.inv_repair_typ NOT LIKE '%Free%' THEN 1 ELSE 0 END), 0) as total_paid_service,
+                COALESCE(SUM(CAST(NULLIF(i.inv_taxtotal, '') AS DECIMAL(12,2))), 0) as total_taxable,
+                COALESCE(SUM(CAST(NULLIF(i.inv_disc_total, '') AS DECIMAL(12,2))), 0) as total_discount,
+                COALESCE(SUM(CAST(NULLIF(i.inv_sgstotal, '') AS DECIMAL(12,2))), 0) as total_sgst,
+                COALESCE(SUM(CAST(NULLIF(i.inv_gsttotal, '') AS DECIMAL(12,2))), 0) as total_cgst,
+                COALESCE(SUM(CAST(NULLIF(i.inv_cesstotal, '') AS DECIMAL(12,2))), 0) as total_kfc,
+                COALESCE(SUM(CAST(NULLIF(i.inv_total, '') AS DECIMAL(12,2))), 0) as grand_total
+            FROM tbl_invoice_labour i
+            ${whereClause}
+        `;
+
+        const detailedTotalsQuery = `
+            SELECT 
+                COALESCE(SUM(CASE WHEN lc.lc_type = 'labour' THEN CAST(NULLIF(lc.lc_tax_amunt, '') AS DECIMAL(12,2)) ELSE 0 END), 0) as labour_taxable,
+                COALESCE(SUM(CASE WHEN lc.lc_type = 'spare' OR lc.lc_type = 'parts' THEN CAST(NULLIF(lc.lc_tax_amunt, '') AS DECIMAL(12,2)) ELSE 0 END), 0) as parts_taxable,
+                COALESCE(SUM(CASE WHEN lc.lc_type = 'labour' THEN (CAST(NULLIF(lc.lc_sgst_a, '') AS DECIMAL(12,2)) + CAST(NULLIF(lc.lc_cgst_a, '') AS DECIMAL(12,2))) ELSE 0 END), 0) as labour_gst,
+                COALESCE(SUM(CASE WHEN lc.lc_type = 'spare' OR lc.lc_type = 'parts' THEN (CAST(NULLIF(lc.lc_sgst_a, '') AS DECIMAL(12,2)) + CAST(NULLIF(lc.lc_cgst_a, '') AS DECIMAL(12,2))) ELSE 0 END), 0) as parts_gst
+            FROM tbl_invoice_labour_cost lc
+            JOIN tbl_invoice_labour i ON i.inv_id = lc.ic_inv_id
+            ${whereClause}
+        `;
+
+        const mainQuery = `
+            SELECT i.*, b.branch_name, e.e_first_name as mechanic_name, a.e_first_name as advisor_name
+            FROM tbl_invoice_labour i
+            LEFT JOIN tbl_branch b ON i.inv_branch = b.b_id
+            LEFT JOIN tbl_employee e ON i.inv_mechna = e.emp_id
+            LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+            ${whereClause}
+            ORDER BY i.inv_jcard_date DESC, i.inv_id DESC
+            LIMIT ? OFFSET ?
+        `;
+
         // Execute queries in parallel for maximum speed
         const [
             [totalsRows],
@@ -98,6 +136,29 @@ exports.getJobCardStatement = async (req, res) => {
                 whereClause += ' AND i.inv_type = ?'; params.push(service_type);
             }
         }
+
+        // SQL Queries
+        const totalsQuery = `
+            SELECT 
+                COUNT(*) as total_count,
+                COALESCE(SUM(CAST(NULLIF(i.inv_taxtotal, '') AS DECIMAL(12,2))), 0) as total_taxable,
+                COALESCE(SUM(CAST(NULLIF(i.inv_disc_total, '') AS DECIMAL(12,2))), 0) as total_discount,
+                COALESCE(SUM(CAST(NULLIF(i.inv_cesstotal, '') AS DECIMAL(12,2))), 0) as total_kfc,
+                COALESCE(SUM(CAST(NULLIF(i.inv_total, '') AS DECIMAL(12,2))), 0) as grand_total
+            FROM tbl_invoice_labour i
+            ${whereClause}
+        `;
+
+        const mainQuery = `
+            SELECT i.*, b.branch_name, e.e_first_name as mechanic_name, a.e_first_name as advisor_name
+            FROM tbl_invoice_labour i
+            LEFT JOIN tbl_branch b ON i.inv_branch = b.b_id
+            LEFT JOIN tbl_employee e ON i.inv_mechna = e.emp_id
+            LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+            ${whereClause}
+            ORDER BY i.inv_jcard_date DESC, i.inv_id DESC
+            LIMIT ? OFFSET ?
+        `;
 
         // Execute queries in parallel
         const [
