@@ -101,6 +101,26 @@
     border-color: #999;
 }
 
+.form-group app-searchable-select {
+    flex: 1;
+}
+
+.form-group app-searchable-select ::ng-deep .select-box {
+    padding: 8px 12px;
+    min-height: 33px; /* Matches input height with 8px padding and 13px font */
+    height: 33px;
+    border-radius: 2px;
+}
+
+.form-group app-searchable-select ::ng-deep .selected-text {
+    font-size: 13px;
+    line-height: 15px;
+}
+
+.form-group app-searchable-select ::ng-deep .arrow {
+    padding: 2px;
+}
+
 .form-actions {
     display: flex;
     justify-content: center;

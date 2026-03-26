@@ -93,3 +93,30 @@ exports.remove = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+// Get paginated labour codes with search
+exports.getPaginated = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+        const search = req.query.search || '';
+        const offset = (page - 1) * pageSize;
+
+        let where = '';
+        const params = [];
+        if (search) {
+            where = ' WHERE labour_title LIKE ? OR labour_code LIKE ?';
+            params.push(`%${search}%`, `%${search}%`);
+        }
+
+        const [[{ total }]] = await pool.query(`SELECT COUNT(*) as total FROM tbl_labour_code${where}`, params);
+        const [rows] = await pool.query(
+            `SELECT labour_id as l_id, labour_code as l_code, labour_title as l_name, discription as l_descr, repair_type as l_repair_type, sale_price as l_amount FROM tbl_labour_code${where} ORDER BY labour_id DESC LIMIT ? OFFSET ?`,
+            [...params, pageSize, offset]
+        );
+
+        res.json({ data: rows, total, page, pageSize });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};

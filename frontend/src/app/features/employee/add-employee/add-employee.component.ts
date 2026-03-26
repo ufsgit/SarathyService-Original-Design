@@ -4,9 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+
 @Component({
   selector: 'app-add-employee', standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, SearchableSelectComponent],
   templateUrl: './add-employee.component.html',
   styleUrls: ['./add-employee.component.css']
 })
@@ -15,20 +17,27 @@ export class AddEmployeeComponent implements OnInit {
     add_as_user: false
   };
   branches: any[] = [];
+  branchNames: string[] = [];
   titles: string[] = ['Mr.', 'Ms.'];
   designations: string[] = ['Mechanic', 'Service Advisor', 'Billing Staff', 'Floor Supervisor'];
 
   constructor(private api: ApiService, private notify: NotificationService, private router: Router) {}
-  ngOnInit() { this.api.getBranches().subscribe((d: any[]) => this.branches = d); }
+  ngOnInit() { 
+    this.api.getBranches().subscribe((d: any[]) => {
+      this.branches = d;
+      this.branchNames = d.map(b => b.branch_name);
+    }); 
+  }
   onSubmit() {
-    if (!this.form.e_first_name) { this.notify.error('Name required'); return; }
+    if (!this.form.e_first_name) { this.notify.error('Name is required'); return; }
+    if (!this.form.e_branch) { this.notify.error('Branch Name is required'); return; }
+    if (!this.form.e_code) { this.notify.error('Employee Code is required'); return; }
+    if (!this.form.e_designation) { this.notify.error('Employee Designation is required'); return; }
+    if (!this.form.login_id) { this.notify.error('Username is required'); return; }
+    if (!this.form.login_password) { this.notify.error('Password is required'); return; }
     
-    // Process login credentials only if add_as_user is true
-    const submissionData = { ...this.form };
-    if (!this.form.add_as_user) {
-      delete submissionData.login_id;
-      delete submissionData.login_password;
-    }
+    // The user wants these required, so we force add_as_user to true effectively
+    const submissionData = { ...this.form, add_as_user: true };
 
     this.api.createEmployee(submissionData).subscribe({ 
       next: () => { this.notify.success('Created'); this.router.navigate(['/admin/employee/list']); }, 

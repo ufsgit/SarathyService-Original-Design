@@ -1,0 +1,160 @@
+.searchable-select-container {
+  position: relative;
+  width: 100%;
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+.searchable-select-container.open {
+  z-index: 9999; /* Ensure it stays on top of other form rows */
+}
+
+.select-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  min-height: 38px;
+}
+
+.select-box.open {
+  border-color: #f7b731; /* Match the yellow border in the image */
+  box-shadow: 0 0 4px rgba(247, 183, 49, 0.5);
+}
+
+.selected-text {
+  flex-grow: 1;
+  font-size: 14px;
+}
+
+.arrow-container {
+  margin-left: 8px;
+}
+
+.arrow {
+  border: solid #666;
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+  padding: 3px;
+}
+
+.arrow.down {
+  transform: rotate(45deg);
+}
+
+.arrow.up {
+  transform: rotate(-135deg);
+}
+
+.dropdown-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-top: 4px;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.search-container {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+}
+
+.icon-search {
+  margin-right: 8px;
+  color: #999;
+  font-size: 14px;
+}
+
+.search-input {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #3498db;
+}
+
+.options-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.option-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.option-item:hover {
+  background-color: #f1f1f1;
+}
+
+.option-item.selected {
+  background-color: #e8f4fd;
+  font-weight: bold;
+}
+
+.no-results {
+  padding: 12px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+/* Compact mode for report filters */
+.searchable-select-container.compact .select-box {
+  min-height: 26px;
+  padding: 2px 8px;
+}
+
+.searchable-select-container.compact .selected-text {
+  font-size: 12px;
+}
+
+.searchable-select-container.compact .option-item {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Very compact mode for invoice forms (22px height) */
+.searchable-select-container.very-compact .select-box {
+  min-height: 22px;
+  height: 22px;
+  padding: 0 5px; /* Match input padding */
+  border-radius: 0; /* Match invoice form style */
+  box-sizing: border-box;
+}
+
+.searchable-select-container.very-compact .selected-text {
+  font-size: 11px;
+  line-height: 20px; /* height - borders */
+}
+
+.searchable-select-container.very-compact .arrow {
+  padding: 2px;
+}
+
+.searchable-select-container.very-compact .option-item {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.searchable-select-container.very-compact .search-input {
+  padding: 4px 6px;
+  font-size: 11px;
+}

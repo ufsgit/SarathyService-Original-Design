@@ -33,10 +33,12 @@
 
           <div class="form-group">
             <label>Model Name :</label>
-            <select [(ngModel)]="form.model_name" name="model">
-              <option value="" disabled selected>Select</option>
-              <option *ngFor="let m of models" [value]="m.mod_name">{{m.mod_name}}</option>
-            </select>
+            <app-searchable-select
+              [(ngModel)]="form.model_name"
+              name="model"
+              [options]="modelOptions"
+              placeholder="Select Model"
+            ></app-searchable-select>
           </div>
         </div>
 

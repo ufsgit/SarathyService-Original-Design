@@ -6,10 +6,11 @@ import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { AddCustomerModalComponent } from '../../../shared/components/add-customer-modal/add-customer-modal.component';
+import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 
 @Component({
   selector: 'app-insurance-invoice', standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AddCustomerModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AddCustomerModalComponent, SearchableSelectComponent],
   templateUrl: './insurance-invoice.component.html',
   styleUrls: ['./insurance-invoice.component.css']
 })
@@ -22,20 +23,51 @@ export class InsuranceInvoiceComponent implements OnInit {
   showAddCustomerModal = false;
   pendingRegNo = '';
 
+  // Searchable Select Options
+  branchOptions: string[] = [];
+  advisorOptions: string[] = [];
+  mechanicOptions: string[] = [];
+  companyOptions: string[] = [];
+  repairTypeOptions: string[] = [
+    'First free service', 'Second free service', 'Third free service',
+    'Paid service', 'AMC service', 'Accidental Repair',
+    'Other Repairs(within warranty)', 'Other Repairs(outside warranty)'
+  ];
+
+  // Selected Labels
+  selectedBranchLabel = '';
+  selectedAdvisorLabel = '';
+  selectedMechanicLabel = '';
+  selectedCompanyLabel = '';
+
   constructor(private api: ApiService, private notify: NotificationService, private router: Router, public auth: AuthService, private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.api.getBranches().subscribe(d => this.branches = d);
+    this.api.getBranches().subscribe(d => {
+      this.branches = d;
+      this.updateBranchOptions();
+    });
     this.api.getLabourNames().subscribe(d => this.labourNames = d);
     this.api.getInsuranceCompanies().subscribe(d => {
       this.companies = d;
-      this.checkInsuranceMapping();
+      this.updateCompanyOptions();
+      // If editing, trigger change once companies are loaded to fill GST/Address
+      if (this.editMode && this.form.inv_insurance_company) {
+        this.onInsuranceChange();
+      }
     });
     // Load all advisors & mechanics initially
-    this.api.getMechanics().subscribe(d => this.mechanics = d);
-    this.api.getAdvisors().subscribe(d => this.advisors = d);
-    
+    this.api.getMechanics().subscribe(d => {
+      this.mechanics = d;
+      this.updateMechanicOptions();
+    });
+    this.api.getAdvisors().subscribe(d => {
+      this.advisors = d;
+      this.updateAdvisorOptions();
+    });
+
     this.isFromPreviousBills = this.route.snapshot.queryParams['from'] === 'previous';
+
     this.invoiceId = this.route.snapshot.params['id'] ? +this.route.snapshot.params['id'] : null;
     if (this.invoiceId) {
       this.editMode = true;
@@ -88,9 +120,99 @@ export class InsuranceInvoiceComponent implements OnInit {
           ic_type: it.lc_type
         }));
         this.calcTotals();
+
+        // Update selected labels for Edit Mode
+        if (this.branches.length > 0) this.updateBranchOptions();
+        if (this.advisors.length > 0) this.updateAdvisorOptions();
+        if (this.mechanics.length > 0) this.updateMechanicOptions();
+        if (this.companies.length > 0) this.updateCompanyOptions();
       },
       error: () => this.notify.error('Failed to load invoice')
     });
+  }
+
+  updateBranchOptions() {
+    this.branchOptions = this.branches.map(b => `${b.branch_name} [${b.branch_id}]`);
+    if (this.form.inv_branch) {
+      const b = this.branches.find(x => x.b_id == this.form.inv_branch);
+      this.selectedBranchLabel = b ? `${b.branch_name} [${b.branch_id}]` : '';
+    }
+  }
+
+  updateAdvisorOptions() {
+    this.advisorOptions = this.advisors.map(a => `${a.e_first_name} [${a.e_code}]`);
+    if (this.form.inv_advisername) {
+      const a = this.advisors.find(x => x.e_first_name == this.form.inv_advisername);
+      this.selectedAdvisorLabel = a ? `${a.e_first_name} [${a.e_code}]` : '';
+    }
+  }
+
+  updateMechanicOptions() {
+    this.mechanicOptions = this.mechanics.map(m => `${m.e_first_name} [${m.e_code}]`);
+    if (this.form.inv_mechna) {
+      const m = this.mechanics.find(x => x.e_first_name == this.form.inv_mechna);
+      this.selectedMechanicLabel = m ? `${m.e_first_name} [${m.e_code}]` : '';
+    }
+  }
+
+  updateCompanyOptions() {
+    this.companyOptions = this.companies.map(c => c.ic_name || c.ic_company_name || c.icompany_name);
+    if (this.form.inv_insurance_company) {
+      const c = this.companies.find(x => x.com_id == this.form.inv_insurance_company);
+      this.selectedCompanyLabel = c ? (c.ic_name || c.ic_company_name || c.icompany_name) : '';
+    }
+  }
+
+  onBranchSelect(label: string) {
+    if (!label) {
+      this.form.inv_branch = '';
+      this.selectedBranchLabel = '';
+    } else {
+      const b = this.branches.find(x => `${x.branch_name} [${x.branch_id}]` === label);
+      if (b) {
+        this.form.inv_branch = b.b_id;
+        this.onBranchChange();
+      }
+    }
+  }
+
+  onAdvisorSelect(label: string) {
+    if (!label) {
+      this.form.inv_advisername = '';
+      this.selectedAdvisorLabel = '';
+    } else {
+      const a = this.advisors.find(x => `${x.e_first_name} [${x.e_code}]` === label);
+      if (a) {
+        this.form.inv_advisername = a.e_first_name;
+      }
+    }
+  }
+
+  onMechanicSelect(label: string) {
+    if (!label) {
+      this.form.inv_mechna = '';
+      this.selectedMechanicLabel = '';
+    } else {
+      const m = this.mechanics.find(x => `${x.e_first_name} [${x.e_code}]` === label);
+      if (m) {
+        this.form.inv_mechna = m.e_first_name;
+      }
+    }
+  }
+
+  onInsuranceSelect(label: string) {
+    if (!label) {
+      this.form.inv_insurance_company = '';
+      this.selectedCompanyLabel = '';
+      this.form.inv_insurance_gstin = '';
+      this.form.inv_insurance_address = '';
+    } else {
+      const c = this.companies.find(x => (x.ic_name || x.ic_company_name || x.icompany_name) === label);
+      if (c) {
+        this.form.inv_insurance_company = c.com_id;
+        this.onInsuranceChange();
+      }
+    }
   }
 
   loadNextNo() {
@@ -109,8 +231,16 @@ export class InsuranceInvoiceComponent implements OnInit {
   loadBranchEmployees(branchId: number) {
     this.form.inv_advisername = '';
     this.form.inv_mechna = '';
-    this.api.getMechanics(branchId).subscribe(d => this.mechanics = d);
-    this.api.getAdvisors(branchId).subscribe(d => this.advisors = d);
+    this.selectedAdvisorLabel = '';
+    this.selectedMechanicLabel = '';
+    this.api.getMechanics(branchId).subscribe(d => {
+      this.mechanics = d;
+      this.updateMechanicOptions();
+    });
+    this.api.getAdvisors(branchId).subscribe(d => {
+      this.advisors = d;
+      this.updateAdvisorOptions();
+    });
   }
 
   onBranchChange() {
@@ -118,8 +248,14 @@ export class InsuranceInvoiceComponent implements OnInit {
     if (this.form.inv_branch) {
       this.loadBranchEmployees(this.form.inv_branch);
     } else {
-      this.api.getMechanics().subscribe(d => this.mechanics = d);
-      this.api.getAdvisors().subscribe(d => this.advisors = d);
+      this.api.getMechanics().subscribe(d => {
+        this.mechanics = d;
+        this.updateMechanicOptions();
+      });
+      this.api.getAdvisors().subscribe(d => {
+        this.advisors = d;
+        this.updateAdvisorOptions();
+      });
     }
   }
 

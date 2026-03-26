@@ -15,6 +15,9 @@ export class ApiService {
   createBranch(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/branches`, data); }
   updateBranch(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/branches/${id}`, data); }
   deleteBranch(id: number): Observable<any> { return this.http.delete(`${this.baseUrl}/branches/${id}`); }
+  getPaginatedBranches(page: number = 1, pageSize: number = 10, search: string = ''): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/branches/paginated`, { params: { page: page.toString(), pageSize: pageSize.toString(), search } });
+  }
 
   // --- Employees ---
   getEmployees(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/employees`); }
@@ -25,6 +28,9 @@ export class ApiService {
   updateEmployeeLogin(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/employees/${id}/login`, data); }
   getEmployeeLogin(id: number): Observable<any> { return this.http.get(`${this.baseUrl}/employees/${id}/login`); }
   deleteEmployee(id: number): Observable<any> { return this.http.delete(`${this.baseUrl}/employees/${id}`); }
+  getPaginatedEmployees(page: number = 1, pageSize: number = 10, search: string = ''): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/employees/paginated`, { params: { page: page.toString(), pageSize: pageSize.toString(), search } });
+  }
   getMechanics(branchId?: number): Observable<any[]> {
     const params: any = {};
     if (branchId) params['branchId'] = branchId.toString();
@@ -42,6 +48,9 @@ export class ApiService {
   createLabour(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/labours`, data); }
   updateLabour(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/labours/${id}`, data); }
   deleteLabour(id: number): Observable<any> { return this.http.delete(`${this.baseUrl}/labours/${id}`); }
+  getPaginatedLabours(page: number = 1, pageSize: number = 10, search: string = ''): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/labours/paginated`, { params: { page: page.toString(), pageSize: pageSize.toString(), search } });
+  }
 
   // --- Customers ---
   getCustomers(branchId?: number): Observable<any[]> {
@@ -63,6 +72,9 @@ export class ApiService {
   createModel(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/models`, data); }
   updateModel(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/models/${id}`, data); }
   deleteModel(id: number): Observable<any> { return this.http.delete(`${this.baseUrl}/models/${id}`); }
+  getPaginatedModels(page: number = 1, pageSize: number = 10, search: string = ''): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/models/paginated`, { params: { page: page.toString(), pageSize: pageSize.toString(), search } });
+  }
 
   // --- Insurance Companies ---
   getInsuranceCompanies(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/insurance-companies`); }
@@ -70,6 +82,9 @@ export class ApiService {
   createInsuranceCompany(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/insurance-companies`, data); }
   updateInsuranceCompany(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/insurance-companies/${id}`, data); }
   deleteInsuranceCompany(id: number): Observable<any> { return this.http.delete(`${this.baseUrl}/insurance-companies/${id}`); }
+  getPaginatedInsurance(page: number = 1, pageSize: number = 10, search: string = ''): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/insurance-companies/paginated`, { params: { page: page.toString(), pageSize: pageSize.toString(), search } });
+  }
 
   // --- Invoices ---
   createLabourInvoice(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/invoices/labour`, data); }
@@ -85,8 +100,8 @@ export class ApiService {
   getInvoice(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/${id}`); }
   updateInvoice(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/invoices/${id}`, data); }
   markInvoiceReady(id: number): Observable<any> { return this.http.put(`${this.baseUrl}/invoices/${id}/ready`, {}); }
-  getReadyLabourBills(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/invoices/ready/labour`); }
-  getReadyInsuranceBills(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/invoices/ready/insurance`); }
+  getReadyLabourBills(params?: any): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/ready/labour`, { params }); }
+  getReadyInsuranceBills(params?: any): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/ready/insurance`, { params }); }
   getNextInvoiceNo(branchId: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/next-no`, { params: { branchId: branchId.toString() } }); }
   getLabourNames(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/invoices/labour-names`); }
   getInvoicePDFUrl(id: number): string { return `${this.baseUrl}/invoices/${id}/pdf`; }

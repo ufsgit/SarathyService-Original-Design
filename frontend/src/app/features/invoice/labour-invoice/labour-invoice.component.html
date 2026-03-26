@@ -25,10 +25,14 @@
             <div *ngIf="!auth.isAdmin" class="readonly-value">
               {{ editMode ? form.branch_name : auth.currentUser?.branchName }}
             </div>
-            <select *ngIf="auth.isAdmin" name="branchname" [(ngModel)]="form.inv_branch" (change)="onBranchChange()" required>
-              <option value="">--Select--</option>
-              <option *ngFor="let b of branches" [ngValue]="b.b_id">{{b.branch_name}} [{{b.branch_id}}]</option>
-            </select>
+            <app-searchable-select 
+              *ngIf="auth.isAdmin"
+              [options]="branchOptions"
+              [(ngModel)]="selectedBranchLabel"
+              (ngModelChange)="onBranchSelect($event)"
+              placeholder="--Select Branch--"
+              customClass="very-compact">
+            </app-searchable-select>
           </div>
           <div class="control-group">
             <label>Jobcard No :</label>
@@ -100,31 +104,35 @@
           </div>
           <div class="control-group">
             <label>Repair Type:</label>
-            <select name="repairty" [(ngModel)]="form.inv_repair_typ" required>
-              <option value="">--Select--</option>
-              <option value="First free service">First free service</option>
-              <option value="Second free service">Second free service</option>
-              <option value="Third free service">Third free service</option>
-              <option value="Paid service">Paid service</option>
-              <option value="Amc service">AMC service</option>
-              <option value="Accidental Repair">Accidental Repair</option>
-              <option value="Other Repairs(within warranty)">Other Repairs (within warranty)</option>
-              <option value="Other Repairs(outside warranty)">Other Repairs (outside warranty)</option>
-            </select>
+            <app-searchable-select 
+              [options]="repairTypeOptions"
+              [(ngModel)]="form.inv_repair_typ"
+              name="repairty"
+              placeholder="--Select Repair Type--"
+              customClass="very-compact">
+            </app-searchable-select>
           </div>
           <div class="control-group">
             <label>Advisor Name:</label>
-            <select name="advname" [(ngModel)]="form.inv_advisername" required>
-              <option value="">--Select--</option>
-              <option *ngFor="let a of advisors" [value]="a.e_first_name">{{a.e_first_name}} [{{a.e_code}}]</option>
-            </select>
+            <app-searchable-select 
+              [options]="advisorOptions"
+              [(ngModel)]="selectedAdvisorLabel"
+              (ngModelChange)="onAdvisorSelect($event)"
+              name="advname"
+              placeholder="--Select Advisor--"
+              customClass="very-compact">
+            </app-searchable-select>
           </div>
           <div class="control-group">
             <label>Mechanic Name:</label>
-            <select name="mechname" [(ngModel)]="form.inv_mechna" required>
-              <option value="">--Select--</option>
-              <option *ngFor="let m of mechanics" [value]="m.e_first_name">{{m.e_first_name}} [{{m.e_code}}]</option>
-            </select>
+            <app-searchable-select 
+              [options]="mechanicOptions"
+              [(ngModel)]="selectedMechanicLabel"
+              (ngModelChange)="onMechanicSelect($event)"
+              name="mechname"
+              placeholder="--Select Mechanic--"
+              customClass="very-compact">
+            </app-searchable-select>
           </div>
           <div class="control-group">
             <label>Sale Date:</label>
@@ -167,19 +175,24 @@
             <tbody>
               <tr *ngFor="let item of items; let i = index">
                 <td>
-                  <select [(ngModel)]="item.ic_labour_code" (change)="onLabourCodeSelect(i)">
-                    <option value="">-Select-</option>
-                    <option *ngFor="let l of labourNames" [value]="l.l_code">{{l.l_code}} - {{l.l_name}}</option>
-                  </select>
+                  <app-searchable-select 
+                    [options]="labourCodeOptions"
+                    [(ngModel)]="item.ic_labour_code"
+                    (ngModelChange)="onLabourCodeSelect(i)"
+                    placeholder="-Select-"
+                    customClass="very-compact">
+                  </app-searchable-select>
                 </td>
                 <td><input type="text" [(ngModel)]="item.ic_particular" readonly /></td>
                 <td><input type="text" [(ngModel)]="item.ic_hsn" readonly /></td>
                 <td>
-                  <select [(ngModel)]="item.ic_type" (change)="calcItem(i)">
-                    <option value="Paid Service">Paid Service</option>
-                    <option value="Expense">Expense</option>
-                    <option value="Free Service">Free Service</option>
-                  </select>
+                  <app-searchable-select 
+                    [options]="jobTypeOptions"
+                    [(ngModel)]="item.ic_type"
+                    (ngModelChange)="calcItem(i)"
+                    placeholder="-Select-"
+                    customClass="very-compact">
+                  </app-searchable-select>
                 </td>
                 <td><input type="number" [(ngModel)]="item.ic_rate" (keyup)="calcItem(i)" /></td>
                 <td><input type="number" [(ngModel)]="item.ic_disc_per" (keyup)="calcItem(i)" /></td>

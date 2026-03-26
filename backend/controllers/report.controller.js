@@ -3,176 +3,213 @@ const pool = require('../config/db');
 // Job Card Summary
 exports.getJobCardSummary = async (req, res) => {
     try {
-        const { from_date, to_date, branch, mechanic, advisor, repair_types, insurance_companies, service_type } = req.body;
-        
-        // Base Query joining with necessary tables
-        let query = `
-            SELECT i.*, 
-                   b.branch_name, b.branch_id,
-                   e1.e_first_name as advisor_name,
-                   e2.e_first_name as mechanic_name,
-                   ic.icompany_name, ic.icompany_gst, ic.icompany_address
-            FROM tbl_invoice_labour i
-            LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch
-            LEFT JOIN tbl_employee e1 ON e1.emp_id = i.inv_advisername
-            LEFT JOIN tbl_employee e2 ON e2.emp_id = i.inv_mechna
-            LEFT JOIN tbl_insurance_company ic ON ic.com_id = i.insurance_id
-            WHERE i.inv_jcard_date BETWEEN ? AND ?
-        `;
+        const { from_date, to_date, branch, mechanic, advisor, repair_types, insurance_companies, service_type, page = 1, pageSize = 10 } = req.body;
+        const offset = (page - 1) * pageSize;
+
+        // Base Filter
+        let whereClause = 'WHERE i.inv_jcard_date BETWEEN ? AND ?';
         const params = [from_date, to_date];
 
-        if (branch) { query += ' AND i.inv_branch = ?'; params.push(branch); }
-        if (mechanic && mechanic.length > 0) { query += ' AND i.inv_mechna IN (?)'; params.push(mechanic); }
-        if (advisor && advisor.length > 0) { query += ' AND i.inv_advisername IN (?)'; params.push(advisor); }
-        if (repair_types && repair_types.length > 0) { query += ' AND i.inv_repair_typ IN (?)'; params.push(repair_types); }
-        if (insurance_companies && insurance_companies.length > 0) { query += ' AND i.insurance_id IN (?)'; params.push(insurance_companies); }
+        if (branch) { whereClause += ' AND i.inv_branch = ?'; params.push(branch); }
+        if (mechanic && mechanic.length > 0) { whereClause += ' AND i.inv_mechna IN (?)'; params.push(mechanic); }
+        if (advisor && advisor.length > 0) { whereClause += ' AND i.inv_advisername IN (?)'; params.push(advisor); }
+        if (repair_types && repair_types.length > 0) { whereClause += ' AND i.inv_repair_typ IN (?)'; params.push(repair_types); }
+        if (insurance_companies && insurance_companies.length > 0) { whereClause += ' AND i.insurance_id IN (?)'; params.push(insurance_companies); }
         
-        // Service type mapping (Legacy mapping: Paid Service -> Cash)
         if (service_type) {
             if (service_type === 'Paid Service') {
-                query += " AND (i.inv_type = 'Paid Service' OR i.inv_type = 'Cash')";
+                whereClause += " AND (i.inv_type = 'Paid Service' OR i.inv_type = 'Cash')";
             } else if (service_type === 'Free Service') {
-                query += " AND (i.inv_type = 'Free Service' OR i.inv_type = 'Free')";
+                whereClause += " AND (i.inv_type = 'Free Service' OR i.inv_type = 'Free')";
             } else {
-                query += ' AND i.inv_type = ?';
+                whereClause += ' AND i.inv_type = ?';
                 params.push(service_type);
             }
         }
 
-        query += ' ORDER BY i.inv_jcard_date DESC';
+        // SQL Queries
+        const totalsQuery = `
+            SELECT 
+                COUNT(*) as total_count,
+                COALESCE(SUM(CASE WHEN i.inv_repair_typ LIKE '%Free%' THEN 1 ELSE 0 END), 0) as total_free_service,
+                COALESCE(SUM(CASE WHEN i.inv_repair_typ NOT LIKE '%Free%' THEN 1 ELSE 0 END), 0) as total_paid_service,
+                COALESCE(SUM(CAST(NULLIF(i.inv_taxtotal, '') AS DECIMAL(12,2))), 0) as total_taxable,
+                COALESCE(SUM(CAST(NULLIF(i.inv_disc_total, '') AS DECIMAL(12,2))), 0) as total_discount,
+                COALESCE(SUM(CAST(NULLIF(i.inv_sgstotal, '') AS DECIMAL(12,2))), 0) as total_sgst,
+                COALESCE(SUM(CAST(NULLIF(i.inv_gsttotal, '') AS DECIMAL(12,2))), 0) as total_cgst,
+                COALESCE(SUM(CAST(NULLIF(i.inv_cesstotal, '') AS DECIMAL(12,2))), 0) as total_kfc,
+                COALESCE(SUM(CAST(NULLIF(i.inv_total, '') AS DECIMAL(12,2))), 0) as grand_total
+            FROM tbl_invoice_labour i
+            ${whereClause}
+        `;
 
-        const [rows] = await pool.query(query, params);
+        const detailedTotalsQuery = `
+            SELECT 
+                COALESCE(SUM(CASE WHEN lc.lc_type = 'labour' THEN CAST(NULLIF(lc.lc_tax_amunt, '') AS DECIMAL(12,2)) ELSE 0 END), 0) as labour_taxable,
+                COALESCE(SUM(CASE WHEN lc.lc_type = 'spare' OR lc.lc_type = 'parts' THEN CAST(NULLIF(lc.lc_tax_amunt, '') AS DECIMAL(12,2)) ELSE 0 END), 0) as parts_taxable,
+                COALESCE(SUM(CASE WHEN lc.lc_type = 'labour' THEN (CAST(NULLIF(lc.lc_sgst_a, '') AS DECIMAL(12,2)) + CAST(NULLIF(lc.lc_cgst_a, '') AS DECIMAL(12,2))) ELSE 0 END), 0) as labour_gst,
+                COALESCE(SUM(CASE WHEN lc.lc_type = 'spare' OR lc.lc_type = 'parts' THEN (CAST(NULLIF(lc.lc_sgst_a, '') AS DECIMAL(12,2)) + CAST(NULLIF(lc.lc_cgst_a, '') AS DECIMAL(12,2))) ELSE 0 END), 0) as parts_gst
+            FROM tbl_invoice_labour_cost lc
+            JOIN tbl_invoice_labour i ON i.inv_id = lc.ic_inv_id
+            ${whereClause}
+        `;
 
-        // Fetch detailed items for all these invoices to calculate Labour vs Parts totals
-        const invoiceIds = rows.map(r => r.inv_id);
-        let labourTaxable = 0;
-        let partsTaxable = 0;
-        let labourGst = 0;
-        let partsGst = 0;
+        const mainQuery = `
+            SELECT i.*, b.branch_name, e.e_first_name as mechanic_name, a.e_first_name as advisor_name
+            FROM tbl_invoice_labour i
+            LEFT JOIN tbl_branch b ON i.inv_branch = b.b_id
+            LEFT JOIN tbl_employee e ON i.inv_mechna = e.emp_id
+            LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+            ${whereClause}
+            ORDER BY i.inv_jcard_date DESC, i.inv_id DESC
+            LIMIT ? OFFSET ?
+        `;
 
-        if (invoiceIds.length > 0) {
-            const [items] = await pool.query(
-                'SELECT lc_sacode, lc_tax_amunt, lc_sgst_a, lc_cgst_a FROM tbl_invoice_labour_cost WHERE ic_inv_id IN (?)',
-                [invoiceIds]
-            );
-            
-            const parse = (val) => isNaN(parseFloat(val)) ? 0 : parseFloat(val);
+        // Execute queries in parallel for maximum speed
+        const [
+            [totalsRows],
+            [detailedRows],
+            [rows]
+        ] = await Promise.all([
+            pool.query(totalsQuery, params),
+            pool.query(detailedTotalsQuery, params),
+            pool.query(mainQuery, [...params, parseInt(pageSize), parseInt(offset)])
+        ]);
 
-            items.forEach(item => {
-                const taxable = parse(item.lc_tax_amunt);
-                const gst = parse(item.lc_sgst_a) + parse(item.lc_cgst_a);
-                
-                // Typical HSN for Labour starts with 9987 (Services related to motor vehicles)
-                if (item.lc_sacode && item.lc_sacode.startsWith('9987')) {
-                    labourTaxable += taxable;
-                    labourGst += gst;
-                } else {
-                    partsTaxable += taxable;
-                    partsGst += gst;
-                }
-            });
-        }
+        const totalsResult = totalsRows[0];
+        const detailed = detailedRows[0];
+        const totalCount = totalsResult.total_count || 0;
 
-        // Calculate Overall Totals Safely
-        const parse = (val) => isNaN(parseFloat(val)) ? 0 : parseFloat(val);
+        const totals = {
+            total_paid_service: parseFloat(totalsResult.total_paid_service || 0),
+            total_free_service: parseFloat(totalsResult.total_free_service || 0),
+            total_expense: parseFloat(totalsResult.total_expense || 0),
+            total_discount: parseFloat(totalsResult.total_discount || 0),
+            total_taxable: parseFloat(totalsResult.total_taxable || 0),
+            total_sgst: parseFloat(totalsResult.total_sgst || 0),
+            total_cgst: parseFloat(totalsResult.total_cgst || 0),
+            total_kfc: parseFloat(totalsResult.total_kfc || 0),
+            grand_total: parseFloat(totalsResult.grand_total || 0),
+            labour_taxable: parseFloat(detailed.labour_taxable || 0),
+            parts_taxable: parseFloat(detailed.parts_taxable || 0),
+            labour_amount: parseFloat(detailed.labour_taxable || 0) + parseFloat(detailed.labour_gst || 0),
+            parts_amount: parseFloat(detailed.parts_taxable || 0) + parseFloat(detailed.parts_gst || 0),
+            total_gst: parseFloat(totalsResult.total_sgst || 0) + parseFloat(totalsResult.total_cgst || 0)
+        };
 
-        const totals = rows.reduce((acc, r) => {
-            acc.total_paid_service += (r.inv_type === 'Paid Service' || r.inv_type === 'Cash') ? parse(r.inv_total) : 0;
-            acc.total_free_service += (r.inv_type === 'Free Service' || r.inv_type === 'Free') ? parse(r.inv_total) : 0;
-            acc.total_expense += (r.inv_type === 'Expense') ? parse(r.inv_total) : 0;
-            acc.total_discount += parse(r.inv_disc_total);
-            acc.total_taxable += parse(r.inv_taxtotal);
-            acc.total_sgst += parse(r.inv_sgstotal);
-            acc.total_cgst += parse(r.inv_gsttotal);
-            acc.total_kfc += parse(r.inv_cesstotal);
-            acc.grand_total += parse(r.inv_total);
-            return acc;
-        }, {
-            total_paid_service: 0, total_free_service: 0, total_expense: 0,
-            total_discount: 0, total_taxable: 0, total_sgst: 0,
-            total_cgst: 0, total_kfc: 0, grand_total: 0
-        });
-
-        // Add detailed totals
-        totals.labour_taxable = labourTaxable;
-        totals.parts_taxable = partsTaxable;
-        totals.labour_amount = labourTaxable + labourGst;
-        totals.parts_amount = partsTaxable + partsGst;
-        totals.total_gst = totals.total_sgst + totals.total_cgst;
-
-        res.json({ data: rows, totals });
+        res.json({ data: rows, total: totalCount, totals, page: parseInt(page), pageSize: parseInt(pageSize) });
     } catch (err) {
         console.error('getJobCardSummary error:', err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
 
+
 // Job Card Statement (flat table with same filters as Summary)
 exports.getJobCardStatement = async (req, res) => {
     try {
         const { from_date, to_date, branch, service_type, mechanic, advisor,
-                repair_types, insurance_companies } = req.body;
+                repair_types, insurance_companies, labour_codes, page = 1, pageSize = 10 } = req.body;
+        const offset = (page - 1) * pageSize;
 
-        let query = `
-            SELECT i.*,
-                   b.branch_name, b.branch_id,
-                   e1.e_first_name as advisor_name,
-                   e2.e_first_name as mechanic_name,
-                   ic.icompany_name
-            FROM tbl_invoice_labour i
-            LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch
-            LEFT JOIN tbl_employee e1 ON e1.emp_id = i.inv_advisername
-            LEFT JOIN tbl_employee e2 ON e2.emp_id = i.inv_mechna
-            LEFT JOIN tbl_insurance_company ic ON ic.com_id = i.insurance_id
-            WHERE i.inv_jcard_date BETWEEN ? AND ?
-        `;
+        // Base Filter
+        let whereClause = 'WHERE i.inv_jcard_date BETWEEN ? AND ?';
         const params = [from_date, to_date];
 
-        if (branch) { query += ' AND i.inv_branch = ?'; params.push(branch); }
-        if (mechanic && mechanic.length > 0) { query += ' AND i.inv_mechna IN (?)'; params.push(mechanic); }
-        if (advisor && advisor.length > 0) { query += ' AND i.inv_advisername IN (?)'; params.push(advisor); }
-        if (repair_types && repair_types.length > 0) { query += ' AND i.inv_repair_typ IN (?)'; params.push(repair_types); }
-        if (insurance_companies && insurance_companies.length > 0) { query += ' AND i.insurance_id IN (?)'; params.push(insurance_companies); }
+        if (branch) { whereClause += ' AND i.inv_branch = ?'; params.push(branch); }
+        if (mechanic && mechanic.length > 0) { whereClause += ' AND i.inv_mechna IN (?)'; params.push(mechanic); }
+        if (advisor && advisor.length > 0) { whereClause += ' AND i.inv_advisername IN (?)'; params.push(advisor); }
+        if (repair_types && repair_types.length > 0) { whereClause += ' AND i.inv_repair_typ IN (?)'; params.push(repair_types); }
+        if (insurance_companies && insurance_companies.length > 0) { whereClause += ' AND i.insurance_id IN (?)'; params.push(insurance_companies); }
+
+        if (labour_codes && labour_codes.length > 0) {
+            whereClause += ' AND i.inv_id IN (SELECT ic_inv_id FROM tbl_invoice_labour_cost WHERE lc_sacode IN (?))';
+            params.push(labour_codes);
+        }
 
         if (service_type) {
             if (service_type === 'Paid Service') {
-                query += " AND (i.inv_type = 'Paid Service' OR i.inv_type = 'Cash')";
+                whereClause += " AND (i.inv_type = 'Paid Service' OR i.inv_type = 'Cash')";
             } else if (service_type === 'Free Service') {
-                query += " AND (i.inv_type = 'Free Service' OR i.inv_type = 'Free')";
+                whereClause += " AND (i.inv_type = 'Free Service' OR i.inv_type = 'Free')";
             } else {
-                query += ' AND i.inv_type = ?'; params.push(service_type);
+                whereClause += ' AND i.inv_type = ?'; params.push(service_type);
             }
         }
 
-        query += ' ORDER BY i.inv_jcard_date DESC';
+        // SQL Queries
+        const totalsQuery = `
+            SELECT 
+                COUNT(*) as total_count,
+                COALESCE(SUM(CAST(NULLIF(i.inv_taxtotal, '') AS DECIMAL(12,2))), 0) as total_taxable,
+                COALESCE(SUM(CAST(NULLIF(i.inv_disc_total, '') AS DECIMAL(12,2))), 0) as total_discount,
+                COALESCE(SUM(CAST(NULLIF(i.inv_cesstotal, '') AS DECIMAL(12,2))), 0) as total_kfc,
+                COALESCE(SUM(CAST(NULLIF(i.inv_total, '') AS DECIMAL(12,2))), 0) as grand_total
+            FROM tbl_invoice_labour i
+            ${whereClause}
+        `;
 
-        const [rows] = await pool.query(query, params);
+        const mainQuery = `
+            SELECT i.*, b.branch_name, e.e_first_name as mechanic_name, a.e_first_name as advisor_name
+            FROM tbl_invoice_labour i
+            LEFT JOIN tbl_branch b ON i.inv_branch = b.b_id
+            LEFT JOIN tbl_employee e ON i.inv_mechna = e.emp_id
+            LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+            ${whereClause}
+            ORDER BY i.inv_jcard_date DESC, i.inv_id DESC
+            LIMIT ? OFFSET ?
+        `;
 
-        // Attach labour items to each invoice
-        for (let inv of rows) {
-            const [items] = await pool.query(
-                'SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?',
-                [inv.inv_id]
+        // Execute queries in parallel
+        const [
+            [totalsRows],
+            [labourCountResult],
+            [rows]
+        ] = await Promise.all([
+            pool.query(totalsQuery, params),
+            pool.query(`
+                SELECT COUNT(*) as total_labour_codes 
+                FROM tbl_invoice_labour_cost lc
+                JOIN tbl_invoice_labour i ON i.inv_id = lc.ic_inv_id
+                ${whereClause}
+            `, params),
+            pool.query(mainQuery, [...params, parseInt(pageSize), parseInt(offset)])
+        ]);
+
+        const totalsResult = totalsRows[0];
+        const totalCount = totalsResult.total_count || 0;
+
+        const totals = {
+            total_taxable: parseFloat(totalsResult.total_taxable || 0),
+            total_discount: parseFloat(totalsResult.total_discount || 0),
+            total_kfc: parseFloat(totalsResult.total_kfc || 0),
+            grand_total: parseFloat(totalsResult.grand_total || 0),
+            total_labour_codes: labourCountResult[0].total_labour_codes || 0
+        };
+
+        // 3. Attach labour items to the paginated rows efficiently
+        if (rows.length > 0) {
+            const invIds = rows.map(r => r.inv_id);
+            const [allItems] = await pool.query(
+                'SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id IN (?)',
+                [invIds]
             );
-            inv.items = items;
+            
+            // Map items back to invoices
+            for (let inv of rows) {
+                inv.items = allItems.filter(it => it.ic_inv_id === inv.inv_id);
+                inv.labour_code = inv.items.map(it => it.lc_sacode).join(', ');
+            }
         }
 
-        // Build totals
-        const parse = (val) => isNaN(parseFloat(val)) ? 0 : parseFloat(val);
-        const totals = rows.reduce((acc, r) => {
-            acc.total_taxable  += parse(r.inv_taxtotal);
-            acc.total_discount += parse(r.inv_disc_total);
-            acc.total_kfc      += parse(r.inv_cesstotal);
-            acc.grand_total    += parse(r.inv_total);
-            return acc;
-        }, { total_taxable: 0, total_discount: 0, total_kfc: 0, grand_total: 0 });
-
-        res.json({ data: rows, totals });
+        res.json({ data: rows, total: totalCount, totals, page: parseInt(page), pageSize: parseInt(pageSize) });
     } catch (err) {
         console.error('getJobCardStatement error:', err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
+
+
 
 
 // Previous Labour Bills (with Pagination)

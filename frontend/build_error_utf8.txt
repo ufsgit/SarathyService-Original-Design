@@ -1,0 +1,225 @@
+﻿node.exe : - Building...
+At C:\Program 
+Files\nodejs\npx.ps1:29 
+char:3
++   & $NODE_EXE 
+$NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (-  
+   Building...:String)    
+ [], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+
+Initial chunk files   | Names                        |  Raw size | Estimated transfer size
+chunk-7KSJLNFW.js     | -                            | 167.12 kB |                48.33 kB
+styles-RUSMAKOT.css   | styles                       | 101.54 kB |                 9.71 kB
+chunk-X6DXQJ3F.js     | -                            |  85.54 kB |                21.31 kB
+polyfills-FFHMD2TL.js | polyfills                    |  33.71 kB |                11.02 kB
+chunk-2QT6REER.js     | -                            |  18.37 kB |                 5.39 kB
+main-N7TO444K.js      | main                         |  10.14 kB |                 2.05 kB
+chunk-ZWX7KJDE.js     | -                            |   1.35 kB |               545 bytes
+
+                      | Initial total                | 417.77 kB |                98.35 kB
+
+Lazy chunk files      | Names                        |  Raw size | Estimated transfer size
+chunk-JSOAMAG6.js     | -                            | 131.46 kB |                26.47 kB
+chunk-4755IQAH.js     | browser                      |  62.22 kB |                16.49 kB
+chunk-Z4AJVLCD.js     | -                            |  35.92 kB |                 7.42 kB
+chunk-TUDKND6O.js     | insurance-invoice-component  |  29.16 kB |                 6.09 kB
+chunk-ZTS3KZUU.js     | labour-invoice-component     |  27.98 kB |                 5.80 kB
+chunk-66LM6ZLS.js     | job-card-summary-component   |  26.33 kB |                 6.18 kB
+chunk-LVK7B4X4.js     | job-card-statement-component |  26.32 kB |                 6.22 kB
+chunk-NDN7EB7U.js     | list-labour-component        |  26.10 kB |                 4.50 kB
+chunk-M5TTSBTK.js     | -                            |  23.59 kB |                 6.40 kB
+chunk-JC7XI4PO.js     | login-component              |  17.17 kB |                 3.89 kB
+chunk-AOLIMHJF.js     | job-card-detail-component    |  12.54 kB |                 3.22 kB
+chunk-D625Y365.js     | list-customer-component      |  11.80 kB |                 3.43 kB
+chunk-GYGEOMCB.js     | invoice-edit-component       |  11.22 kB |                 2.97 kB
+chunk-HORPSZDM.js     | list-employee-component      |  10.71 kB |                 3.07 kB
+chunk-2OI7EKFC.js     | previous-bills-component     |   9.87 kB |                 3.11 kB
+...and 28 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation failed. [12.045 seconds]
+
+Γû▓ [WARNING] src/app/feat
+ures/customer/list-custome
+r/list-customer.component.
+css exceeded maximum 
+budget. Budget 2.00 kB 
+was not met by 1.54 kB 
+with a total of 3.54 kB.
+
+
+Γû▓ [WARNING] src/app/feat
+ures/customer/edit-custome
+r/edit-customer.component.
+css exceeded maximum 
+budget. Budget 2.00 kB 
+was not met by 211 bytes 
+with a total of 2.21 kB.
+
+
+Γû▓ [WARNING] src/app/feat
+ures/employee/list-employe
+e/list-employee.component.
+css exceeded maximum 
+budget. Budget 2.00 kB 
+was not met by 685 bytes 
+with a total of 2.67 kB.
+
+
+Γû▓ [WARNING] src/app/feat
+ures/reports/previous-bill
+s/previous-bills.component
+.css exceeded maximum 
+budget. Budget 2.00 kB 
+was not met by 135 bytes 
+with a total of 2.13 kB.
+
+
+Γû▓ [WARNING] src/app/feat
+ures/invoice/labour-invoic
+e/labour-invoice.component
+.css exceeded maximum 
+budget. Budget 2.00 kB 
+was not met by 1.51 kB 
+with a total of 3.51 kB.
+
+
+Γû▓ [WARNING] src/app/feat
+ures/employee/add-employee
+/add-employee.component.cs
+s exceeded maximum 
+budget. Budget 2.00 kB 
+was not met by 562 bytes 
+with a total of 2.55 kB.
+
+
+Γû▓ [WARNING] src/app/feat
+ures/customer/add-customer
+/add-customer.component.cs
+s exceeded maximum 
+budget. Budget 2.00 kB 
+was not met by 169 bytes 
+with a total of 2.17 kB.
+
+
+Γû▓ [WARNING] src/app/feat
+ures/reports/job-card-summ
+ary/job-card-summary.compo
+nent.css exceeded maximum 
+budget. Budget 2.00 kB 
+was not met by 2.48 kB 
+with a total of 4.48 kB.
+
+
+Γû▓ [WARNING] src/app/shar
+ed/components/searchable-s
+elect/searchable-select.co
+mponent.css exceeded 
+maximum budget. Budget 
+2.00 kB was not met by 15 
+bytes with a total of 
+2.01 kB.
+
+
+Γû▓ [WARNING] src/app/feat
+ures/invoice/ready-bills/r
+eady-bills.component.css 
+exceeded maximum budget. 
+Budget 2.00 kB was not 
+met by 565 bytes with a 
+total of 2.55 kB.
+
+
+Γû▓ [WARNING] src/app/feat
+ures/reports/job-card-stat
+ement/job-card-statement.c
+omponent.css exceeded 
+maximum budget. Budget 
+2.00 kB was not met by 
+2.43 kB with a total of 
+4.43 kB.
+
+
+Γû▓ [WARNING] src/app/feat
+ures/invoice/invoice-edit/
+invoice-edit.component.css
+ exceeded maximum budget. 
+Budget 2.00 kB was not 
+met by 746 bytes with a 
+total of 2.73 kB.
+
+
+Γû▓ [WARNING] src/app/feat
+ures/vehicle-history/vehic
+le-history.component.css 
+exceeded maximum budget. 
+Budget 2.00 kB was not 
+met by 401 bytes with a 
+total of 2.39 kB.
+
+
+Γû▓ [WARNING] src/app/feat
+ures/employee/edit-employe
+e/edit-employee.component.
+css exceeded maximum 
+budget. Budget 2.00 kB 
+was not met by 113 bytes 
+with a total of 2.11 kB.
+
+
+Γû▓ [WARNING] src/app/feat
+ures/invoice/insurance-inv
+oice/insurance-invoice.com
+ponent.css exceeded 
+maximum budget. Budget 
+2.00 kB was not met by 
+1.39 kB with a total of 
+3.39 kB.
+
+
+Γû▓ [WARNING] css-inline-f
+onts:https://fonts.googlea
+pis.com/css2?family=Inter:
+wght@300;400;500;600;700&d
+isplay=swap exceeded 
+maximum budget. Budget 
+2.00 kB was not met by 
+16.43 kB with a total of 
+18.43 kB.
+
+
+X [ERROR] src/app/features
+/reports/job-card-summary/
+job-card-summary.component
+.css exceeded maximum 
+budget. Budget 4.00 kB 
+was not met by 489 bytes 
+with a total of 4.48 kB.
+
+
+X [ERROR] src/app/features
+/reports/job-card-statemen
+t/job-card-statement.compo
+nent.css exceeded maximum 
+budget. Budget 4.00 kB 
+was not met by 440 bytes 
+with a total of 4.43 kB.
+
+
+X [ERROR] css-inline-fonts
+:https://fonts.googleapis.
+com/css2?family=Inter:wght
+@300;400;500;600;700&displ
+ay=swap exceeded maximum 
+budget. Budget 4.00 kB 
+was not met by 14.43 kB 
+with a total of 18.43 kB.
+
+
