@@ -411,6 +411,33 @@ export class JobCardStatementComponent implements OnInit {
     this.exportToCSV(this.results(), 'JobCardStatement_Visible.csv');
   }
 
+  getSelectedLabel(ids: any[], type: 'mechanics' | 'advisors' | 'insuranceCompanies' | 'repairTypes' | 'labourCodes'): string {
+    if (!ids || ids.length === 0) return '';
+    if (ids.length > 1) return `${ids.length} Selected`;
+    
+    // For single selection
+    const id = ids[0];
+    const opts = this.options();
+    switch (type) {
+      case 'mechanics':
+        const m = opts.mechanics.find((x: any) => x.emp_id === id);
+        return m ? `${m.e_first_name} [${m.e_code}]` : id;
+      case 'advisors':
+        const a = opts.advisors.find((x: any) => x.emp_id === id);
+        return a ? `${a.e_first_name} [${a.e_code}]` : id;
+      case 'repairTypes':
+        return id;
+      case 'insuranceCompanies':
+        const c = opts.insuranceCompanies.find((x: any) => x.com_id === id);
+        return c ? c.icompany_name : id;
+      case 'labourCodes':
+        const l = opts.labourNames.find((x: any) => x.l_code === id);
+        return l ? `${l.l_name}(${l.l_code})` : id;
+      default:
+        return id;
+    }
+  }
+
   trackByInvId(index: number, item: any): number {
     return item.inv_id;
   }

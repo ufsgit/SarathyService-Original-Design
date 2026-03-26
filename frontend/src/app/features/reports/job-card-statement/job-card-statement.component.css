@@ -177,8 +177,8 @@
 }
 
 .th-input {
-  width: 80px;
-  font-size: 11px;
+  min-width: 100px;
+  font-size: 14px;
   border: 1px solid #bbb;
   background: #fff;
   padding: 3px 4px;
@@ -192,15 +192,29 @@
 .th-input.th-sm  { width: 55px; }
 .th-input.th-wide { width: 170px; }
 
+::ng-deep .mat-mdc-select-value {
+  color: #000 !important;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+::ng-deep .mat-mdc-select-placeholder {
+  color: #666 !important;
+  font-size: 12px;
+}
+
 .main-header th mat-select {
-  font-size: 11px;
+  font-size: 14px;
   background: #fff;
   border: 1px solid #bbb;
   border-radius: 2px;
   padding: 3px 4px;
-  min-width: 130px;
+  min-width: 220px;
   color: #111;
   display: block;
+  min-height: 32px;   /* increase height */
+  display: flex;
+  align-items: center;
 }
 
 .legacy-table tbody tr:nth-child(odd) { background: #f9f9f9; }
