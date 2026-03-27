@@ -241,7 +241,11 @@ exports.getPreviousLabourBills = async (req, res) => {
 
         // Fetch paginated data
         const [rows] = await pool.query(
-            `SELECT * FROM tbl_invoice_labour ${whereClause} ORDER BY inv_id DESC LIMIT ? OFFSET ?`,
+            `SELECT tbl_invoice_labour.*, tbl_branch.branch_name 
+             FROM tbl_invoice_labour 
+             LEFT JOIN tbl_branch ON tbl_invoice_labour.inv_branch = tbl_branch.b_id 
+             ${whereClause} 
+             ORDER BY tbl_invoice_labour.inv_id DESC LIMIT ? OFFSET ?`,
             [...params, pageSize, offset]
         );
 
@@ -274,7 +278,11 @@ exports.getPreviousInsuranceBills = async (req, res) => {
 
         // Fetch paginated data
         const [rows] = await pool.query(
-            `SELECT * FROM tbl_invoice_labour ${whereClause} ORDER BY inv_id DESC LIMIT ? OFFSET ?`,
+            `SELECT tbl_invoice_labour.*, tbl_branch.branch_name 
+             FROM tbl_invoice_labour 
+             LEFT JOIN tbl_branch ON tbl_invoice_labour.inv_branch = tbl_branch.b_id 
+             ${whereClause} 
+             ORDER BY tbl_invoice_labour.inv_id DESC LIMIT ? OFFSET ?`,
             [...params, pageSize, offset]
         );
 
