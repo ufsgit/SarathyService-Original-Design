@@ -71,16 +71,17 @@ exports.login = async (req, res) => {
 exports.changeAdminPassword = async (req, res) => {
     try {
         const { oldPassword, newPassword } = req.body;
-        const [rows] = await pool.query('SELECT * FROM admin_info WHERE admin_id = ?', [req.user.id]);
+        const [rows] = await pool.query('SELECT * FROM tbl_login WHERE login_id = ? AND role = 1', [req.user.id]);
         if (rows.length === 0) return res.status(404).json({ message: 'Admin not found' });
 
-        const isMatch = await bcrypt.compare(oldPassword, rows[0].admin_password);
+        const isMatch = await bcrypt.compare(oldPassword, rows[0].pwd);
         if (!isMatch) return res.status(401).json({ message: 'Old password incorrect' });
 
         const hashed = await bcrypt.hash(newPassword, 10);
-        await pool.query('UPDATE admin_info SET admin_password = ? WHERE admin_id = ?', [hashed, req.user.id]);
+        await pool.query('UPDATE tbl_login SET pwd = ? WHERE login_id = ?', [hashed, req.user.id]);
         res.json({ message: 'Password changed' });
     } catch (err) {
+        console.log(err);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -89,16 +90,17 @@ exports.changeAdminPassword = async (req, res) => {
 exports.changeStaffPassword = async (req, res) => {
     try {
         const { oldPassword, newPassword } = req.body;
-        const [rows] = await pool.query('SELECT * FROM login_details WHERE lg_id = ?', [req.user.id]);
+        const [rows] = await pool.query('SELECT * FROM tbl_login WHERE login_id = ? AND role = 2', [req.user.id]);
         if (rows.length === 0) return res.status(404).json({ message: 'Staff not found' });
 
-        const isMatch = await bcrypt.compare(oldPassword, rows[0].login_password);
+        const isMatch = await bcrypt.compare(oldPassword, rows[0].pwd);
         if (!isMatch) return res.status(401).json({ message: 'Old password incorrect' });
 
         const hashed = await bcrypt.hash(newPassword, 10);
-        await pool.query('UPDATE login_details SET login_password = ? WHERE lg_id = ?', [hashed, req.user.id]);
+        await pool.query('UPDATE tbl_login SET pwd = ? WHERE login_id = ?', [hashed, req.user.id]);
         res.json({ message: 'Password changed' });
     } catch (err) {
+        console.log(err);
         res.status(500).json({ message: 'Server error' });
     }
 };
