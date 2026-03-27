@@ -22,6 +22,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
   @Input() searchPlaceholder: string = 'Search...';
   @Input() customClass: string = '';
   @Input() displayFormatter?: (option: string) => string;
+  @Input() disabled: boolean = false;
 
   selectedValue: string = '';
   searchQuery: string = '';
@@ -46,6 +47,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
   }
 
   toggleDropdown() {
+    if (this.disabled) return;
     this.isOpen = !this.isOpen;
     if (this.isOpen) {
       setTimeout(() => {
@@ -77,7 +79,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
   }
 
   setDisabledState?(isDisabled: boolean): void {
-    // Implement if needed
+    this.disabled = isDisabled;
   }
 
   @HostListener('document:click', ['$event'])

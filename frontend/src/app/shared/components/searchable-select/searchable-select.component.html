@@ -1,5 +1,5 @@
 <div class="searchable-select-container" [class.open]="isOpen" [ngClass]="customClass">
-  <div class="select-box" (click)="toggleDropdown()" [class.open]="isOpen">
+  <div class="select-box" (click)="toggleDropdown()" [class.open]="isOpen" [class.disabled]="disabled">
     <div class="selected-text">{{ getDisplayValue() || placeholder }}</div>
     <div class="arrow-container">
       <i class="arrow" [class.up]="isOpen" [class.down]="!isOpen"></i>

@@ -314,6 +314,36 @@ export class JobCardSummaryComponent implements OnInit {
       next: (d: any) => {
         this.options.set(d);
         this.branchOptions = ['--Select Branch--', ...this.options().branches.map((b: any) => `${b.branch_name}(${b.branch_id})`)];
+        
+        if (!this.isAdmin()) {
+          try {
+            const userStr = localStorage.getItem('currentUser');
+            if (userStr) {
+              const user = JSON.parse(userStr);
+              if (user.branchId || user.branchName || user.e_branch || user.branch) {
+                const searchStr1 = String(user.branchId || '').trim().toLowerCase();
+                const searchStr2 = String(user.branchName || user.e_branch || user.branch || '').trim().toLowerCase();
+                
+                const b = this.options().branches.find((br: any) => {
+                  const brId = String(br.b_id).toLowerCase();
+                  const brStrId = String(br.branch_id || '').toLowerCase();
+                  const brName = String(br.branch_name || '').toLowerCase();
+                  
+                  return (searchStr1 && (brId === searchStr1 || brStrId === searchStr1 || brName === searchStr1)) ||
+                         (searchStr2 && (brId === searchStr2 || brStrId === searchStr2 || brName === searchStr2));
+                });
+                
+                if (b) {
+                  this.filters.branch_label = `${b.branch_name}(${b.branch_id})`;
+                  this.branch.set([b.b_id]);
+                } else if (searchStr2 || searchStr1) {
+                  // Fallback: just show the string if we couldn't map it properly to backend list
+                  this.filters.branch_label = user.branchName || user.e_branch || user.branch || user.branchId;
+                }
+              }
+            }
+          } catch(e) {}
+        }
       },
       error: () => this.notify.error('Failed to load filter options')
     });

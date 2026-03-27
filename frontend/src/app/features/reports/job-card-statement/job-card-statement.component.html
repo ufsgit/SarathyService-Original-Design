@@ -19,7 +19,8 @@
           [(ngModel)]="filters.branch_label" 
           (ngModelChange)="onBranchSelect($event)"
           placeholder="--Select Branch--"
-          customClass="compact">
+          customClass="compact"
+          [disabled]="!isAdmin()">
         </app-searchable-select>
       </div>
       <div class="filter-row">
