@@ -7,7 +7,7 @@ exports.getJobCardSummary = async (req, res) => {
         const offset = (page - 1) * pageSize;
 
         // Base Filter
-        let whereClause = 'WHERE i.inv_jcard_date BETWEEN ? AND ?';
+        let whereClause = 'WHERE i.inv_inv_date BETWEEN ? AND ?';
         const params = [from_date, to_date];
 
         if (branch && branch.length > 0) {
@@ -64,7 +64,7 @@ exports.getJobCardSummary = async (req, res) => {
             LEFT JOIN tbl_employee e ON i.inv_mechna = e.emp_id
             LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
             ${whereClause}
-            ORDER BY i.inv_jcard_date DESC, i.inv_id DESC
+            ORDER BY i.inv_inv_date DESC, i.inv_id DESC
             LIMIT ? OFFSET ?
         `;
 
@@ -116,7 +116,7 @@ exports.getJobCardStatement = async (req, res) => {
         const offset = (page - 1) * pageSize;
 
         // Base Filter
-        let whereClause = 'WHERE i.inv_jcard_date BETWEEN ? AND ?';
+        let whereClause = 'WHERE i.inv_inv_date BETWEEN ? AND ?';
         const params = [from_date, to_date];
 
         if (branch && branch.length > 0) {
@@ -162,7 +162,7 @@ exports.getJobCardStatement = async (req, res) => {
             LEFT JOIN tbl_employee e ON i.inv_mechna = e.emp_id
             LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
             ${whereClause}
-            ORDER BY i.inv_jcard_date DESC, i.inv_id DESC
+            ORDER BY i.inv_inv_date DESC, i.inv_id DESC
             LIMIT ? OFFSET ?
         `;
 

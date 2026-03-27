@@ -44,11 +44,11 @@
       </div>
       <div class="date-row">
         <div class="date-group">
-          <label>Date From</label>
+          <label>Inv. Date From</label>
           <input type="date" [ngModel]="fromDate()" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="fromDate.set($event)">
         </div>
         <div class="date-group">
-          <label>Date To</label>
+          <label>Inv. Date To</label>
           <input type="date" [ngModel]="toDate()" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="toDate.set($event)">
         </div>
       </div>
