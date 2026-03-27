@@ -24,12 +24,9 @@ export class AddCustomerComponent implements OnInit {
     });
   }
   onSubmit(){
-    if(!this.form.c_name||!this.form.c_reg_no||!this.form.c_chassis_no||!this.form.c_engine_no){
-      this.notify.error('Name, Reg No, Chassis No, and Engine No are required');
+    if(!this.form.c_name||!this.form.c_reg_no||!this.form.c_chassis_no||!this.form.c_engine_no||!this.form.model_name){
+      this.notify.error('Customer Name, Reg No, Chassis No, Engine No, and Model Name are required');
       return;
-    }
-    if (this.auth.currentUser?.branchId) {
-      this.form.c_branch = this.auth.currentUser.branchId;
     }
     this.api.createCustomer(this.form).subscribe({next:()=>{this.notify.success('Created');const base = this.auth.isAdmin ? '/admin' : '/staff';this.router.navigate([`${base}/customer/list`]);},error:(e:any)=>this.notify.error(e.error?.message||'Error')});
   }
