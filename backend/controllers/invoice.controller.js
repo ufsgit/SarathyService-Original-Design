@@ -339,12 +339,17 @@ exports.markReady = async (req, res) => {
 // Get ready labour bills with pagination
 exports.getReadyLabourBills = async (req, res) => {
     try {
-        const { page = 1, pageSize = 10, search = '' } = req.query;
+        const { page = 1, pageSize = 10, search = '', branchId } = req.query;
         const offset = (parseInt(page) - 1) * parseInt(pageSize);
         const limit = parseInt(pageSize);
 
         let whereClause = 'WHERE i.status = 0 AND i.ready_status = 1';
         const params = [];
+
+        if (branchId) {
+            whereClause += ' AND i.inv_branch = ?';
+            params.push(branchId);
+        }
 
         if (search) {
             whereClause += ' AND (i.in_registr LIKE ? OR i.inv_cus LIKE ? OR i.inv_job_card_no LIKE ? OR i.inv_no LIKE ?)';
@@ -375,12 +380,17 @@ exports.getReadyLabourBills = async (req, res) => {
 // Get ready insurance bills with pagination
 exports.getReadyInsuranceBills = async (req, res) => {
     try {
-        const { page = 1, pageSize = 10, search = '' } = req.query;
+        const { page = 1, pageSize = 10, search = '', branchId } = req.query;
         const offset = (parseInt(page) - 1) * parseInt(pageSize);
         const limit = parseInt(pageSize);
 
         let whereClause = 'WHERE i.status = 1 AND i.ready_status = 1';
         const params = [];
+
+        if (branchId) {
+            whereClause += ' AND i.inv_branch = ?';
+            params.push(branchId);
+        }
 
         if (search) {
             whereClause += ' AND (i.in_registr LIKE ? OR i.inv_cus LIKE ? OR i.inv_job_card_no LIKE ? OR i.inv_no LIKE ?)';

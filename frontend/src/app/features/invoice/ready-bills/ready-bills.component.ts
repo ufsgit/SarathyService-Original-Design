@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-ready-bills', standalone: true,
@@ -44,7 +45,7 @@ export class ReadyBillsComponent implements OnInit {
     return pages;
   });
 
-  constructor(public api: ApiService, private notify: NotificationService, private route: ActivatedRoute) {
+  constructor(public api: ApiService, private notify: NotificationService, private route: ActivatedRoute, private auth: AuthService) {
     // Re-fetch data whenever page, pageSize or search changes
     effect(() => {
       this.loadBills();
@@ -65,11 +66,16 @@ export class ReadyBillsComponent implements OnInit {
 
   loadBills() {
     this.loading.set(true);
-    const params = {
+    const params: any = {
       page: this.currentPage(),
       pageSize: this.pageSize(),
       search: this.searchText()
     };
+
+    const user = this.auth.currentUser;
+    if (user && user.role === 'staff' && user.branchId) {
+      params['branchId'] = user.branchId;
+    }
 
     const apiCall = this.type() === 'labour' ? 
       this.api.getReadyLabourBills(params) : 
