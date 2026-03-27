@@ -5,10 +5,6 @@ exports.getAll = async (req, res) => {
     try {
         let query = 'SELECT * FROM customer_details';
         const params = [];
-        if (req.query.branchId) {
-            query += ' WHERE c_branch = ?';
-            params.push(req.query.branchId);
-        }
         query += ' ORDER BY c_id DESC';
         const [rows] = await pool.query(query, params);
         res.json(rows);
@@ -31,12 +27,6 @@ exports.dataTable = async (req, res) => {
 
         let whereClause = '';
         let params = [];
-        const { branchId } = req.query;
-
-        if (branchId) {
-            whereClause = 'WHERE c_branch = ?';
-            params.push(branchId);
-        }
 
         if (searchValue) {
             const searchConditions = columns.map(col => `${col} LIKE ?`).join(' OR ');
@@ -48,7 +38,7 @@ exports.dataTable = async (req, res) => {
             columns.forEach(() => params.push(`%${searchValue}%`));
         }
 
-        const [totalRows] = await pool.query('SELECT COUNT(*) as total FROM customer_details' + (branchId ? ' WHERE c_branch = ?' : ''), branchId ? [branchId] : []);
+        const [totalRows] = await pool.query('SELECT COUNT(*) as total FROM customer_details');
         const [filteredRows] = await pool.query(`SELECT COUNT(*) as total FROM customer_details ${whereClause}`, params);
         const [data] = await pool.query(
             `SELECT * FROM customer_details ${whereClause} ORDER BY ${orderBy} ${orderDir} LIMIT ? OFFSET ?`,
@@ -103,15 +93,31 @@ exports.checkRegistration = async (req, res) => {
 // Create customer
 exports.create = async (req, res) => {
     try {
-        const { c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email, c_branch } = req.body;
-        if (!c_name || !c_reg_no || !c_chassis_no || !c_engine_no) {
-            return res.status(400).json({ message: 'Name, Registration No, Chassis No, and Engine No are required' });
+        const { c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email } = req.body;
+        
+        // 1. Check required fields
+        if (!c_name || !c_reg_no || !c_chassis_no || !c_engine_no || !model_name) {
+            return res.status(400).json({ message: 'Customer Name, Registration No, Chassis No, Engine No, and Model Name are required' });
+        }
+
+        // 2. Chassis No & Registration Number Uniqueness check
+        const [existing] = await pool.query(
+            'SELECT * FROM customer_details WHERE c_reg_no = ? OR c_chassis_no = ?',
+            [c_reg_no, c_chassis_no]
+        );
+
+        if (existing.length > 0) {
+            const match = existing[0];
+            let msg = 'Customer already exists with this ';
+            if (match.c_reg_no === c_reg_no) msg += 'Registration Number';
+            else msg += 'Chassis Number';
+            return res.status(400).json({ message: msg });
         }
 
         const [result] = await pool.query(
-            `INSERT INTO customer_details (c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email, c_branch)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email, c_branch || null]
+            `INSERT INTO customer_details (c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email]
         );
         res.status(201).json({ message: 'Customer created successfully', id: result.insertId });
     } catch (error) {
@@ -123,10 +129,10 @@ exports.create = async (req, res) => {
 // Update customer
 exports.update = async (req, res) => {
     try {
-        const { c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email, c_branch } = req.body;
+        const { c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email } = req.body;
         const [result] = await pool.query(
-            `UPDATE customer_details SET c_name=?, c_address=?, c_reg_no=?, c_chassis_no=?, c_engine_no=?, model_name=?, c_contact_no=?, gstin_no=?, c_sales_date=?, c_email=?, c_branch=? WHERE c_id=?`,
-            [c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email, c_branch, req.params.id]
+            `UPDATE customer_details SET c_name=?, c_address=?, c_reg_no=?, c_chassis_no=?, c_engine_no=?, model_name=?, c_contact_no=?, gstin_no=?, c_sales_date=?, c_email=? WHERE c_id=?`,
+            [c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email, req.params.id]
         );
         if (result.affectedRows === 0) return res.status(404).json({ message: 'Customer not found' });
         res.json({ message: 'Customer updated successfully' });

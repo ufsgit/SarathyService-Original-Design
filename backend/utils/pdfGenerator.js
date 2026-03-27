@@ -134,18 +134,31 @@ function generateInvoicePDF(inv, items) {
 
             let rowY = y;
             leftFields.forEach(f => {
-                drawField(f[0], f[1], L, rowY, labelW, valW1, f[2] !== false);
-                rowY += 10.5;
+                const boldLbl = f[2] !== false;
+                doc.fontSize(7.5);
+                const lblH = doc.font(boldLbl ? FONT_BOLD : FONT_REG).heightOfString(String(f[0] || ''), { width: labelW });
+                const valH = doc.font(FONT_REG).heightOfString(String(f[1] || ''), { width: valW1 });
+                let dy = Math.max(lblH, valH);
+                if (dy < 9) dy = 9;
+
+                drawField(f[0], f[1], L, rowY, labelW, valW1, boldLbl);
+                rowY += dy + 1.5;
             });
             let rY = y;
             rightFields.forEach(f => {
+                let dy = 9;
                 if (f[0] === 'reverse Charges') {
                     doc.font(FONT_BOLD).fontSize(7.5).text(f[0], colMid, rY);
                     doc.font(FONT_REG).text(': ' + f[1], colMid + labelW2 - 8, rY);
                 } else {
+                    doc.fontSize(7.5);
+                    const lblH = doc.font(FONT_BOLD).heightOfString(String(f[0] || ''), { width: labelW2 });
+                    const valH = doc.font(FONT_REG).heightOfString(String(f[1] || ''), { width: valW2 });
+                    dy = Math.max(lblH, valH);
+                    if (dy < 9) dy = 9;
                     drawField(f[0], f[1], colMid, rY, labelW2, valW2);
                 }
-                rY += 10.5;
+                rY += dy + 1.5;
             });
 
             y = Math.max(rowY, rY) + 5;
