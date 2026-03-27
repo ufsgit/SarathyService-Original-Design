@@ -114,14 +114,26 @@ exports.generatePDF = async (req, res) => {
         const col1 = L, col2 = L + 200;
 
         const drawHeaderRow = (l1, v1, l2, v2) => {
-            doc.font(FONT_REG).text(l1, col1, y, { width: 85 });
+            const str1 = String(v1 || '-');
+            const str2 = String(v2 || '-');
+            
+            const w1 = 145; // Width before hitting second column start
+            const w2 = 205; // Width before hitting right margin
+
+            doc.font(FONT_REG).fontSize(8);
+            const h1 = doc.heightOfString(str1, { width: w1 });
+            const h2 = doc.heightOfString(str2, { width: w2 });
+            const maxH = Math.max(h1, h2, 12);
+
+            doc.text(l1, col1, y, { width: 85 });
             doc.text(':', col1 + 80, y);
-            doc.text(v1 || '-', col1 + 85, y);
+            doc.text(str1, col1 + 85, y, { width: w1 });
 
             doc.text(l2, col2 + 40, y, { width: 85 });
             doc.text(':', col2 + 120, y);
-            doc.text(v2 || '-', col2 + 125, y);
-            y += 12;
+            doc.text(str2, col2 + 125, y, { width: w2 });
+            
+            y += maxH + 4;
         };
 
         drawHeaderRow('Selling Dealer', 'SARATHY MOTORS', 'Dealer Code', 'SARATHY MOTORS');
@@ -162,15 +174,23 @@ exports.generatePDF = async (req, res) => {
             y += 14;
 
             // Visit Table Body
-            doc.rect(L, y, W, 18).stroke();
-            cx = L;
             const vData = [fmtDate(inv.inv_jcard_date), inv.inv_km || '-', inv.inv_repair_typ || 'Paid service', inv.branch_name || 'Sarathy Bajaj', '-'];
+            doc.font(FONT_REG).fontSize(7);
+            
+            let vRowH = 18;
             vData.forEach((v, i) => {
-                doc.font(FONT_REG).fontSize(7).text(String(v), cx + 2, y + 4, { width: vCols[i].w - 4 });
-                cx += vCols[i].w;
-                if (cx < R) doc.moveTo(cx, y).lineTo(cx, y + 18).stroke();
+                const h = doc.heightOfString(String(v), { width: vCols[i].w - 4 });
+                if (h + 8 > vRowH) vRowH = h + 8;
             });
-            y += 25;
+
+            doc.rect(L, y, W, vRowH).stroke();
+            cx = L;
+            vData.forEach((v, i) => {
+                doc.text(String(v), cx + 2, y + 4, { width: vCols[i].w - 4 });
+                cx += vCols[i].w;
+                if (cx < R) doc.moveTo(cx, y).lineTo(cx, y + vRowH).stroke();
+            });
+            y += vRowH + 7;
 
             // Services Done
             doc.font(FONT_BOLD).fontSize(9).text('Services Done', L, y);
@@ -195,18 +215,25 @@ exports.generatePDF = async (req, res) => {
 
             let visitTaxable = 0, visitDisc = 0, visitTotal = 0;
             (inv.items || []).forEach(item => {
-                if (y > 750) { doc.addPage(); y = 30; }
-                const rowH = 14;
-                doc.rect(L, y, W, rowH).stroke();
-                cx = L;
                 const amt = parseFloat(item.lc_amount || 0);
                 const tax = parseFloat(item.lc_tax_amunt || 0);
                 const disc = parseFloat(item.lc_disc || 0);
                 visitTaxable += tax; visitDisc += disc; visitTotal += amt;
 
                 const rowData = [item.lc_lb_name || '-', 'P', tax.toFixed(2), disc.toFixed(2), amt.toFixed(2)];
+                
+                doc.font(FONT_REG).fontSize(7);
+                let rowH = 14;
+                const nameHeight = doc.heightOfString(rowData[0], { width: sCols[0].w - 4 });
+                if (nameHeight + 8 > rowH) rowH = nameHeight + 8;
+
+                if (y + rowH > 750) { doc.addPage(); y = 30; }
+
+                doc.rect(L, y, W, rowH).stroke();
+                cx = L;
+                
                 rowData.forEach((v, i) => {
-                    doc.font(FONT_REG).fontSize(7).text(v, cx + 2, y + 4, { width: sCols[i].w - 4, align: i > 1 ? 'right' : 'left' });
+                    doc.text(v, cx + 2, y + 4, { width: sCols[i].w - 4, align: i > 1 ? 'right' : 'left' });
                     cx += sCols[i].w;
                     if (cx < R) doc.moveTo(cx, y).lineTo(cx, y + rowH).stroke();
                 });
