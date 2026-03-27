@@ -80,7 +80,7 @@
             <th><input type="text" class="th-input" value="JobCard" readonly></th>
             <th><input type="text" class="th-input" value="JobCard Date" readonly></th>
             <th><input type="text" class="th-input th-wide" value="Branch Name" readonly></th>
-            <th>
+            <th class="col-labour-code">
               <mat-select placeholder="--Select Labour Code--" multiple [ngModel]="labourCodes()" (selectionChange)="labourCodes.set($event.value)" panelClass="legacy-select-panel">
                 <mat-select-trigger>
                   {{getSelectedLabel(labourCodes(), 'labourCodes')}}
@@ -148,7 +148,7 @@
             </td>
             <td>{{r.inv_jcard_date | date:'yyyy-MM-dd'}}</td>
             <td>{{r.branch_name}}</td>
-            <td>{{r.labour_code}}</td>
+            <td class="col-labour-code">{{r.labour_code}}</td>
             <td>{{r.mechanic_name}}</td>
             <td>{{r.advisor_name}}</td>
             <td>{{r.inv_repair_typ}}</td>

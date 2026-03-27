@@ -165,7 +165,6 @@
   padding: 4px 5px;
   text-align: left;
   white-space: nowrap;
-  /* max-width: 220px; */
 }
 
 /* Grey header row with input-box style headers */
@@ -176,6 +175,13 @@
   padding: 4px 4px !important;
   border-right: 1px solid #bbb;
 }
+
+.col-labour-code {
+  max-width: 350px;
+  white-space: normal !important;
+  word-wrap: break-word;
+}
+
 
 .th-input {
   min-width: 100px;
@@ -211,6 +217,7 @@
   border-radius: 2px;
   padding: 3px 4px;
   min-width: 220px;
+  max-width: 350px;
   color: #111;
   display: block;
   min-height: 32px;   /* increase height */
