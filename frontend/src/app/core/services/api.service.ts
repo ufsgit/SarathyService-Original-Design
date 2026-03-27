@@ -128,5 +128,6 @@ export class ApiService {
 
   // --- Vehicle History ---
   searchVehicleHistory(reg_no: string): Observable<any> { return this.http.post(`${this.baseUrl}/vehicle-history/search`, { reg_no }); }
+  searchVehicleRegNo(query: string): Observable<string[]> { return this.http.get<string[]>(`${this.baseUrl}/vehicle-history/search-reg`, { params: { q: query } }); }
   getVehicleHistoryPDFUrl(regNo: string): string { return `${this.baseUrl}/vehicle-history/pdf?reg_no=${regNo}`; }
 }

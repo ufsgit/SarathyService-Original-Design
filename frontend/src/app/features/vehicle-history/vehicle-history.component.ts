@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { Subject, Subscription, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-vehicle-history',
@@ -11,17 +13,55 @@ import { NotificationService } from '../../core/services/notification.service';
   templateUrl: './vehicle-history.component.html',
   styleUrls: ['./vehicle-history.component.css']
 })
-export class VehicleHistoryComponent {
+export class VehicleHistoryComponent implements OnInit, OnDestroy {
 
   regNo = '';
   customer: any = null;
   invoices: any[] = [];
   searched = false;
 
+  suggestedRegNos: string[] = [];
+  private searchSubject = new Subject<string>();
+  private searchSubscription!: Subscription;
+
   constructor(
     private api: ApiService,
     private notify: NotificationService
   ) {}
+
+  ngOnInit() {
+    this.searchSubscription = this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(query => {
+        if (!query || query.trim().length === 0) {
+          return of([]);
+        }
+        return this.api.searchVehicleRegNo(query).pipe(
+          catchError(() => of([]))
+        );
+      })
+    ).subscribe({
+      next: (results: any) => this.suggestedRegNos = results,
+      error: () => this.suggestedRegNos = []
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.searchSubscription) {
+      this.searchSubscription.unsubscribe();
+    }
+  }
+
+  onSearchInput(event: any) {
+    this.searchSubject.next(this.regNo);
+  }
+
+  selectRegNo(reg: string) {
+    this.regNo = reg;
+    this.suggestedRegNos = [];
+    this.search();
+  }
 
   search() {
     if (!this.regNo) {

@@ -9,9 +9,16 @@
   <div class="card-body">
     <!-- Search Bar -->
     <div class="search-bar">
-      <div class="form-group">
+      <div class="form-group" style="position: relative;">
         <label>Registration Number :</label>
-        <input type="text" [(ngModel)]="regNo" name="reg" placeholder="Enter registration number" (keyup.enter)="search()">
+        <input type="text" [(ngModel)]="regNo" name="reg" placeholder="Enter registration number" (keyup.enter)="search()" (input)="onSearchInput($event)" autocomplete="off">
+        
+        <!-- Autocomplete Dropdown -->
+        <ul *ngIf="suggestedRegNos && suggestedRegNos.length > 0" class="autocomplete-list">
+          <li *ngFor="let suggestion of suggestedRegNos" (click)="selectRegNo(suggestion)">
+            {{suggestion}}
+          </li>
+        </ul>
       </div>
       <button class="btn-search" (click)="search()">🔍 Search</button>
     </div>
@@ -60,7 +67,7 @@
           </tbody>
         </table>
       </div>
-      <div style="margin-top: 10px; font-size: 13px;">
+      <div style="margin-top: 10px; font-size: 13px; color: black;">
           <span>Supervisor: <strong>{{inv.advisor_name || '-'}}</strong></span>
           <span style="margin-left: 20px;">Mechanic: <strong>{{inv.mechanic_name || '-'}}</strong></span>
       </div>

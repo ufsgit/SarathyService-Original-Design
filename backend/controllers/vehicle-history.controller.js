@@ -33,6 +33,26 @@ exports.search = async (req, res) => {
     }
 };
 
+// Autocomplete endpoint for dynamic registration number suggestions
+exports.searchRegNo = async (req, res) => {
+    try {
+        const query = req.query.q || '';
+        if (!query) return res.json([]);
+
+        const [rows] = await pool.query(
+            `SELECT DISTINCT c_reg_no FROM customer_details 
+             WHERE c_reg_no LIKE ? 
+             ORDER BY LENGTH(c_reg_no) ASC, c_reg_no ASC 
+             LIMIT 10`,
+            [`%${query}%`]
+        );
+        res.json(rows.map(r => r.c_reg_no));
+    } catch (err) {
+        console.error('Registration search error:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 // Generate vehicle history PDF (Match High-Fidelity Template)
 exports.generatePDF = async (req, res) => {
     try {
