@@ -166,7 +166,12 @@ exports.getInvoice = async (req, res) => {
     try {
         // Try finding in tbl_readyfor_labour first (Ready state)
         let [invoices] = await pool.query(
-            'SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, i.inv_branch FROM tbl_readyfor_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE i.inv_id = ? AND i.ready_status = 1',
+            `SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, i.inv_branch, a.e_first_name AS adv_name, m.e_first_name AS mech_name
+             FROM tbl_readyfor_labour i 
+             LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+             LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+             LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
+             WHERE i.inv_id = ? AND i.ready_status = 1`,
             [req.params.id]
         );
         let itemsTable = 'tbl_readyfor_bill';
@@ -175,7 +180,12 @@ exports.getInvoice = async (req, res) => {
         if (invoices.length === 0) {
             // Check in tbl_invoice_labour (Finalized state)
             [invoices] = await pool.query(
-                'SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr FROM tbl_invoice_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE i.inv_id = ?',
+                `SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, a.e_first_name AS adv_name, m.e_first_name AS mech_name 
+                 FROM tbl_invoice_labour i 
+                 LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+                 LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+                 LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
+                 WHERE i.inv_id = ?`,
                 [req.params.id]
             );
             itemsTable = 'tbl_invoice_labour_cost';
@@ -185,7 +195,12 @@ exports.getInvoice = async (req, res) => {
         if (invoices.length === 0) {
             // Last resort: check tbl_readyfor_labour regardless of status
             [invoices] = await pool.query(
-                'SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr FROM tbl_readyfor_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE i.inv_id = ?',
+                `SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, a.e_first_name AS adv_name, m.e_first_name AS mech_name 
+                 FROM tbl_readyfor_labour i 
+                 LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+                 LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+                 LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
+                 WHERE i.inv_id = ?`,
                 [req.params.id]
             );
             itemsTable = 'tbl_readyfor_bill';
@@ -203,7 +218,12 @@ exports.getInvoice = async (req, res) => {
             lc_amount: it.lc_amount || it.ic_total
         }));
 
-        res.json({ invoice: invoices[0], items: normalizedItems });
+        const invoiceData = invoices[0];
+        // Ensure names are preferred over IDs, but fall back to whatever was there if names are null
+        invoiceData.inv_advisername = invoiceData.adv_name || invoiceData.inv_advisername;
+        invoiceData.inv_mechna = invoiceData.mech_name || invoiceData.inv_mechna;
+
+        res.json({ invoice: invoiceData, items: normalizedItems });
     } catch (err) {
         res.status(500).json({ message: 'Server error', error: err.message });
     }
@@ -416,7 +436,12 @@ exports.generatePDF = async (req, res) => {
 
         // 1. Find the invoice (Prefer Ready table)
         const [readyInvoices] = await conn.query(
-            'SELECT i.*, b.branch_name, b.branch_address, b.branch_ph FROM tbl_readyfor_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE i.inv_id = ? AND i.ready_status = 1',
+            `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name 
+             FROM tbl_readyfor_labour i 
+             LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+             LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+             LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
+             WHERE i.inv_id = ? AND i.ready_status = 1`,
             [req.params.id]
         );
 
@@ -428,7 +453,12 @@ exports.generatePDF = async (req, res) => {
             isFromReadyTable = true;
         } else {
             const [invoices] = await conn.query(
-                'SELECT i.*, b.branch_name, b.branch_address, b.branch_ph FROM tbl_invoice_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE i.inv_id = ?',
+                `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name 
+                 FROM tbl_invoice_labour i 
+                 LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+                 LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+                 LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
+                 WHERE i.inv_id = ?`,
                 [req.params.id]
             );
             if (invoices.length === 0) {
@@ -437,6 +467,9 @@ exports.generatePDF = async (req, res) => {
             }
             invoice = invoices[0];
         }
+
+        invoice.inv_advisername = invoice.adv_name || invoice.inv_advisername;
+        invoice.inv_mechna = invoice.mech_name || invoice.inv_mechna;
 
         // 2. Fetch items (Check both tables)
         let [items] = await conn.query('SELECT * FROM tbl_readyfor_bill WHERE ic_inv_id = ?', [req.params.id]);
@@ -500,7 +533,12 @@ exports.generateWord = async (req, res) => {
 
         // 1. Find the invoice (Prefer Ready table)
         const [readyInvoices] = await conn.query(
-            'SELECT i.*, b.branch_name, b.branch_address, b.branch_ph FROM tbl_readyfor_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE i.inv_id = ? AND i.ready_status = 1',
+            `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name 
+             FROM tbl_readyfor_labour i 
+             LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+             LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+             LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
+             WHERE i.inv_id = ? AND i.ready_status = 1`,
             [req.params.id]
         );
 
@@ -512,7 +550,12 @@ exports.generateWord = async (req, res) => {
             isFromReadyTable = true;
         } else {
             const [invoices] = await conn.query(
-                'SELECT i.*, b.branch_name, b.branch_address, b.branch_ph FROM tbl_invoice_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE i.inv_id = ?',
+                `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name 
+                 FROM tbl_invoice_labour i 
+                 LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+                 LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+                 LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
+                 WHERE i.inv_id = ?`,
                 [req.params.id]
             );
             if (invoices.length === 0) {
@@ -521,6 +564,9 @@ exports.generateWord = async (req, res) => {
             }
             invoice = invoices[0];
         }
+
+        invoice.inv_advisername = invoice.adv_name || invoice.inv_advisername;
+        invoice.inv_mechna = invoice.mech_name || invoice.inv_mechna;
 
         // 2. Fetch items (Check both tables)
         let [items] = await conn.query('SELECT * FROM tbl_readyfor_bill WHERE ic_inv_id = ?', [req.params.id]);
