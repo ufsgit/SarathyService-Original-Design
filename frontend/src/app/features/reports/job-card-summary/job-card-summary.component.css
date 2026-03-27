@@ -170,6 +170,7 @@
 /* Table Header Row — grey background with input-style headers */
 .main-header th {
   background: #d9d9d9;
+  min-width: 220px;
   color: #111;
   vertical-align: middle;
   padding: 4px 4px !important;
@@ -178,7 +179,7 @@
 
 /* Readonly input boxes inside th */
 .th-input {
-  width: 100px;
+  min-width: 220px;
   font-size: 14px;
   border: 1px solid #bbb;
   background: #fff;
@@ -190,9 +191,8 @@
   box-sizing: border-box;
 }
 
-.th-input.th-sm { width: 55px; }
+.th-input.th-sm  { width: 55px; }
 .th-input.th-wide { width: 170px; }
-.th-input.th-lg { width: 120px; }
 
 ::ng-deep .mat-mdc-select-value {
   color: #000 !important;
