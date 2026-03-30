@@ -166,11 +166,12 @@ exports.getInvoice = async (req, res) => {
     try {
         // Try finding in tbl_readyfor_labour first (Ready state)
         let [invoices] = await pool.query(
-            `SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, i.inv_branch, a.e_first_name AS adv_name, m.e_first_name AS mech_name
+            `SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, i.inv_branch, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.c_email
              FROM tbl_readyfor_labour i 
              LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
              LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
              LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
+             LEFT JOIN customer_details c ON i.in_registr = c.c_reg_no
              WHERE i.inv_id = ? AND i.ready_status = 1`,
             [req.params.id]
         );
@@ -180,11 +181,12 @@ exports.getInvoice = async (req, res) => {
         if (invoices.length === 0) {
             // Check in tbl_invoice_labour (Finalized state)
             [invoices] = await pool.query(
-                `SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, a.e_first_name AS adv_name, m.e_first_name AS mech_name 
+                `SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.c_email
                  FROM tbl_invoice_labour i 
                  LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
                  LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
                  LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
+                 LEFT JOIN customer_details c ON i.in_registr = c.c_reg_no
                  WHERE i.inv_id = ?`,
                 [req.params.id]
             );
@@ -195,11 +197,12 @@ exports.getInvoice = async (req, res) => {
         if (invoices.length === 0) {
             // Last resort: check tbl_readyfor_labour regardless of status
             [invoices] = await pool.query(
-                `SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, a.e_first_name AS adv_name, m.e_first_name AS mech_name 
+                `SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.c_email
                  FROM tbl_readyfor_labour i 
                  LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
                  LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
                  LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
+                 LEFT JOIN customer_details c ON i.in_registr = c.c_reg_no
                  WHERE i.inv_id = ?`,
                 [req.params.id]
             );

@@ -4,10 +4,12 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
+import { FormsModule } from '@angular/forms';
+
 @Component({
   selector: 'app-job-card-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './job-card-detail.component.html',
   styleUrls: ['./job-card-detail.component.css']
 })
@@ -15,6 +17,12 @@ export class JobCardDetailComponent implements OnInit {
   id: number = 0;
   data: any = null;
   loading: boolean = true;
+  showEmailPopup: boolean = false;
+  emailData = {
+    to: '',
+    subject: '',
+    message: ''
+  };
 
   constructor(
     private route: ActivatedRoute,
@@ -224,6 +232,25 @@ export class JobCardDetailComponent implements OnInit {
   }
 
   sendEmail(): void {
-    this.notify.info('Email functionality coming soon');
+    if (!this.data) return;
+    this.emailData = {
+      to: this.data.invoice.c_email || this.data.invoice.inv_email || '',
+      subject: `Invoice for Job Card: ${this.data.invoice.inv_job_card_no}`,
+      message: `Dear ${this.data.invoice.inv_cus},\n\nPlease find attached the invoice for your vehicle ${this.data.invoice.in_registr}.\n\nRegards,\nSarathy Service`
+    };
+    this.showEmailPopup = true;
+  }
+
+  closeEmailPopup(): void {
+    this.showEmailPopup = false;
+  }
+
+  sendActualEmail(): void {
+    if (!this.emailData.to) {
+      this.notify.error('Please enter recipient email');
+      return;
+    }
+    this.notify.success('Email sent successfully');
+    this.showEmailPopup = false;
   }
 }

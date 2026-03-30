@@ -118,4 +118,31 @@
   <div class="loading-state" *ngIf="loading">
     Loading job card details...
   </div>
+
+  <!-- Email Popup Modal -->
+  <div class="modal-overlay" *ngIf="showEmailPopup">
+    <div class="email-modal">
+      <div class="modal-header">
+        <span>Send Email</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>To :</label>
+          <input type="text" [(ngModel)]="emailData.to" />
+        </div>
+        <div class="form-group">
+          <label>Subject :</label>
+          <input type="text" [(ngModel)]="emailData.subject" />
+        </div>
+        <div class="form-group">
+          <label>Message:</label>
+          <textarea rows="4" [(ngModel)]="emailData.message"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-yes" (click)="sendActualEmail()">Yes</button>
+        <button class="btn btn-no" (click)="closeEmailPopup()">No</button>
+      </div>
+    </div>
+  </div>
 </div>
