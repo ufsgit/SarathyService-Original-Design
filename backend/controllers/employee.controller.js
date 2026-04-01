@@ -18,8 +18,10 @@ exports.getAll = async (req, res) => {
 exports.getById = async (req, res) => {
     try {
         const [rows] = await pool.query(
-            `SELECT e.*, COALESCE(b.branch_name, e.e_branch) AS branch_name FROM tbl_employee e 
+            `SELECT e.*, COALESCE(b.branch_name, e.e_branch) AS branch_name, l.uname AS login_id 
+       FROM tbl_employee e 
        LEFT JOIN tbl_branch b ON b.b_id = e.e_branch 
+       LEFT JOIN tbl_login l ON l.login_id = e.emp_login_id
        WHERE e.emp_id = ?`, [req.params.id]
         );
         if (rows.length === 0) return res.status(404).json({ message: 'Not found' });
@@ -76,13 +78,51 @@ exports.create = async (req, res) => {
 // Update employee
 exports.update = async (req, res) => {
     try {
-        const { e_first_name, emp_intial, e_address, e_mobile, e_email, e_designation, e_branch, e_code } = req.body;
+        const { e_first_name, emp_intial, e_address, e_mobile, e_email, e_designation, e_branch, e_code, login_id, login_password } = req.body;
+        const id = req.params.id;
+
+        if (!e_first_name) return res.status(400).json({ message: 'Name is required' });
+        if (!e_branch) return res.status(400).json({ message: 'Branch Name is required' });
+        if (!e_code) return res.status(400).json({ message: 'Employee Code is required' });
+        if (!e_designation) return res.status(400).json({ message: 'Employee Designation is required' });
+        if (!login_id) return res.status(400).json({ message: 'Username is required' });
+        // login_password might be handled as: if provided, update it. 
+        // But user said "Password... are required". 
+
+        // Check duplicate employee code
+        const [codeCheck] = await pool.query('SELECT emp_id FROM tbl_employee WHERE e_code = ? AND emp_id != ?', [e_code, id]);
+        if (codeCheck.length > 0) return res.status(409).json({ message: 'Employee Code already exists' });
+
+        // Get employee to find login_id
+        const [emp] = await pool.query('SELECT emp_login_id FROM tbl_employee WHERE emp_id = ?', [id]);
+        if (emp.length === 0) return res.status(404).json({ message: 'Employee not found' });
+        const loginRecordId = emp[0].emp_login_id;
+
+        // Check duplicate username in tbl_login
+        if (loginRecordId) {
+            const [userCheck] = await pool.query('SELECT login_id FROM tbl_login WHERE uname = ? AND login_id != ?', [login_id, loginRecordId]);
+            if (userCheck.length > 0) return res.status(409).json({ message: 'Username already exists' });
+        }
+
         await pool.query(
             'UPDATE tbl_employee SET e_first_name=?, emp_intial=?, e_address=?, e_mobile=?, e_email=?, e_designation=?, e_branch=?, e_code=? WHERE emp_id=?',
-            [e_first_name, emp_intial, e_address, e_mobile, e_email, e_designation, e_branch, e_code, req.params.id]
+            [e_first_name, emp_intial || '', e_address || '', e_mobile || '', e_email || '', e_designation || '', e_branch || '', e_code || '', id]
         );
-        res.json({ message: 'Employee updated' });
+
+        // Update login info
+        if (loginRecordId) {
+            if (login_password) {
+                const bcrypt = require('bcryptjs');
+                const hashed = await bcrypt.hash(login_password, 10);
+                await pool.query('UPDATE tbl_login SET uname = ?, pwd = ? WHERE login_id = ?', [login_id, hashed, loginRecordId]);
+            } else {
+                await pool.query('UPDATE tbl_login SET uname = ? WHERE login_id = ?', [login_id, loginRecordId]);
+            }
+        }
+
+        res.json({ message: 'Employee updated successfully' });
     } catch (err) {
+        console.error('Update employee error:', err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };

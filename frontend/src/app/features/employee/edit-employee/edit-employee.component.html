@@ -39,13 +39,14 @@
               [(ngModel)]="form.e_designation"
               name="desig"
               [options]="designations"
-              placeholder="Select Designation">
+              placeholder="Select Designation"
+              required>
             </app-searchable-select>
           </div>
 
           <div class="form-group">
             <label>Code :</label>
-            <input type="text" [(ngModel)]="form.e_code" name="code" placeholder="Employee code">
+            <input type="text" [(ngModel)]="form.e_code" name="code" placeholder="Employee code" required>
           </div>
 
           <div class="form-group">
@@ -54,8 +55,19 @@
               [(ngModel)]="form.e_branch"
               name="branch"
               [options]="branchNames"
-              placeholder="Select Branch">
+              placeholder="Select Branch"
+              required>
             </app-searchable-select>
+          </div>
+
+          <div class="form-group">
+            <label>Username :</label>
+            <input type="text" [(ngModel)]="form.login_id" name="uname" placeholder="Username" required>
+          </div>
+
+          <div class="form-group">
+            <label>Password :</label>
+            <input type="password" [(ngModel)]="form.login_password" name="pwd" placeholder="Leave blank to keep current" required>
           </div>
 
           <div class="form-group">

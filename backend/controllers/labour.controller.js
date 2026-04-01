@@ -72,9 +72,24 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const d = req.body;
+        const id = req.params.id;
+
+        if (!d.l_code) return res.status(400).json({ message: 'Labour Code is required' });
+        if (!d.l_name) return res.status(400).json({ message: 'Labour Name is required' });
+
+        // Check if labour_code already exists for other entries
+        const [existing] = await pool.query(
+            'SELECT labour_id FROM tbl_labour_code WHERE labour_code = ? AND labour_id != ?',
+            [d.l_code, id]
+        );
+
+        if (existing.length > 0) {
+            return res.status(409).json({ message: 'Labour Code already exists' });
+        }
+
         const [result] = await pool.query(
             'UPDATE tbl_labour_code SET labour_title=?, labour_code=?, sale_price=?, discription=?, repair_type=? WHERE labour_id=?',
-            [d.l_name, d.l_code, d.l_amount, d.l_descr || '', d.l_repair_type || 'Paid Service', req.params.id]
+            [d.l_name, d.l_code, d.l_amount, d.l_descr || '', d.l_repair_type || 'Paid Service', id]
         );
         if (result.affectedRows === 0) return res.status(404).json({ message: 'Labour not found' });
         res.json({ message: 'Labour updated successfully' });

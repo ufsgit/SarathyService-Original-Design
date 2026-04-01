@@ -45,7 +45,19 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const { mod_name, mod_code } = req.body;
-        await pool.query('UPDATE tbl_model SET mod_name = ?, mod_code = ? WHERE model_id = ?', [mod_name, mod_code, req.params.id]);
+        const id = req.params.id;
+
+        if (!mod_name) return res.status(400).json({ message: 'Model Name is required' });
+        if (!mod_code) return res.status(400).json({ message: 'Model Code is required' });
+
+        // Check if mod_code exists for other records
+        const [existing] = await pool.query(
+            'SELECT model_id FROM tbl_model WHERE mod_code = ? AND model_id != ?',
+            [mod_code, id]
+        );
+        if (existing.length > 0) return res.status(409).json({ message: 'Model Code already exists' });
+
+        await pool.query('UPDATE tbl_model SET mod_name = ?, mod_code = ? WHERE model_id = ?', [mod_name, mod_code, id]);
         res.json({ message: 'Model updated' });
     } catch (err) {
         res.status(500).json({ message: 'Server error', error: err.message });

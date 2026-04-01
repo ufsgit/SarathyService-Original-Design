@@ -44,9 +44,12 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const { icompany_name, icompany_address, icompany_gst } = req.body;
+        if (!icompany_name) return res.status(400).json({ message: 'Company Name is required' });
+        if (!icompany_gst) return res.status(400).json({ message: 'GSTIN is required' });
+
         await pool.query(
             'UPDATE tbl_insurance_company SET icompany_name = ?, icompany_address = ?, icompany_gst = ? WHERE com_id = ?',
-            [icompany_name, icompany_address, icompany_gst, req.params.id]
+            [icompany_name, icompany_address || '', icompany_gst, req.params.id]
         );
         res.json({ message: 'Insurance company updated' });
     } catch (err) {

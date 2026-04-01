@@ -130,9 +130,30 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const { c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email } = req.body;
+        const id = req.params.id;
+
+        // 1. Check required fields
+        if (!c_name || !c_reg_no || !c_chassis_no || !c_engine_no || !model_name) {
+            return res.status(400).json({ message: 'Customer Name, Registration No, Chassis No, Engine No, and Model Name are required' });
+        }
+
+        // 2. Chassis No & Registration Number Uniqueness check (excluding current record)
+        const [existing] = await pool.query(
+            'SELECT * FROM customer_details WHERE (c_reg_no = ? OR c_chassis_no = ?) AND c_id != ?',
+            [c_reg_no, c_chassis_no, id]
+        );
+
+        if (existing.length > 0) {
+            const match = existing[0];
+            let msg = 'Another customer already exists with this ';
+            if (match.c_reg_no === c_reg_no) msg += 'Registration Number';
+            else msg += 'Chassis Number';
+            return res.status(409).json({ message: msg });
+        }
+
         const [result] = await pool.query(
             `UPDATE customer_details SET c_name=?, c_address=?, c_reg_no=?, c_chassis_no=?, c_engine_no=?, model_name=?, c_contact_no=?, gstin_no=?, c_sales_date=?, c_email=? WHERE c_id=?`,
-            [c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email, req.params.id]
+            [c_name, c_address || '', c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no || '', gstin_no || '', c_sales_date || null, c_email || '', id]
         );
         if (result.affectedRows === 0) return res.status(404).json({ message: 'Customer not found' });
         res.json({ message: 'Customer updated successfully' });

@@ -49,9 +49,24 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const { branch_name, branch_address, branch_ph, branch_id } = req.body;
+        const id = req.params.id;
+
+        if (!branch_id) return res.status(400).json({ message: 'Branch ID is required' });
+        if (!branch_name) return res.status(400).json({ message: 'Branch Name is required' });
+
+        // Check if branch_id or branch_name already exists for other branches
+        const [existing] = await pool.query(
+            'SELECT b_id FROM tbl_branch WHERE (branch_id = ? OR branch_name = ?) AND b_id != ?',
+            [branch_id, branch_name, id]
+        );
+
+        if (existing.length > 0) {
+            return res.status(409).json({ message: 'Branch ID or Branch Name already exists' });
+        }
+
         await pool.query(
             'UPDATE tbl_branch SET branch_name = ?, branch_address = ?, branch_ph = ?, branch_id = ? WHERE b_id = ?',
-            [branch_name, branch_address, branch_ph, branch_id, req.params.id]
+            [branch_name, branch_address || '', branch_ph || '', branch_id, id]
         );
         res.json({ message: 'Branch updated' });
     } catch (err) {
