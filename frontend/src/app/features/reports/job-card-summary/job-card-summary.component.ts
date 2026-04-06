@@ -78,25 +78,11 @@ export class JobCardSummaryComponent implements OnInit {
     return withEllipsis;
   });
 
-  constructor(private api: ApiService, private notify: NotificationService, private router: Router) {
-    // Single consolidated effect for filters and data fetching
-    effect(() => {
-      // 1. Reactive dependencies
-      const view = this.viewBy();
-      const fDateRaw = this.fromDate();
-      const tDateRaw = this.toDate();
-      const br = this.branch();
-      const st = this.serviceType();
-      const mech = this.mechanic();
-      const adv = this.advisor();
-      const rt = this.repairTypes();
-      const ic = this.insuranceCompanies();
-      const pg = this.currentPage();
-      const ps = this.pageSize();
+  today = new Date().toISOString().split('T')[0];
 
-      // 2. Handle View By date calculations if not Custom
-      let finalFrom = fDateRaw;
-      let finalTo = tDateRaw;
+  constructor(private api: ApiService, private notify: NotificationService, private router: Router) {
+    effect(() => {
+      const view = this.viewBy();
 
       if (view !== 'Custom Date') {
         const today = new Date();
@@ -119,23 +105,25 @@ export class JobCardSummaryComponent implements OnInit {
             to = new Date(today.getFullYear() - 1, 11, 31);
             break;
         }
-        finalFrom = this.formatDateInternal(from);
-        finalTo = this.formatDateInternal(to);
+        const finalFrom = this.formatDateInternal(from);
+        const finalTo = this.formatDateInternal(to);
 
-        // Update signals silently if they changed, to keep UI in sync
         untracked(() => {
           if (finalFrom !== this.fromDate()) this.fromDate.set(finalFrom);
           if (finalTo !== this.toDate()) this.toDate.set(finalTo);
-          // If the page was not reset yet, reset it when viewBy changes
-          // But be careful of infinite loops; only set if it's not 1
-          // Actually we only reset page when viewBy itself changes
         });
       }
+    }, { allowSignalWrites: true });
 
-      // 3. Trigger API call
-      if (finalFrom && finalTo) {
-        untracked(() => this.search(false));
-      }
+    effect(() => {
+      const pg = this.currentPage();
+      const ps = this.pageSize();
+
+      untracked(() => {
+        if (this.searched() && this.fromDate() && this.toDate()) {
+          this.search(false);
+        }
+      });
     }, { allowSignalWrites: true });
   }
 

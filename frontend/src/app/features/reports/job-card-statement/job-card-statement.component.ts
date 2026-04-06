@@ -80,24 +80,11 @@ export class JobCardStatementComponent implements OnInit {
     return withEllipsis;
   });
 
+  today = new Date().toISOString().split('T')[0];
+
   constructor(private api: ApiService, private notify: NotificationService, private router: Router) {
-    // Consolidated Effect
     effect(() => {
       const view = this.viewBy();
-      const fDateRaw = this.fromDate();
-      const tDateRaw = this.toDate();
-      const br = this.branch();
-      const st = this.serviceType();
-      const lc = this.labourCodes();
-      const mech = this.mechanic();
-      const adv = this.advisor();
-      const rt = this.repairTypes();
-      const ic = this.insuranceCompanies();
-      const pg = this.currentPage();
-      const ps = this.pageSize();
-
-      let finalFrom = fDateRaw;
-      let finalTo = tDateRaw;
 
       if (view !== 'Custom Date') {
         const today = new Date();
@@ -120,18 +107,25 @@ export class JobCardStatementComponent implements OnInit {
             to = new Date(today.getFullYear() - 1, 11, 31);
             break;
         }
-        finalFrom = this.formatDateInternal(from);
-        finalTo = this.formatDateInternal(to);
+        const finalFrom = this.formatDateInternal(from);
+        const finalTo = this.formatDateInternal(to);
 
         untracked(() => {
           if (finalFrom !== this.fromDate()) this.fromDate.set(finalFrom);
           if (finalTo !== this.toDate()) this.toDate.set(finalTo);
         });
       }
+    }, { allowSignalWrites: true });
 
-      if (finalFrom && finalTo) {
-        untracked(() => this.search(false));
-      }
+    effect(() => {
+      const pg = this.currentPage();
+      const ps = this.pageSize();
+
+      untracked(() => {
+        if (this.searched() && this.fromDate() && this.toDate()) {
+          this.search(false);
+        }
+      });
     }, { allowSignalWrites: true });
   }
 

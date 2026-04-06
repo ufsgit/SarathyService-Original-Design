@@ -46,11 +46,14 @@
       <div class="date-row">
         <div class="date-group">
           <label>Inv. Date From</label>
-          <input type="date" [ngModel]="fromDate()" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="fromDate.set($event)">
+          <input type="date" [ngModel]="fromDate()" [max]="today" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="fromDate.set($event)">
         </div>
         <div class="date-group">
           <label>Inv. Date To</label>
-          <input type="date" [ngModel]="toDate()" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="toDate.set($event)">
+          <input type="date" [ngModel]="toDate()" [max]="today" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="toDate.set($event)">
+        </div>
+        <div class="date-group" style="align-self: flex-end;">
+          <button type="button" class="btn-search" (click)="search(true)" style="background-color: #3498db; color: white; border: none; padding: 6px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; height: 32px; min-width: 80px;">Search</button>
         </div>
       </div>
     </div>

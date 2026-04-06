@@ -21,7 +21,7 @@
         <!-- Col 1 -->
         <div class="grid-col">
           <div class="control-group">
-            <label>Branch Name:</label>
+            <label>Branch Name: <span class="text-danger">*</span></label>
             <div *ngIf="!auth.isAdmin" class="readonly-value">
               {{ editMode ? form.branch_name : auth.currentUser?.branchName }}
             </div>
@@ -35,19 +35,19 @@
             </app-searchable-select>
           </div>
           <div class="control-group">
-            <label>Jobcard No :</label>
+            <label>Jobcard No : <span class="text-danger">*</span></label>
             <input type="text" name="jno" [(ngModel)]="form.inv_job_card_no" required />
           </div>
           <div class="control-group">
-            <label>Jobcard Date :</label>
+            <label>Jobcard Date : <span class="text-danger">*</span></label>
             <input type="date" name="jname" [(ngModel)]="form.inv_jcard_date" required />
           </div>
           <div class="control-group">
-            <label>Invoice No :</label>
+            <label>Invoice No : <span class="text-danger">*</span></label>
             <input type="text" name="invoic" [(ngModel)]="form.inv_no" readonly required />
           </div>
           <div class="control-group">
-            <label>Invoice Date :</label>
+            <label>Invoice Date : <span class="text-danger">*</span></label>
             <input type="date" name="invoicedate" [(ngModel)]="form.inv_inv_date" readonly />
           </div>
         </div>
@@ -55,15 +55,15 @@
         <!-- Col 2 -->
         <div class="grid-col">
           <div class="control-group">
-            <label>Registration No:</label>
+            <label>Registration No: <span class="text-danger">*</span></label>
             <input type="text" name="rno" [(ngModel)]="form.in_registr" (blur)="onRegBlur()" required />
           </div>
           <div class="control-group">
-            <label>Model Name:</label>
+            <label>Model Name: <span class="text-danger">*</span></label>
             <input type="text" name="mname" [(ngModel)]="form.inv_modl" readonly />
           </div>
           <div class="control-group">
-            <label>KM Reading:</label>
+            <label>KM Reading: <span class="text-danger">*</span></label>
             <input type="text" name="km" [(ngModel)]="form.inv_km" required />
           </div>
           <div class="control-group">
@@ -79,15 +79,15 @@
         <!-- Col 3 -->
         <div class="grid-col">
           <div class="control-group">
-            <label>Customer Name:</label>
+            <label>Customer Name: <span class="text-danger">*</span></label>
             <input type="text" name="cusname" [(ngModel)]="form.inv_cus" readonly />
           </div>
           <div class="control-group">
-            <label>Mobile Number:</label>
+            <label>Mobile Number: <span class="text-danger">*</span></label>
             <input type="text" name="cusph" [(ngModel)]="form.inv_pho" required />
           </div>
           <div class="control-group">
-            <label>Insurance Company:</label>
+            <label>Insurance Company: <span class="text-danger">*</span></label>
             <app-searchable-select 
               [options]="companyOptions"
               [(ngModel)]="selectedCompanyLabel"
@@ -102,7 +102,7 @@
             <input type="text" name="cusgst" [(ngModel)]="form.inv_insurance_gstin" readonly />
           </div>
           <div class="control-group">
-            <label>Invoice Type :</label>
+            <label>Invoice Type : <span class="text-danger">*</span></label>
             <input type="text" name="invtype" [(ngModel)]="form.inv_type" readonly />
           </div>
         </div>
@@ -110,7 +110,7 @@
         <!-- Col 4 -->
         <div class="grid-col">
           <div class="control-group">
-            <label>Advisor Name:</label>
+            <label>Advisor Name: <span class="text-danger">*</span></label>
             <app-searchable-select 
               [options]="advisorOptions"
               [(ngModel)]="selectedAdvisorLabel"
@@ -121,7 +121,7 @@
             </app-searchable-select>
           </div>
           <div class="control-group">
-            <label>Mechanic Name:</label>
+            <label>Mechanic Name: <span class="text-danger" title="Mandatory at time of billing">*</span></label>
             <app-searchable-select 
               [options]="mechanicOptions"
               [(ngModel)]="selectedMechanicLabel"
@@ -136,7 +136,7 @@
             <textarea name="insaddr" [(ngModel)]="form.inv_insurance_address" rows="2" readonly></textarea>
           </div>
           <div class="control-group">
-            <label>Repair Type:</label>
+            <label>Repair Type: <span class="text-danger">*</span></label>
             <app-searchable-select 
               [options]="repairTypeOptions"
               [(ngModel)]="form.inv_repair_typ"
@@ -146,7 +146,7 @@
             </app-searchable-select>
           </div>
           <div class="control-group">
-            <label>Surveyor Name:</label>
+            <label>Surveyor Name: <span class="text-danger">*</span></label>
             <input type="text" name="surveyor" [(ngModel)]="form.inv_surveyor" />
           </div>
         </div>
@@ -165,21 +165,21 @@
           <table class="items-table">
             <thead>
               <tr>
-                <th style="width: 100px;">Labour Code</th>
+                <th style="width: 250px;">Labour Code</th>
                 <th style="width: 150px;">Labour Name</th>
                 <th style="width: 80px;">SAC Code</th>
                 <th style="width: 100px;">Job Type</th>
-                <th style="width: 80px;">Rate</th>
-                <th style="width: 60px;">Dis %</th>
-                <th style="width: 80px;">Dis</th>
+                <th style="width: 60px;">Rate</th>
+                <th style="width: 50px;">Dis %</th>
+                <th style="width: 60px;">Dis</th>
                 <th style="width: 90px;">Taxable Amt</th>
-                <th style="width: 100px;">SGST/UTGST %</th>
+                <th style="width: 80px;">SGST/UTGST %</th>
                 <th style="width: 100px;">SGST/UTGST AMT</th>
-                <th style="width: 80px;">CGST %</th>
+                <th style="width: 60px;">CGST %</th>
                 <th style="width: 90px;">CGST AMT</th>
                 <th style="width: 100px;">Amount</th>
                 <th style="width: 40px; text-align:center;">
-                  <i class="icon-plus" style="cursor: pointer;" (click)="addItem()">+</i>
+                  <button type="button" style="background-color: #28a745; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; padding: 0;" (click)="addItem()" title="Add row">+</button>
                 </th>
               </tr>
             </thead>

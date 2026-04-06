@@ -356,12 +356,8 @@ export class LabourInvoiceComponent implements OnInit {
   }
 
   onAddToReadyForBill() {
-    if (!this.form.in_registr || !this.form.inv_cus || !this.form.inv_branch) {
-      this.notify.error('Please fill Registration No, Customer Name, Branch.');
-      return;
-    }
-    if (!this.form.inv_job_card_no) {
-      this.notify.error('Jobcard No is required.');
+    if (!this.form.inv_branch || !this.form.inv_job_card_no || !this.form.inv_jcard_date || !this.form.inv_no || !this.form.inv_inv_date || !this.form.in_registr || !this.form.inv_cus || !this.form.inv_type || !this.form.inv_repair_typ || !this.form.inv_advisername || !this.form.inv_km || !this.form.inv_modl || !this.form.inv_pho) {
+      this.notify.error('Please fill all mandatory fields (Branch, Jobcard, Invoice details, Registration, Model, KM, Customer, Mobile, Repair Type, Advisor).');
       return;
     }
     if (this.items.length === 0 || !this.items[0].ic_particular) {
@@ -399,12 +395,12 @@ export class LabourInvoiceComponent implements OnInit {
   }
 
   onSaveBill() {
-    if (!this.form.in_registr || !this.form.inv_cus || !this.form.inv_branch) {
-      this.notify.error('Please fill Registration No, Customer Name, Branch.');
+    if (!this.form.inv_branch || !this.form.inv_job_card_no || !this.form.inv_jcard_date || !this.form.inv_no || !this.form.inv_inv_date || !this.form.in_registr || !this.form.inv_cus || !this.form.inv_type || !this.form.inv_repair_typ || !this.form.inv_advisername || !this.form.inv_km || !this.form.inv_modl || !this.form.inv_pho) {
+      this.notify.error('Please fill all mandatory fields (Branch, Jobcard, Invoice details, Registration, Model, KM, Customer, Mobile, Repair Type, Advisor).');
       return;
     }
-    if (!this.form.inv_job_card_no) {
-      this.notify.error('Jobcard No is required.');
+    if (!this.form.inv_mechna) {
+      this.notify.error('Mechanic Name is mandatory for billing.');
       return;
     }
     if (this.items.length === 0 || !this.items[0].ic_particular) {
@@ -428,8 +424,12 @@ export class LabourInvoiceComponent implements OnInit {
   }
 
   saveBeforeAction(callback: Function) {
-    if (!this.form.in_registr || !this.form.inv_cus || !this.form.inv_branch || !this.form.inv_job_card_no) {
-      this.notify.error('Please fill Registration No, Customer Name, Branch and Jobcard No.');
+    if (!this.form.inv_branch || !this.form.inv_job_card_no || !this.form.inv_jcard_date || !this.form.inv_no || !this.form.inv_inv_date || !this.form.in_registr || !this.form.inv_cus || !this.form.inv_type || !this.form.inv_repair_typ || !this.form.inv_advisername || !this.form.inv_km || !this.form.inv_modl || !this.form.inv_pho) {
+      this.notify.error('Please fill all mandatory fields (Branch, Jobcard, Invoice details, Registration, Model, KM, Customer, Mobile, Repair Type, Advisor).');
+      return;
+    }
+    if (!this.form.inv_mechna) {
+      this.notify.error('Mechanic Name is mandatory for billing.');
       return;
     }
     this.form.items = this.items;
