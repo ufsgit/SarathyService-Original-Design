@@ -26,9 +26,56 @@ export class AddCustomerModalComponent implements OnInit {
     this.api.getModels().subscribe((d: any[]) => this.models = d);
   }
 
+  sanitizeContactNo() {
+    this.form.c_contact_no = (this.form.c_contact_no || '').replace(/\D/g, '').slice(0, 10);
+  }
+
+  onContactInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const sanitizedValue = (input.value || '').replace(/\D/g, '').slice(0, 10);
+    input.value = sanitizedValue;
+    this.form.c_contact_no = sanitizedValue;
+  }
+
+  blockNonNumericKey(event: KeyboardEvent) {
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+    if (allowedKeys.includes(event.key)) {
+      return;
+    }
+
+    if (!/^\d$/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  blockNonNumericPaste(event: ClipboardEvent) {
+    const pastedText = event.clipboardData?.getData('text') || '';
+    if (!/^\d*$/.test(pastedText)) {
+      event.preventDefault();
+    }
+  }
+
+  sanitizeGstinNo() {
+    this.form.gstin_no = (this.form.gstin_no || '').replace(/[^0-9a-z]/gi, '').slice(0, 15).toUpperCase();
+  }
+
   onSubmit() {
     if (!this.form.c_name || !this.form.c_reg_no || !this.form.c_chassis_no || !this.form.c_engine_no) {
       this.notify.error('Name, Reg No, Chassis No, and Engine No are required');
+      return;
+    }
+    this.sanitizeContactNo();
+    this.sanitizeGstinNo();
+    if (this.form.c_contact_no && this.form.c_contact_no.length !== 10) {
+      this.notify.error('Contact number must be exactly 10 digits');
+      return;
+    }
+    if (this.form.gstin_no && this.form.gstin_no.length > 15) {
+      this.notify.error('GSTIN must not exceed 15 characters');
       return;
     }
 

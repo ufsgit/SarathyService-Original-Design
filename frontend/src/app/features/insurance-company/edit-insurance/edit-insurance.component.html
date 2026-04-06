@@ -18,7 +18,11 @@
 
           <div class="form-group">
             <label>GSTIN :</label>
+<<<<<<< Updated upstream
             <input type="text" [(ngModel)]="form.icompany_gst" name="gst" placeholder="GST number" required>
+=======
+            <input type="text" [(ngModel)]="form.icompany_gst" oninput="this.value=this.value.replace(/[^0-9a-z]/gi,'').slice(0,15).toUpperCase()" style="text-transform: uppercase;" name="gst" placeholder="GST number" maxlength="15" pattern="[0-9A-Za-z]{1,15}" title="Enter up to 15 alphanumeric characters" autocomplete="off">
+>>>>>>> Stashed changes
           </div>
         </div>
 

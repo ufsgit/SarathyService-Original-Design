@@ -1,5 +1,28 @@
 const pool = require('../config/db');
 
+const sanitizeCustomerInput = (payload = {}) => {
+    const sanitizedContactNo = String(payload.c_contact_no || '').replace(/\D/g, '').slice(0, 10);
+    const sanitizedGstinNo = String(payload.gstin_no || '').replace(/[^0-9a-z]/gi, '').slice(0, 15).toUpperCase();
+
+    return {
+        ...payload,
+        c_contact_no: sanitizedContactNo,
+        gstin_no: sanitizedGstinNo
+    };
+};
+
+const validateCustomerInput = ({ c_contact_no, gstin_no }) => {
+    if (c_contact_no && !/^\d{10}$/.test(c_contact_no)) {
+        return 'Contact number must be exactly 10 digits';
+    }
+
+    if (gstin_no && !/^[0-9A-Z]{1,15}$/.test(gstin_no)) {
+        return 'GSTIN must contain only letters and numbers and be at most 15 characters';
+    }
+
+    return null;
+};
+
 // Get all customers (optionally filtered by branch)
 exports.getAll = async (req, res) => {
     try {
@@ -93,11 +116,16 @@ exports.checkRegistration = async (req, res) => {
 // Create customer
 exports.create = async (req, res) => {
     try {
-        const { c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email } = req.body;
+        const { c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email } = sanitizeCustomerInput(req.body);
         
         // 1. Check required fields
         if (!c_name || !c_reg_no || !c_chassis_no || !c_engine_no || !model_name) {
             return res.status(400).json({ message: 'Customer Name, Registration No, Chassis No, Engine No, and Model Name are required' });
+        }
+
+        const validationError = validateCustomerInput({ c_contact_no, gstin_no });
+        if (validationError) {
+            return res.status(400).json({ message: validationError });
         }
 
         // 2. Chassis No & Registration Number Uniqueness check
@@ -129,6 +157,7 @@ exports.create = async (req, res) => {
 // Update customer
 exports.update = async (req, res) => {
     try {
+<<<<<<< Updated upstream
         const { c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email } = req.body;
         const id = req.params.id;
 
@@ -151,6 +180,13 @@ exports.update = async (req, res) => {
             return res.status(409).json({ message: msg });
         }
 
+=======
+        const { c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email } = sanitizeCustomerInput(req.body);
+        const validationError = validateCustomerInput({ c_contact_no, gstin_no });
+        if (validationError) {
+            return res.status(400).json({ message: validationError });
+        }
+>>>>>>> Stashed changes
         const [result] = await pool.query(
             `UPDATE customer_details SET c_name=?, c_address=?, c_reg_no=?, c_chassis_no=?, c_engine_no=?, model_name=?, c_contact_no=?, gstin_no=?, c_sales_date=?, c_email=? WHERE c_id=?`,
             [c_name, c_address || '', c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no || '', gstin_no || '', c_sales_date || null, c_email || '', id]

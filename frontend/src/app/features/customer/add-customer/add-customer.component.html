@@ -45,7 +45,7 @@
         <div class="form-col">
           <div class="form-group">
             <label>GSTIN Number :</label>
-            <input type="text" [(ngModel)]="form.gstin_no" name="gstin" placeholder="GSTIN">
+            <input type="text" [(ngModel)]="form.gstin_no" (ngModelChange)="sanitizeGstinNo()" oninput="this.value=this.value.replace(/[^0-9a-z]/gi,'').slice(0,15).toUpperCase()" style="text-transform: uppercase;" name="gstin" placeholder="GSTIN" maxlength="15" pattern="[0-9A-Za-z]{1,15}" title="Enter up to 15 alphanumeric characters" autocomplete="off">
           </div>
           
           <div class="form-group">
@@ -55,7 +55,7 @@
           
           <div class="form-group">
             <label>Contact No :</label>
-            <input type="text" [(ngModel)]="form.c_contact_no" name="contact" placeholder="contact no">
+            <input type="tel" [(ngModel)]="form.c_contact_no" (keydown)="blockNonNumericKey($event)" (paste)="blockNonNumericPaste($event)" (input)="onContactInput($event)" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)" name="contact" placeholder="contact no" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" title="Enter exactly 10 digits" autocomplete="off">
           </div>
           
           <div class="form-group">

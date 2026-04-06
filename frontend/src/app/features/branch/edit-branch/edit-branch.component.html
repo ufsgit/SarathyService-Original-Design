@@ -23,7 +23,7 @@
 
           <div class="form-group">
             <label>Phone :</label>
-            <input type="text" [(ngModel)]="form.branch_ph" name="ph" placeholder="Phone number">
+            <input type="tel" [(ngModel)]="form.branch_ph" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)" name="ph" placeholder="Phone number" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" title="Enter exactly 10 digits" autocomplete="off">
           </div>
         </div>
 
