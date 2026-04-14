@@ -29,8 +29,46 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  padding-left: 5%;
+  padding: 0 10%;
+  gap: 15%;
   margin-top: -20px;
+}
+
+.hero-logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
+.big-hero-logo {
+  max-width: 650px;
+  width: 100%;
+  height: auto;
+  opacity: 0.9;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
+  animation: fadeInLogo 1s ease-out;
+}
+
+@keyframes fadeInLogo {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 0.9;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 992px) {
+  .hero-logo-container {
+    display: none;
+  }
+  .login-container {
+    justify-content: center;
+    padding: 0;
+  }
 }
 .legacy-card {
   background: #eee;
