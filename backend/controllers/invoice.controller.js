@@ -443,6 +443,7 @@ exports.getLabourNames = async (req, res) => {
 
 // Generate PDF and Finalize Bill
 exports.generatePDF = async (req, res) => {
+    console.log("generatePDF",req.params.id);
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();

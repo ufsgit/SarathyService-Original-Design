@@ -94,11 +94,13 @@ export class PreviousBillsComponent implements OnInit {
   }
 
   openPdf(bill: any): void {
+    console.log("openPdf:",bill);
     if (!bill?.inv_id) return;
     const url = this.api.getInvoicePDFUrl(bill.inv_id);
     // Append auth token so the protected PDF endpoint can verify the request
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-    const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
+    const cb = Date.now();
+    const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}&cb=${cb}` : `${url}?cb=${cb}`;
     window.open(pdfUrl, '_blank');
   }
 }

@@ -1,5 +1,6 @@
 const PDFDocument = require('pdfkit');
 const { convertNumberToWords } = require('./numberToWords');
+const path = require('path');
 
 const p = (v) => isNaN(parseFloat(v)) ? 0 : parseFloat(v);
 
@@ -25,6 +26,7 @@ function fmtDate(d) {
  * Generate a Tax Invoice PDF that EXACTLY matches the Sarathy Motors template.
  */
 function generateInvoicePDF(inv, items) {
+    console.log("generateInvoicePDF",inv);
     return new Promise(function (resolve, reject) {
         try {
             const doc = new PDFDocument({ size: 'A4', margin: 0, autoFirstPage: true });
@@ -38,8 +40,8 @@ function generateInvoicePDF(inv, items) {
             const W = R - L;
             let y = 20;
 
-            const FONT_REG = 'Helvetica';
-            const FONT_BOLD = 'Helvetica-Bold';
+            const FONT_REG = 'Times-Roman';
+            const FONT_BOLD = 'Times-Bold';
             const COLOR_BLUE = '#003087';
 
             // ── HEADER SECTION ──────────────────────────────────────────────
@@ -56,12 +58,11 @@ function generateInvoicePDF(inv, items) {
             // Logo Section
             const logoX = R - 130;
             const logoY = 15;
-            doc.moveTo(logoX + 10, logoY + 10).lineTo(logoX + 30, logoY + 25).lineTo(logoX + 10, logoY + 40).lineWidth(1.2).strokeColor(COLOR_BLUE).stroke();
-            doc.font(FONT_BOLD).fontSize(9).fillColor(COLOR_BLUE).text('BAJAJ', logoX + 10, logoY + 45);
-            doc.fontSize(7).text('THE', logoX + 60, logoY + 12);
-            doc.fontSize(11).text("WORLD'S", logoX + 60, logoY + 18);
-            doc.fontSize(11).text('FAVOURITE', logoX + 60, logoY + 28);
-            doc.fontSize(13).text('INDIAN', logoX + 60, logoY + 38);
+            try {
+                doc.image(path.join(__dirname, '../assets/images/bajaj1.png'), logoX, logoY, { width: 130 });
+            } catch (e) {
+                console.error("Logo image not found", e);
+            }
 
             y = 105;
             doc.fillColor('#000').font(FONT_BOLD).fontSize(10.5).text('SARATHY MOTORS', L, y, { width: W, align: 'center' });
@@ -75,7 +76,7 @@ function generateInvoicePDF(inv, items) {
             y += 9;
             doc.font(FONT_BOLD).fontSize(10).text(inv.branch_gst || '32ABQFS6676M1ZA', L, y);
 
-            const invType = (inv.status == 2 || inv.inv_type === 'insurance') ? 'Insurance' : 'Labour';
+            const invType = (inv.status == 1 || inv.inv_type === 'insurance') ? 'Insurance' : 'Labour';
             doc.font(FONT_BOLD).fontSize(15).text('TAX INVOICE (' + invType + ')', L, y - 5, { width: W, align: 'center' });
             y += 25;
 
@@ -147,9 +148,8 @@ function generateInvoicePDF(inv, items) {
             let rY = y;
             rightFields.forEach(f => {
                 let dy = 9;
-                if (f[0] === 'reverse Charges') {
+                if (f[0] === 'reverse Charges' || f[0] === 'Payable on') {
                     doc.font(FONT_BOLD).fontSize(7.5).text(f[0], colMid, rY);
-                    doc.font(FONT_REG).text(': ' + f[1], colMid + labelW2 - 8, rY);
                 } else {
                     doc.fontSize(7.5);
                     const lblH = doc.font(FONT_BOLD).heightOfString(String(f[0] || ''), { width: labelW2 });
@@ -158,7 +158,10 @@ function generateInvoicePDF(inv, items) {
                     if (dy < 9) dy = 9;
                     drawField(f[0], f[1], colMid, rY, labelW2, valW2);
                 }
-                rY += dy + 1.5;
+                rY += dy + 4;
+                if (f[0] === 'reverse Charges') {
+                    rY += 5; // Extra gap
+                }
             });
 
             y = Math.max(rowY, rY) + 5;
@@ -278,8 +281,11 @@ function generateInvoicePDF(inv, items) {
                 doc.font(FONT_REG).text(val, R - 50, y + 3, { width: 45, align: 'right' });
                 y += 14;
             };
-            summaryRow('Round Off', fmt(inv.inv_round_off || 0, 0));
-            summaryRow('Total Amount', fmt(inv.inv_total || tAmt, 2));
+            let finalTotal = Math.round(tAmt);
+            let roundOffAmt = tAmt - finalTotal;
+
+            summaryRow('Round Off', fmt(roundOffAmt, 2));
+            summaryRow('Total Amount', fmt(finalTotal, 2));
 
             y += 10;
             const bH = 26;
@@ -287,7 +293,7 @@ function generateInvoicePDF(inv, items) {
             // Divider for amount in words
             doc.moveTo(L + 140, y).lineTo(L + 140, y + bH).stroke();
             doc.font(FONT_BOLD).fontSize(9).text('AMOUNT IN WORDS', L + 5, y + 8);
-            doc.font(FONT_REG).text('RS: ' + convertNumberToWords(inv.inv_total || tAmt), L + 145, y + 8);
+            doc.font(FONT_REG).text('RS: ' + convertNumberToWords(finalTotal), L + 145, y + 8);
             y += bH + 8;
 
             doc.font(FONT_BOLD).fontSize(8.5).text('Tax amount payable on reverse charges (in Rs.) : Nil', L, y);
@@ -295,8 +301,19 @@ function generateInvoicePDF(inv, items) {
 
             const fY = doc.page.height - 80;
             doc.font(FONT_REG).fontSize(8).text('Sign of Customer Or His Agent', L, fY);
+            let nextServiceDateStr = fmtDate(inv.inv_next_service_date);
+            if (!nextServiceDateStr || nextServiceDateStr === '02/10/2018' || !inv.inv_next_service_date) {
+                let invDate = new Date(inv.inv_inv_date || Date.now());
+                if (isNaN(invDate)) invDate = new Date();
+                
+                const rType = (inv.inv_repair_typ || 'Paid service').toLowerCase();
+                const monthsToAdd = rType.includes('paid') ? 4 : 3;
+                invDate.setMonth(invDate.getMonth() + monthsToAdd);
+                nextServiceDateStr = fmtDate(invDate);
+            }
+
             doc.font(FONT_BOLD).fontSize(9).fillColor(COLOR_BLUE).text('Get your vehicle serviced at regular intervals.', L, fY - 12, { width: W, align: 'center' });
-            doc.fillColor('#000').text('Next due date for service is ' + (fmtDate(inv.inv_next_service_date) || '02/10/2018'), L, fY + 2, { width: W, align: 'center' });
+            doc.fillColor('#000').text('Next due date for service is ' + nextServiceDateStr, L, fY + 2, { width: W, align: 'center' });
             doc.text('Thank You & Happy Riding', L, fY + 14, { width: W, align: 'center' });
 
             const sWd = 140;
