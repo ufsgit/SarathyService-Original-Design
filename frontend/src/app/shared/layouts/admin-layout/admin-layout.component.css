@@ -10,9 +10,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #1a1a2e;
+  background: #ffffff;
   padding: 10px 20px;
-  color: #ccc;
+  color: #333;
 }
 .header-logo {
   height: 50px;
@@ -24,22 +24,22 @@
   font-size: 13px;
 }
 .welcome-info {
-  color: #ccc;
+  color: #333;
 }
 .icon-user {
   font-style: normal;
 }
 .phone-info {
-  color: #ccc;
+  color: #333;
 }
 .logout-link {
-  color: #ccc;
+  color: #333;
   text-decoration: none;
   cursor: pointer;
   transition: color 0.2s;
 }
 .logout-link:hover {
-  color: #fff;
+  color: #000;
 }
 
 /* ====== Navigation Bar ====== */
