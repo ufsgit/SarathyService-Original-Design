@@ -157,8 +157,7 @@ exports.create = async (req, res) => {
 // Update customer
 exports.update = async (req, res) => {
     try {
-<<<<<<< Updated upstream
-        const { c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email } = req.body;
+        const { c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email } = sanitizeCustomerInput(req.body);
         const id = req.params.id;
 
         // 1. Check required fields
@@ -180,13 +179,10 @@ exports.update = async (req, res) => {
             return res.status(409).json({ message: msg });
         }
 
-=======
-        const { c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email } = sanitizeCustomerInput(req.body);
         const validationError = validateCustomerInput({ c_contact_no, gstin_no });
         if (validationError) {
             return res.status(400).json({ message: validationError });
         }
->>>>>>> Stashed changes
         const [result] = await pool.query(
             `UPDATE customer_details SET c_name=?, c_address=?, c_reg_no=?, c_chassis_no=?, c_engine_no=?, model_name=?, c_contact_no=?, gstin_no=?, c_sales_date=?, c_email=? WHERE c_id=?`,
             [c_name, c_address || '', c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no || '', gstin_no || '', c_sales_date || null, c_email || '', id]
