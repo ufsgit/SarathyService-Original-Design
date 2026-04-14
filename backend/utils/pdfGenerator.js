@@ -29,7 +29,7 @@ function generateInvoicePDF(inv, items) {
     console.log("generateInvoicePDF",inv);
     return new Promise(function (resolve, reject) {
         try {
-            const doc = new PDFDocument({ size: 'A4', margin: 0, autoFirstPage: true });
+            const doc = new PDFDocument({ size: 'A4', margin: 0, autoFirstPage: true, bufferPages: true });
             const chunks = [];
             doc.on('data', (c) => chunks.push(c));
             doc.on('end', () => resolve(Buffer.concat(chunks)));
@@ -143,7 +143,7 @@ function generateInvoicePDF(inv, items) {
                 if (dy < 9) dy = 9;
 
                 drawField(f[0], f[1], L, rowY, labelW, valW1, boldLbl);
-                rowY += dy + 1.5;
+                rowY += dy + 4.5;
             });
             let rY = y;
             rightFields.forEach(f => {
@@ -158,7 +158,7 @@ function generateInvoicePDF(inv, items) {
                     if (dy < 9) dy = 9;
                     drawField(f[0], f[1], colMid, rY, labelW2, valW2);
                 }
-                rY += dy + 4;
+                rY += dy + 4.5;
                 if (f[0] === 'reverse Charges') {
                     rY += 5; // Extra gap
                 }
@@ -299,8 +299,18 @@ function generateInvoicePDF(inv, items) {
             doc.font(FONT_BOLD).fontSize(8.5).text('Tax amount payable on reverse charges (in Rs.) : Nil', L, y);
             y += 35;
 
-            const fY = doc.page.height - 80;
+            // Dynamically place Signature Block instead of forcing to bottom
+            // Signature needs about 50 points of space
+            if (y + 50 > doc.page.height - 30) {
+                doc.addPage();
+                y = 40;
+            } else {
+                y += 50; 
+            }
+
+            const fY = y;
             doc.font(FONT_REG).fontSize(8).text('Sign of Customer Or His Agent', L, fY);
+            
             let nextServiceDateStr = fmtDate(inv.inv_next_service_date);
             if (!nextServiceDateStr || nextServiceDateStr === '02/10/2018' || !inv.inv_next_service_date) {
                 let invDate = new Date(inv.inv_inv_date || Date.now());
@@ -320,6 +330,77 @@ function generateInvoicePDF(inv, items) {
             doc.moveTo(R - sWd, fY).lineTo(R, fY).stroke();
             doc.font(FONT_BOLD).fontSize(8.5).text('SARATHY MOTORS', R - sWd, fY - 12, { width: sWd, align: 'center' });
             doc.font(FONT_REG).fontSize(8).text('Authorised Signatory', R - sWd, fY + 4, { width: sWd, align: 'center' });
+
+            y = fY + 40;
+
+            // --- GATE PASS SECTION ---
+            if (y + 140 > doc.page.height - 30) {
+                doc.addPage();
+                y = 40;
+            } else {
+                y += 20; 
+            }
+
+            doc.moveTo(L, y).lineTo(R, y).dash(3, { space: 3 }).lineWidth(0.8).strokeColor('#000').stroke();
+            doc.undash(); 
+            y += 20;
+
+            doc.font(FONT_BOLD).fontSize(12).text('Gate Pass', L, y, { width: W, align: 'center' });
+            y += 30;
+
+            const gpCol1 = L;
+            const gpCol2 = L + 185;
+            const gpCol3 = L + 365;
+
+            const drawGpField = (lbl, val, x, yy) => {
+                doc.font(FONT_BOLD).fontSize(8).text(lbl, x, yy, { width: 75 });
+                doc.font(FONT_REG).text(': ' + (val || ''), x + 75, yy, { width: 100 });
+            };
+
+            drawGpField('Job Card No.', inv.inv_job_card_no, gpCol1, y);
+            drawGpField('Invoice no', inv.inv_no, gpCol2, y);
+            drawGpField('Chase No.', inv.inv_chassis, gpCol3, y);
+            y += 18;
+
+            drawGpField('Jobcard Date', fmtDate(inv.inv_jcard_date), gpCol1, y);
+            drawGpField('Service Advisor', inv.inv_advisername, gpCol2, y);
+            drawGpField('Engine No', inv.in_engine, gpCol3, y);
+            y += 18;
+
+            drawGpField('Invoice Date', fmtDate(inv.inv_inv_date), gpCol1, y);
+            drawGpField('Vehicle No.', inv.in_registr, gpCol2, y);
+            drawGpField('Mechanic Name', inv.inv_mechna, gpCol3, y);
+            y += 18;
+
+            drawGpField('Model Name', inv.inv_modl, gpCol1, y);
+            y += 35; 
+            
+            const sigW2 = 140;
+            const sigX2 = L + (W / 2) - (sigW2 / 2);
+            doc.moveTo(sigX2, y).lineTo(sigX2 + sigW2, y).lineWidth(0.8).stroke();
+            y += 4;
+            doc.font(FONT_REG).fontSize(8).text('SARATHY MOTORS', sigX2, y, { width: sigW2, align: 'center' });
+            y += 12;
+            doc.text('Authorised Signatory', sigX2, y, { width: sigW2, align: 'center' });
+
+            // Ensure footers apply to all pages
+            function formatAmPm(date) {
+                let hours = date.getHours();
+                let minutes = date.getMinutes();
+                const ampm = hours >= 12 ? 'pm' : 'am';
+                hours = hours % 12;
+                hours = hours ? hours : 12; 
+                minutes = minutes < 10 ? '0' + minutes : minutes;
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                return monthNames[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear() + ', ' + hours + ':' + minutes + ' ' + ampm;
+            }
+
+            const range = doc.bufferedPageRange();
+            for (let i = range.start; i < range.start + range.count; i++) {
+                doc.switchToPage(i);
+                doc.font(FONT_REG).fontSize(7).text(`Printed On: ` + formatAmPm(new Date()), L, doc.page.height - 30);
+                doc.text(`Page ${i + 1}/${range.count}`, R - 40, doc.page.height - 30, { width: 40, align: 'right' });
+            }
 
             doc.end();
         } catch (err) {
