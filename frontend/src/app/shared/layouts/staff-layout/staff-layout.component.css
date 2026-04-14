@@ -10,12 +10,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #ffffff;
+  background: #1a1a2e;
   padding: 10px 20px;
-  color: #333;
+  color: #ccc;
 }
 .header-logo {
   height: 50px;
+  filter: brightness(0) invert(1);
 }
 .header-right {
   display: flex;
@@ -24,22 +25,22 @@
   font-size: 13px;
 }
 .welcome-info {
-  color: #333;
+  color: #ccc;
 }
 .icon-user {
   font-style: normal;
 }
 .phone-info {
-  color: #333;
+  color: #ccc;
 }
 .logout-link {
-  color: #333;
+  color: #ccc;
   text-decoration: none;
   cursor: pointer;
   transition: color 0.2s;
 }
 .logout-link:hover {
-  color: #000;
+  color: #fff;
 }
 
 /* ====== Navigation Bar ====== */
