@@ -25,7 +25,7 @@ function fmtDate(d) {
  * Generate a Tax Invoice PDF that EXACTLY matches the Sarathy Motors template.
  */
 function generateInvoicePDF(inv, items) {
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
         try {
             const doc = new PDFDocument({ size: 'A4', margin: 0, autoFirstPage: true });
             const chunks = [];
@@ -51,7 +51,7 @@ function generateInvoicePDF(inv, items) {
             doc.font(FONT_REG).fontSize(7).text('Pulamon Jun.', L, y); y += 8;
             doc.font(FONT_REG).fontSize(7).text('Kottarakkara', L, y); y += 8;
             doc.font(FONT_REG).fontSize(7).text('Kerala [State Code : 32]', L, y); y += 8;
-            doc.font(FONT_REG).fontSize(7).text('PH : ' + (inv.branch_ph || '+91-9847986565'), L, y); 
+            doc.font(FONT_REG).fontSize(7).text('PH : ' + (inv.branch_ph || '+91-9847986565'), L, y);
 
             // Logo Section
             const logoX = R - 130;
@@ -183,7 +183,7 @@ function generateInvoicePDF(inv, items) {
 
             const headerH = 32;
             const startY = y;
-            
+
             // Draw Header
             doc.rect(L, y, W, headerH).stroke();
             doc.font(FONT_BOLD).fontSize(6).fillColor('#000');
@@ -196,7 +196,7 @@ function generateInvoicePDF(inv, items) {
 
             let tDisc = 0, tTax = 0, tSgst = 0, tCgst = 0, tKfc = 0, tAmt = 0;
             doc.font(FONT_REG).fontSize(7.5);
-            
+
             // Draw Item Rows
             (items || []).forEach((item, idx) => {
                 const disc = p(item.lc_disc);
@@ -230,7 +230,7 @@ function generateInvoicePDF(inv, items) {
                     fmt(kfc, 2),
                     fmt(amount, 2)
                 ];
-                
+
                 const alignments = ['center', 'center', 'left', 'right', 'right', 'right', 'center', 'right', 'center', 'right', 'right', 'right'];
 
                 data.forEach((val, i) => {
@@ -246,7 +246,7 @@ function generateInvoicePDF(inv, items) {
             doc.font(FONT_BOLD).fontSize(7.5);
             // Place 'TOTAL' under Name column
             doc.text('TOTAL', L + 20 + 45, y + 5, { width: 120, align: 'right' });
-            
+
             cx = L + 20 + 45 + 120 + 45; // Start of DISC
             const fTot = [fmt(tDisc, 2), fmt(tTax, 2), '', fmt(tSgst, 2), '', fmt(tCgst, 2), fmt(tKfc, 2), fmt(tAmt, 2)];
             let ti = 4;
@@ -255,7 +255,7 @@ function generateInvoicePDF(inv, items) {
                 cx += cols[ti].w;
                 ti++;
             });
-            
+
             // Vertical lines for the whole table (header, rows, total)
             const endY = y + footerH;
             cx = L;
@@ -269,9 +269,9 @@ function generateInvoicePDF(inv, items) {
 
             // Summary (Round Off / Total Amount)
             // Starts after Rate + Disc
-            const sumStart = L + cols[0].w + cols[1].w + cols[2].w + cols[3].w + cols[4].w; 
+            const sumStart = L + cols[0].w + cols[1].w + cols[2].w + cols[3].w + cols[4].w;
             const sW = R - sumStart;
-            
+
             const summaryRow = (lbl, val) => {
                 doc.rect(sumStart, y, sW, 14).stroke();
                 doc.font(FONT_BOLD).fontSize(7.5).text(lbl, sumStart + 5, y + 3);

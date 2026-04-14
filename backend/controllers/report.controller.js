@@ -251,6 +251,7 @@ exports.getPreviousLabourBills = async (req, res) => {
 
         res.json({ data: rows, total, page, pageSize });
     } catch (err) {
+        console.log("getPreviousLabourBills error:",err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
@@ -288,6 +289,7 @@ exports.getPreviousInsuranceBills = async (req, res) => {
 
         res.json({ data: rows, total, page, pageSize });
     } catch (err) {
+        console.log("getPreviousInsuranceBills error:",err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
@@ -308,6 +310,7 @@ exports.getFilterOptions = async (req, res) => {
 
         res.json({ branches, mechanics, advisors, insuranceCompanies, repairTypes });
     } catch (err) {
+        console.log("getFilterOptions error:",err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };

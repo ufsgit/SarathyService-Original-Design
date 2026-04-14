@@ -7,7 +7,7 @@ exports.search = async (req, res) => {
         if (!reg_no) return res.status(400).json({ message: 'Registration number required' });
 
         const [customers] = await pool.query(
-            'SELECT * FROM customer_details WHERE c_reg_no = ?', 
+            'SELECT * FROM customer_details WHERE c_reg_no = ?',
             [reg_no]
         );
         const customer = customers.length > 0 ? customers[0] : null;
@@ -60,7 +60,7 @@ exports.generatePDF = async (req, res) => {
         if (!reg_no) return res.status(400).json({ message: 'Registration number required' });
 
         const [customers] = await pool.query(
-            'SELECT * FROM customer_details WHERE c_reg_no = ?', 
+            'SELECT * FROM customer_details WHERE c_reg_no = ?',
             [reg_no]
         );
         if (customers.length === 0) return res.status(404).json({ message: 'Customer not found' });
@@ -116,7 +116,7 @@ exports.generatePDF = async (req, res) => {
         const drawHeaderRow = (l1, v1, l2, v2) => {
             const str1 = String(v1 || '-');
             const str2 = String(v2 || '-');
-            
+
             const w1 = 145; // Width before hitting second column start
             const w2 = 205; // Width before hitting right margin
 
@@ -132,7 +132,7 @@ exports.generatePDF = async (req, res) => {
             doc.text(l2, col2 + 40, y, { width: 85 });
             doc.text(':', col2 + 120, y);
             doc.text(str2, col2 + 125, y, { width: w2 });
-            
+
             y += maxH + 4;
         };
 
@@ -176,7 +176,7 @@ exports.generatePDF = async (req, res) => {
             // Visit Table Body
             const vData = [fmtDate(inv.inv_jcard_date), inv.inv_km || '-', inv.inv_repair_typ || 'Paid service', inv.branch_name || 'Sarathy Bajaj', '-'];
             doc.font(FONT_REG).fontSize(7);
-            
+
             let vRowH = 18;
             vData.forEach((v, i) => {
                 const h = doc.heightOfString(String(v), { width: vCols[i].w - 4 });
@@ -221,7 +221,7 @@ exports.generatePDF = async (req, res) => {
                 visitTaxable += tax; visitDisc += disc; visitTotal += amt;
 
                 const rowData = [item.lc_lb_name || '-', 'P', tax.toFixed(2), disc.toFixed(2), amt.toFixed(2)];
-                
+
                 doc.font(FONT_REG).fontSize(7);
                 let rowH = 14;
                 const nameHeight = doc.heightOfString(rowData[0], { width: sCols[0].w - 4 });
@@ -231,7 +231,7 @@ exports.generatePDF = async (req, res) => {
 
                 doc.rect(L, y, W, rowH).stroke();
                 cx = L;
-                
+
                 rowData.forEach((v, i) => {
                     doc.text(v, cx + 2, y + 4, { width: sCols[i].w - 4, align: i > 1 ? 'right' : 'left' });
                     cx += sCols[i].w;

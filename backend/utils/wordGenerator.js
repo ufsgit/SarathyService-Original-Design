@@ -201,7 +201,7 @@ async function generateInvoiceWord(inv, items) {
                 new Table({
                     width: { size: 100, type: WidthType.PERCENTAGE },
                     borders: {
-                         top: { style: BorderStyle.NONE },
+                        top: { style: BorderStyle.NONE },
                         bottom: { style: BorderStyle.NONE },
                         left: { style: BorderStyle.NONE },
                         right: { style: BorderStyle.NONE },
@@ -241,7 +241,7 @@ async function generateInvoiceWord(inv, items) {
 function createDetailParagraphs(inv) {
     const leftLabels = ["Invoice No", "Jobcard No", "Customer Name", "Customer GSTIN", "Model Name", "Registration No", "Mechanic Name"];
     const leftValues = [inv.inv_no, inv.inv_job_card_no, inv.inv_cus, inv.inv_cus_gstin, inv.inv_modl, inv.in_registr, inv.inv_mechna];
-    
+
     const rightLabels = ["Invoice Date", "Jobcard Date", "Mobile No", "Repair Type", "KM Reading", "Adviser Name", "Branch Name"];
     const rightValues = [fmtDate(inv.inv_inv_date), fmtDate(inv.inv_jcard_date), inv.inv_pho, inv.inv_repair_typ, inv.inv_km, inv.inv_advisername, inv.branch_name];
 
