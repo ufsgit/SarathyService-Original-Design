@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +15,9 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
   styleUrls: ['./previous-bills.component.css']
 })
 export class PreviousBillsComponent implements OnInit {
-  bills: any[] = []; type = 'labour'; searchText = '';
+  bills = signal<any[]>([]); 
+  isLoading = signal<boolean>(false);
+  type = 'labour'; searchText = '';
   isAdmin = false;
   Math = Math;
   
@@ -42,17 +44,22 @@ export class PreviousBillsComponent implements OnInit {
   }
 
   fetchBills(): void {
+    this.isLoading.set(true);
     const obs = this.type === 'labour' 
       ? this.api.getPreviousLabourBills(this.currentPage, this.pageSize, this.searchText)
       : this.api.getPreviousInsuranceBills(this.currentPage, this.pageSize, this.searchText);
 
     obs.subscribe({
       next: (res: any) => {
-        this.bills = res.data;
-        this.totalItems = res.total;
+        this.bills.set(res.data || []);
+        this.totalItems = res.total || 0;
         this.totalPages = Math.ceil(this.totalItems / this.pageSize);
+        this.isLoading.set(false);
       },
-      error: () => this.notify.error('Failed to load bills')
+      error: () => {
+        this.notify.error('Failed to load bills');
+        this.isLoading.set(false);
+      }
     });
   }
 

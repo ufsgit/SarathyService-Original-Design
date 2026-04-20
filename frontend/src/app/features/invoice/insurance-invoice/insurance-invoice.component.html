@@ -40,7 +40,7 @@
           </div>
           <div class="control-group">
             <label>Jobcard Date : <span class="text-danger">*</span></label>
-            <input type="date" name="jname" [(ngModel)]="form.inv_jcard_date" required />
+            <input type="date" name="jname" [(ngModel)]="form.inv_jcard_date" (ngModelChange)="onJcardDateChange()" required />
           </div>
           <div class="control-group">
             <label>Invoice No : <span class="text-danger">*</span></label>

@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 export class ApiService {
   private baseUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // --- Branches ---
   getBranches(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/branches`); }
@@ -114,6 +114,11 @@ export class ApiService {
     return this.http.get<any[]>(url);
   }
   getJobCard(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/jobcards/${id}`); }
+  getNextJobCardNo(date?: string): Observable<any> { 
+    const params: any = {};
+    if (date) params['date'] = date;
+    return this.http.get<any>(`${this.baseUrl}/jobcards/next-number`, { params });
+  }
 
   // --- Reports ---
   getJobCardSummary(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/reports/job-card-summary`, data); }

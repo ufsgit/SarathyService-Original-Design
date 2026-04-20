@@ -92,6 +92,7 @@ export class InsuranceInvoiceComponent implements OnInit {
       if (this.auth.currentUser?.branchId) {
         this.form.inv_branch = this.auth.currentUser.branchId;
         this.loadNextNo();
+        this.loadNextJobCardNo();
         this.loadBranchEmployees(this.auth.currentUser.branchId);
       }
     }
@@ -249,6 +250,19 @@ export class InsuranceInvoiceComponent implements OnInit {
         // Match user's example: CI20260312 + 357322 (no additional padding needed if ID is already long)
         this.form.inv_no = `CI${ymd}${res.nextNo}`;
       });
+    }
+  }
+
+  loadNextJobCardNo() {
+    const date = this.form.inv_jcard_date || new Date().toISOString().split('T')[0];
+    this.api.getNextJobCardNo(date).subscribe(res => {
+      this.form.inv_job_card_no = res.nextNumber;
+    });
+  }
+
+  onJcardDateChange() {
+    if (!this.editMode) {
+      this.loadNextJobCardNo();
     }
   }
 

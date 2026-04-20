@@ -39,14 +39,19 @@
   justify-content: center;
   align-items: center;
   flex: 1;
+  background: white;
+  border-radius: 30px;
+  padding: 60px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  margin-left: 5%;
 }
 
 .big-hero-logo {
-  max-width: 650px;
+  max-width: 600px;
   width: 100%;
   height: auto;
-  opacity: 0.9;
-  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
+  opacity: 1;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,0.1));
   animation: fadeInLogo 1s ease-out;
 }
 

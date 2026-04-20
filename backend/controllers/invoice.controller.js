@@ -240,20 +240,15 @@ exports.updateInvoice = async (req, res) => {
         const d = req.body;
 
         if (d.inv_no) {
-            // Refined check: allow same inv_no if it's the finalized counterpart
             let duplicateQuery = '';
             let duplicateParams = [];
-
             if (d.isFinalized === true) {
-                // Updating finalized bill: check ready bills (status 1) and other finalized bills
                 duplicateQuery = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_no = ? AND ready_status = 1 UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_no = ? AND inv_id != ?';
                 duplicateParams = [d.inv_no, d.inv_no, req.params.id];
             } else {
-                // Updating ready bill: check other ready bills and all finalized bills
                 duplicateQuery = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_no = ? AND inv_id != ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_no = ?';
                 duplicateParams = [d.inv_no, req.params.id, d.inv_no];
             }
-
             const [exists] = await conn.query(duplicateQuery, duplicateParams);
             if (exists.length > 0) {
                 conn.release();
@@ -261,18 +256,73 @@ exports.updateInvoice = async (req, res) => {
             }
         }
 
-
-        // Determine which table to update
-        let isReadyTable = true;
         if (d.isFinalized === true) {
-            isReadyTable = false;
-        } else {
-            const [readyRows] = await conn.query('SELECT inv_id FROM tbl_readyfor_labour WHERE inv_id = ? AND ready_status = 1', [req.params.id]);
-            isReadyTable = readyRows.length > 0;
+            // Reopening a finalized invoice
+            // 1. Find corresponding record in tbl_readyfor_labour using inv_no or job_card_no
+            let [readyRows] = await conn.query('SELECT inv_id FROM tbl_readyfor_labour WHERE inv_no = ?', [d.inv_no]);
+            if (readyRows.length === 0 && d.inv_job_card_no) {
+               [readyRows] = await conn.query('SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? ORDER BY inv_id DESC LIMIT 1', [d.inv_job_card_no]);
+            }
+
+            if (readyRows.length > 0) {
+                const readyId = readyRows[0].inv_id;
+
+                // 2. Update tbl_readyfor_labour with new data and set ready_status = 1 (Ready for Bill)
+                await conn.query(
+                    `UPDATE tbl_readyfor_labour SET 
+                        inv_cus=?, inv_cus_addres=?, inv_pho=?, inv_cus_gstin=?, 
+                        inv_job_card_no=?, inv_jcard_date=?, inv_repair_typ=?, inv_km=?, 
+                        in_registr=?, inv_chassis=?, in_engine=?, inv_modl=?,
+                        inv_advisername=?, inv_mechna=?, inv_branch=?,
+                        inv_disc_total=?, inv_taxtotal=?, inv_sgstotal=?, inv_gsttotal=?, inv_total=?,
+                        insurance_id=?, insurance_serveyor=?, inv_sale_date=?, inv_type=?, inv_cesstotal=?,
+                        ready_status = 1
+                    WHERE inv_id=?`,
+                    [
+                        d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '',
+                        d.inv_job_card_no || '', d.inv_jcard_date, d.inv_repair_typ || '', d.inv_km || '',
+                        d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
+                        d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || null,
+                        d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0,
+                        d.inv_insurance_company || d.insurance_id || null, d.inv_surveyor || d.insurance_serveyor || '',
+                        d.inv_sale_date || '', d.inv_type || '', d.inv_cesstotal || 0,
+                        readyId
+                    ]
+                );
+
+                // 3. Update tbl_readyfor_bill items
+                await conn.query(`DELETE FROM tbl_readyfor_bill WHERE ic_inv_id = ?`, [readyId]);
+                if (d.items && d.items.length > 0) {
+                    for (const item of d.items) {
+                        await conn.query(
+                            `INSERT INTO tbl_readyfor_bill (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
+                    lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess)
+                  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+                            [readyId, item.ic_labour_code || item.lc_lab_code || '', item.ic_type || item.lc_type || 'labour',
+                            item.ic_particular || item.lc_lb_name || '', item.ic_hsn || item.lc_sacode || '998729',
+                            String(item.ic_rate || item.lc_rate || 0), String(item.ic_disc_per || item.lc_disc_p || 0), String(item.lc_disc || item.ic_disc || 0),
+                            String(item.ic_taxable_amt || item.lc_tax_amunt || 0),
+                            String(item.ic_sgst_p || item.lc_sgst_p || 9), String(item.ic_sgst_amt || item.lc_sgst_a || 0),
+                            String(item.ic_cgst_p || item.lc_cgst_p || 9), String(item.ic_cgst_amt || item.lc_cgst_a || 0),
+                            String(item.ic_total || item.lc_amount || 0), String(item.lc_cess || 0)]
+                        );
+                    }
+                }
+
+                // 4. Delete from finalized tables
+                await conn.query('DELETE FROM tbl_invoice_labour WHERE inv_id = ?', [req.params.id]);
+                await conn.query('DELETE FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [req.params.id]);
+
+                await conn.commit();
+                return res.json({ message: 'Invoice moved back to Ready For Bill and updated' });
+            } else {
+                throw new Error("Corresponding ready bill not found to reopen.");
+            }
         }
 
-        const mainTable = isReadyTable ? 'tbl_readyfor_labour' : 'tbl_invoice_labour';
-        const itemsTable = isReadyTable ? 'tbl_readyfor_bill' : 'tbl_invoice_labour_cost';
+        // Standard update for non-finalized invoices
+        const mainTable = 'tbl_readyfor_labour';
+        const itemsTable = 'tbl_readyfor_bill';
 
         await conn.query(
             `UPDATE ${mainTable} SET 
@@ -443,7 +493,7 @@ exports.getLabourNames = async (req, res) => {
 
 // Generate PDF and Finalize Bill
 exports.generatePDF = async (req, res) => {
-    console.log("generatePDF",req.params.id);
+    console.log("generatePDF", req.params.id);
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();

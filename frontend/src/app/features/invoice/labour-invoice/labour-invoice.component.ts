@@ -15,7 +15,7 @@ import { SearchableSelectComponent } from '../../../shared/components/searchable
   styleUrls: ['./labour-invoice.component.css']
 })
 export class LabourInvoiceComponent implements OnInit {
-  form: any = { inv_discount: 0, inv_type: 'Cash', inv_total: 0 }; 
+  form: any = { inv_discount: 0, inv_type: 'Cash', inv_total: 0 };
   items: any[] = [this.newItem()];
   branches: any[] = []; mechanics: any[] = []; advisors: any[] = []; labourNames: any[] = [];
   editMode = false; invoiceId: number | null = null;
@@ -40,13 +40,13 @@ export class LabourInvoiceComponent implements OnInit {
 
   labourCodeOptions: string[] = [];
   jobTypeOptions: string[] = ['Paid Service', 'Expense', 'Free Service'];
-  
+
   formatLabourCode = (option: string) => {
     return option ? option.split(' - ')[0] : option;
   };
 
-  constructor(private api: ApiService, private notify: NotificationService, private router: Router, public auth: AuthService, private route: ActivatedRoute) {}
-  
+  constructor(private api: ApiService, private notify: NotificationService, private router: Router, public auth: AuthService, private route: ActivatedRoute) { }
+
   ngOnInit() {
     this.api.getBranches().subscribe(d => {
       this.branches = d;
@@ -65,7 +65,7 @@ export class LabourInvoiceComponent implements OnInit {
       this.advisors = d;
       this.updateAdvisorOptions();
     });
-    
+
     this.isFromPreviousBills = this.route.snapshot.queryParams['from'] === 'previous';
     this.invoiceId = this.route.snapshot.params['id'] ? +this.route.snapshot.params['id'] : null;
     if (this.invoiceId) {
@@ -79,6 +79,7 @@ export class LabourInvoiceComponent implements OnInit {
       if (this.auth.currentUser?.branchId) {
         this.form.inv_branch = this.auth.currentUser.branchId;
         this.loadNextNo();
+        this.loadNextJobCardNo();
         this.loadBranchEmployees(this.auth.currentUser.branchId);
       }
     }
@@ -91,11 +92,11 @@ export class LabourInvoiceComponent implements OnInit {
         // Normalize types and fields for legacy records
         if (this.form.inv_branch) this.form.inv_branch = +this.form.inv_branch;
         this.form.inv_engine = this.form.inv_engine || this.form.in_engine;
-        
+
         if (this.form.inv_inv_date) this.form.inv_inv_date = this.form.inv_inv_date.split('T')[0];
         if (this.form.inv_jcard_date) this.form.inv_jcard_date = this.form.inv_jcard_date.split('T')[0];
         if (this.form.inv_sale_date) this.form.inv_sale_date = this.form.inv_sale_date.split('T')[0];
-        
+
         this.items = res.items.map((it: any) => ({
           ic_labour_code: it.lc_lab_code,
           ic_particular: it.lc_lb_name,
@@ -113,7 +114,7 @@ export class LabourInvoiceComponent implements OnInit {
           ic_type: it.lc_type
         }));
         this.calcTotals();
-        
+
         // Update selected labels for Edit Mode
         if (this.branches.length > 0) this.updateBranchOptions();
         if (this.advisors.length > 0) this.updateAdvisorOptions();
@@ -210,6 +211,19 @@ export class LabourInvoiceComponent implements OnInit {
     }
   }
 
+  loadNextJobCardNo() {
+    const date = this.form.inv_jcard_date || new Date().toISOString().split('T')[0];
+    this.api.getNextJobCardNo(date).subscribe(res => {
+      this.form.inv_job_card_no = res.nextNumber;
+    });
+  }
+
+  onJcardDateChange() {
+    if (!this.editMode) {
+      this.loadNextJobCardNo();
+    }
+  }
+
   loadBranchEmployees(branchId: number) {
     this.form.inv_advisername = '';
     this.form.inv_mechna = '';
@@ -242,24 +256,24 @@ export class LabourInvoiceComponent implements OnInit {
     }
   }
 
-  newItem() { 
-    return { 
+  newItem() {
+    return {
       ic_labour_label: '',
-      ic_labour_code: '', 
-      ic_particular: '', 
-      ic_hsn: '998729', 
-      ic_qty: 1, 
-      ic_rate: 0, 
-      ic_disc_per: 0, 
-      ic_disc: 0, 
-      ic_taxable_amt: 0, 
-      ic_sgst_p: 9, 
-      ic_sgst_amt: 0, 
-      ic_cgst_p: 9, 
-      ic_cgst_amt: 0, 
-      ic_total: 0, 
+      ic_labour_code: '',
+      ic_particular: '',
+      ic_hsn: '998729',
+      ic_qty: 1,
+      ic_rate: 0,
+      ic_disc_per: 0,
+      ic_disc: 0,
+      ic_taxable_amt: 0,
+      ic_sgst_p: 9,
+      ic_sgst_amt: 0,
+      ic_cgst_p: 9,
+      ic_cgst_amt: 0,
+      ic_total: 0,
       ic_type: 'Paid Service'
-    }; 
+    };
   }
 
   addItem() { this.items.push(this.newItem()); }
@@ -275,22 +289,22 @@ export class LabourInvoiceComponent implements OnInit {
       return;
     }
     const found = this.labourNames.find(l => `${l.l_code} - ${l.l_name}` === label);
-    if (found) { 
+    if (found) {
       this.items[i].ic_labour_code = found.l_code;
       this.items[i].ic_particular = found.l_name;
-      this.items[i].ic_hsn = found.l_hsn || '998729'; 
-      this.items[i].ic_rate = found.l_amount; 
-      this.calcItem(i); 
+      this.items[i].ic_hsn = found.l_hsn || '998729';
+      this.items[i].ic_rate = found.l_amount;
+      this.calcItem(i);
     }
   }
 
   calcItem(i: number) {
     const item = this.items[i];
     if (item.ic_type === 'Expense' || item.ic_type === 'Free Service') {
-      item.ic_disc = 0; 
-      item.ic_taxable_amt = 0; 
-      item.ic_cgst_amt = 0; 
-      item.ic_sgst_amt = 0; 
+      item.ic_disc = 0;
+      item.ic_taxable_amt = 0;
+      item.ic_cgst_amt = 0;
+      item.ic_sgst_amt = 0;
       item.ic_total = 0;
     } else {
       const rate = item.ic_rate || 0;
@@ -316,24 +330,24 @@ export class LabourInvoiceComponent implements OnInit {
     this.form.inv_sgst = +sgstTotal.toFixed(2);
     this.form.inv_discount = +discTotal.toFixed(2);
     const grandTotal = taxableTotal + cgstTotal + sgstTotal;
-    
+
     // As per reference screenshot, Total Payable Amount is the sum including taxes
-    this.form.inv_total = +grandTotal.toFixed(2); 
+    this.form.inv_total = +grandTotal.toFixed(2);
     this.form.inv_final_amount = Math.round(grandTotal);
   }
 
   onRegBlur() {
     if (this.form.in_registr) {
       this.api.getCustomerByReg(this.form.in_registr).subscribe({
-        next: (c:any) => { 
-          this.form.inv_cus = c.c_name; 
-          this.form.inv_cus_addres = c.c_address; 
-          this.form.inv_pho = c.c_contact_no; 
-          this.form.inv_email = c.c_email; 
-          this.form.inv_gstin = c.gstin_no; 
-          this.form.inv_modl = c.model_name; 
-          this.form.inv_chassis = c.c_chassis_no; 
-          this.form.inv_engine = c.c_engine_no; 
+        next: (c: any) => {
+          this.form.inv_cus = c.c_name;
+          this.form.inv_cus_addres = c.c_address;
+          this.form.inv_pho = c.c_contact_no;
+          this.form.inv_email = c.c_email;
+          this.form.inv_gstin = c.gstin_no;
+          this.form.inv_modl = c.model_name;
+          this.form.inv_chassis = c.c_chassis_no;
+          this.form.inv_engine = c.c_engine_no;
         },
         error: () => {
           this.pendingRegNo = this.form.in_registr;
