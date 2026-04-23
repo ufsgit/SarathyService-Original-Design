@@ -17,18 +17,24 @@ exports.login = async (req, res) => {
              WHERE l.uname = ?`, [username]
         );
 
-        if (rows.length === 0) return res.status(401).json({ message: 'Invalid credentials' });
+        if (rows.length === 0) {
+            console.log("Invalid credentials");
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
 
         const user = rows[0];
         const isMatch = await bcrypt.compare(password, user.pwd);
+        console.log("user.pwd", user.pwd, "password", password);
 
         if (!isMatch) {
+            console.log("Invalid credentials isMatch");
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         const role = user.role_des === 'admin' ? 'admin' : 'staff';
 
         if (role === 'staff' && user.status !== 'active' && user.status != 1) {
+            console.log("Your account is inactive. Please contact the administrator.");
             return res.status(403).json({ message: 'Your account is inactive. Please contact the administrator.' });
         }
 
