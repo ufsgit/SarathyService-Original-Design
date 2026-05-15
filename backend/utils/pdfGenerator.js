@@ -101,22 +101,39 @@ function generateInvoicePDF(inv, items) {
                 }
             }
 
-            const leftFields = [
-                ['Invoice No.', inv.inv_no],
-                ['Invoice Date', fmtDate(inv.inv_inv_date)],
-                ['Billed TO', inv.inv_cus],
-                ['', 'Mobile : ' + (inv.inv_pho || ''), false],
-                ['', inv.inv_cus_addres || 'BOUGAIN VILLA', false],
-                ['', '', false],
-                ['', 'Kerala[State Code :32] INDIA', false],
-                ['', '', false],
-                ['Customer GSTIN', (inv.inv_cus_gstin || '')],
-                ['Mobile No.', inv.inv_pho],
-                ['Delivery Address', (inv.inv_cus_addres || '')],
-                ['Advisor Name', inv.inv_advisername],
-                ['Mechanic Name', inv.inv_mechna],
-                ['Sale Date', fmtDate(inv.inv_sale_date)]
-            ];
+            let leftFields = [];
+            if (invType === 'Insurance') {
+                leftFields = [
+                    ['Invoice No.', inv.inv_no],
+                    ['Invoice Date', fmtDate(inv.inv_inv_date)],
+                    ['Billed TO', ''],
+                    ['Customer Name.', inv.inv_cus],
+                    ['Insurance GSTIN No:', (inv.inv_insurance_gstin || '')],
+                    ['Mobile No.', inv.inv_pho],
+                    ['Delivery Address', (inv.inv_cus_addres || '')],
+                    ['Insurance Address:', (inv.inv_insurance_address || '')],
+                    ['Advisor Name.', inv.inv_advisername],
+                    ['Mechanic Name.', inv.inv_mechna],
+                    ['Surveyor Name.', (inv.insurance_serveyor || '')]
+                ];
+            } else {
+                leftFields = [
+                    ['Invoice No.', inv.inv_no],
+                    ['Invoice Date', fmtDate(inv.inv_inv_date)],
+                    ['Billed TO', inv.inv_cus],
+                    ['', 'Mobile : ' + (inv.inv_pho || ''), false],
+                    ['', inv.inv_cus_addres || 'BOUGAIN VILLA', false],
+                    ['', '', false],
+                    ['', 'Kerala[State Code :32] INDIA', false],
+                    ['', '', false],
+                    ['Customer GSTIN', (inv.inv_cus_gstin || '')],
+                    ['Mobile No.', inv.inv_pho],
+                    ['Delivery Address', (inv.inv_cus_addres || '')],
+                    ['Advisor Name', inv.inv_advisername],
+                    ['Mechanic Name', inv.inv_mechna],
+                    ['Sale Date', fmtDate(inv.inv_sale_date)]
+                ];
+            }
 
             const rightFields = [
                 ['Invoice Type', inv.inv_type || 'Cash'],

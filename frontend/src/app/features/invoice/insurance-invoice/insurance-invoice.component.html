@@ -15,7 +15,13 @@
       <button *ngIf="isFromPreviousBills" type="button" class="btn-ready-bill" style="background-color: #e74c3c;" (click)="onSaveBill()">Save Bill</button>
     </div>
 
-    <div class="widget-content">
+    <div class="widget-content" style="position: relative; min-height: 200px;">
+      <!-- Loading Overlay -->
+      <div class="loading-overlay" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <span>Loading values...</span>
+      </div>
+
       <!-- 4-column Grid Header -->
       <div class="invoice-grid">
         <!-- Col 1 -->

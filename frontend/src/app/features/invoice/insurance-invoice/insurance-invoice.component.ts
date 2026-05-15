@@ -22,6 +22,7 @@ export class InsuranceInvoiceComponent implements OnInit {
   isFromPreviousBills = false; isFinalizing = false;
   showAddCustomerModal = false;
   pendingRegNo = '';
+  isLoading = false;
 
   // Searchable Select Options
   branchOptions: string[] = [];
@@ -99,8 +100,10 @@ export class InsuranceInvoiceComponent implements OnInit {
   }
 
   loadInvoice(id: number) {
+    this.isLoading = true;
     this.api.getInvoice(id).subscribe({
       next: (res: any) => {
+        this.isLoading = false;
         this.form = res.invoice;
         // Normalize types and fields for legacy records
         if (this.form.inv_branch) this.form.inv_branch = +this.form.inv_branch;
@@ -140,7 +143,10 @@ export class InsuranceInvoiceComponent implements OnInit {
         if (this.companies.length > 0) this.updateCompanyOptions();
         if (this.labourNames.length > 0) this.updateLabourCodeOptions();
       },
-      error: () => this.notify.error('Failed to load invoice')
+      error: () => {
+        this.isLoading = false;
+        this.notify.error('Failed to load invoice');
+      }
     });
   }
 
@@ -401,6 +407,7 @@ export class InsuranceInvoiceComponent implements OnInit {
           this.form.inv_cus = c.c_name; 
           this.form.inv_cus_addres = c.c_address; 
           this.form.inv_pho = c.c_contact_no; 
+          this.form.inv_cus_gstin = c.gstin_no;
           this.form.inv_modl = c.model_name; 
           this.form.inv_chassis = c.c_chassis_no; 
           this.form.inv_engine = c.c_engine_no; 
@@ -417,34 +424,76 @@ export class InsuranceInvoiceComponent implements OnInit {
     this.form.inv_cus = c.c_name;
     this.form.inv_cus_addres = c.c_address;
     this.form.inv_pho = c.c_contact_no;
+    this.form.inv_cus_gstin = c.gstin_no;
     this.form.inv_modl = c.model_name;
     this.form.inv_chassis = c.c_chassis_no;
     this.form.inv_engine = c.c_engine_no;
     this.showAddCustomerModal = false;
   }
 
-  onAddToReadyForBill() {
-    if (!this.form.inv_branch || !this.form.inv_job_card_no || !this.form.inv_jcard_date || !this.form.inv_no || !this.form.inv_inv_date || !this.form.in_registr || !this.form.inv_cus || !this.form.inv_type || !this.form.inv_repair_typ || !this.form.inv_advisername || !this.form.inv_km || !this.form.inv_modl || !this.form.inv_pho || !this.form.inv_insurance_company || !this.form.inv_surveyor) {
-      this.notify.error('Please fill all mandatory fields (Branch, Jobcard, Invoice, Registration, Model, KM, Customer, Mobile, Co., Surveyor, Repair, Advisor).');
-      return;
+  private validateForm(isBilling: boolean): boolean {
+    const missing: string[] = [];
+    if (!this.form.inv_branch) missing.push('Branch Name');
+    if (!this.form.inv_job_card_no) missing.push('Jobcard No');
+    if (!this.form.inv_jcard_date) missing.push('Jobcard Date');
+    if (!this.form.inv_no) missing.push('Invoice No');
+    if (!this.form.inv_inv_date) missing.push('Invoice Date');
+    if (!this.form.in_registr) missing.push('Registration No');
+    if (!this.form.inv_modl) missing.push('Model Name');
+    if (!this.form.inv_km) missing.push('KM Reading');
+    if (!this.form.inv_cus) missing.push('Customer Name');
+    if (!this.form.inv_pho) missing.push('Mobile Number');
+    if (!this.form.inv_insurance_company) missing.push('Insurance Company');
+    if (!this.form.inv_type) missing.push('Invoice Type');
+    if (!this.form.inv_advisername) missing.push('Advisor Name');
+    if (!this.form.inv_repair_typ) missing.push('Repair Type');
+    if (!this.form.inv_surveyor) missing.push('Surveyor Name');
+
+    if (missing.length > 0) {
+      this.notify.error(`Please fill missing mandatory fields: ${missing.join(', ')}`);
+      return false;
     }
+
+    if (isBilling && !this.form.inv_mechna) {
+      this.notify.error('Mechanic Name is mandatory for billing.');
+      return false;
+    }
+
+    if (isBilling && (this.items.length === 0 || !this.items[0].ic_particular)) {
+      this.notify.error('Please add at least one line item');
+      return false;
+    }
+
+    return true;
+  }
+
+  onAddToReadyForBill() {
+    if (!this.validateForm(false)) return;
     if (this.items.length === 0 || !this.items[0].ic_particular) {
       this.notify.error('Please add at least one line item');
       return;
     }
     this.form.items = this.items;
+    this.isLoading = true;
 
     if (this.editMode && this.invoiceId) {
       this.api.updateInvoice(this.invoiceId, this.form).subscribe({
         next: () => {
           this.api.markInvoiceReady(this.invoiceId!).subscribe({
             next: () => {
+              this.isLoading = false;
               this.notify.success('Invoice updated and marked as Ready for Bill');
             },
-            error: (e: any) => this.notify.error('Invoice updated but failed to mark as ready')
+            error: (e: any) => {
+              this.isLoading = false;
+              this.notify.error('Invoice updated but failed to mark as ready');
+            }
           });
         },
-        error: (e: any) => this.notify.error(e.error?.message || 'Error updating invoice')
+        error: (e: any) => {
+          this.isLoading = false;
+          this.notify.error(e.error?.message || 'Error updating invoice');
+        }
       });
     } else {
       this.api.createInsuranceInvoice(this.form).subscribe({
@@ -452,86 +501,82 @@ export class InsuranceInvoiceComponent implements OnInit {
           this.invoiceId = res.id;
           this.api.markInvoiceReady(res.id).subscribe({
             next: () => {
+              this.isLoading = false;
               this.notify.success('Invoice saved and marked as Ready for Bill');
+              const basePath = this.auth.isAdmin ? '/admin' : '/staff';
+              setTimeout(() => {
+                this.router.navigate([`${basePath}/invoice/ready/insurance`]);
+              }, 1500);
             },
-            error: (e: any) => this.notify.error('Invoice saved but failed to mark as ready')
+            error: (e: any) => {
+              this.isLoading = false;
+              this.notify.error('Invoice saved but failed to mark as ready');
+            }
           });
         },
-        error: (e: any) => this.notify.error(e.error?.message || 'Error saving invoice')
+        error: (e: any) => {
+          this.isLoading = false;
+          this.notify.error(e.error?.message || 'Error saving invoice');
+        }
       });
     }
   }
 
   onSaveBill() {
-    if (!this.form.inv_branch || !this.form.inv_job_card_no || !this.form.inv_jcard_date || !this.form.inv_no || !this.form.inv_inv_date || !this.form.in_registr || !this.form.inv_cus || !this.form.inv_type || !this.form.inv_repair_typ || !this.form.inv_advisername || !this.form.inv_km || !this.form.inv_modl || !this.form.inv_pho || !this.form.inv_insurance_company || !this.form.inv_surveyor) {
-      this.notify.error('Please fill all mandatory fields (Branch, Jobcard, Invoice, Registration, Model, KM, Customer, Mobile, Co., Surveyor, Repair, Advisor).');
-      return;
-    }
-    if (!this.form.inv_mechna) {
-      this.notify.error('Mechanic Name is mandatory for billing.');
-      return;
-    }
-    if (this.items.length === 0 || !this.items[0].ic_particular) {
-      this.notify.error('Please add at least one line item');
-      return;
-    }
+    if (!this.validateForm(true)) return;
     this.form.items = this.items;
 
     if (this.editMode && this.invoiceId) {
+      this.isLoading = true;
       if (this.isFromPreviousBills) this.form.isFinalized = true;
       this.api.updateInvoice(this.invoiceId, this.form).subscribe({
         next: () => {
+          this.isLoading = false;
           this.notify.success('Invoice updated successfully');
           setTimeout(() => {
             this.router.navigate(['/admin/reports/previous-bills/insurance']);
           }, 1500);
         },
-        error: (e: any) => this.notify.error(e.error?.message || 'Error updating invoice')
+        error: (e: any) => {
+          this.isLoading = false;
+          this.notify.error(e.error?.message || 'Error updating invoice');
+        }
       });
     }
   }
 
   saveBeforeAction(callback: Function) {
-    if (!this.form.inv_branch || !this.form.inv_job_card_no || !this.form.inv_jcard_date || !this.form.inv_no || !this.form.inv_inv_date || !this.form.in_registr || !this.form.inv_cus || !this.form.inv_type || !this.form.inv_repair_typ || !this.form.inv_advisername || !this.form.inv_km || !this.form.inv_modl || !this.form.inv_pho || !this.form.inv_insurance_company || !this.form.inv_surveyor) {
-      this.notify.error('Please fill all mandatory fields (Branch, Jobcard, Invoice, Registration, Model, KM, Customer, Mobile, Co., Surveyor, Repair, Advisor).');
-      return;
-    }
-    if (!this.form.inv_mechna) {
-      this.notify.error('Mechanic Name is mandatory for billing.');
-      return;
-    }
+    if (!this.validateForm(true)) return;
     this.form.items = this.items;
+    this.isLoading = true;
 
     if (this.editMode && this.invoiceId) {
+      if (this.isFromPreviousBills) this.form.isFinalized = true;
       this.api.updateInvoice(this.invoiceId, this.form).subscribe({
         next: () => {
           this.api.markInvoiceReady(this.invoiceId!).subscribe({
-            next: () => callback(),
-            error: () => this.notify.error('Failed to prepare invoice for action')
+            next: () => { this.isLoading = false; callback(); },
+            error: () => { this.isLoading = false; this.notify.error('Failed to prepare invoice for action'); }
           });
         },
-        error: (e: any) => this.notify.error(e.error?.message || 'Error updating invoice')
+        error: (e: any) => { this.isLoading = false; this.notify.error(e.error?.message || 'Error updating invoice'); }
       });
     } else {
       this.api.createInsuranceInvoice(this.form).subscribe({
         next: (res: any) => {
           this.invoiceId = res.id;
           this.api.markInvoiceReady(res.id).subscribe({
-            next: () => callback(),
-            error: () => this.notify.error('Failed to prepare invoice for action')
+            next: () => { this.isLoading = false; callback(); },
+            error: () => { this.isLoading = false; this.notify.error('Failed to prepare invoice for action'); }
           });
         },
-        error: (e: any) => this.notify.error(e.error?.message || 'Error saving invoice')
+        error: (e: any) => { this.isLoading = false; this.notify.error(e.error?.message || 'Error saving invoice'); }
       });
     }
   }
 
   onPrint() {
-    if (!this.invoiceId) {
-      this.saveBeforeAction(() => this.triggerPrint());
-    } else {
-      this.triggerPrint();
-    }
+    this.saveBeforeAction(() => this.triggerPrint());
   }
 
   private triggerPrint() {
