@@ -48,7 +48,7 @@
             <label>Jobcard Date : <span class="text-danger">*</span></label>
             <input type="date" name="jname" [(ngModel)]="form.inv_jcard_date" (ngModelChange)="onJcardDateChange()" [disabled]="isFromPreviousBills" required />
           </div>
-          <div class="control-group">
+          <div class="control-group" *ngIf="isFromPreviousBills">
             <label>Invoice No : <span class="text-danger">*</span></label>
             <input type="text" name="invoic" [(ngModel)]="form.inv_no" readonly required />
           </div>

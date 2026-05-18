@@ -592,16 +592,24 @@ exports.generatePDF = async (req, res) => {
 
         // 3. If it's from Ready table, finalize it
         if (isFromReadyTable) {
-            const preservedInvNo = invoice.inv_no;
-
-            // Insert into tbl_invoice_labour (Finalized)
+            // 1. Insert into tbl_invoice_labour with empty inv_no first
             const finalizedStatus = (invoice.status === 0) ? 0 : 1;
-
             const [insertResult] = await conn.query(
-                'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status, insurance_id, insurance_serveyor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [preservedInvNo, invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0, invoice.insurance_id || null, invoice.insurance_serveyor || '']
+                'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status, insurance_id, insurance_serveyor, inv_cesstotal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                ['', invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0, invoice.insurance_id || null, invoice.insurance_serveyor || '', invoice.inv_cesstotal || 0]
             );
             const newInvId = insertResult.insertId;
+
+            // 2. Generate New Invoice Number using the actual insertId
+            const today = new Date();
+            const ymd = today.getFullYear().toString()
+              + String(today.getMonth() + 1).padStart(2, '0')
+              + String(today.getDate()).padStart(2, '0');
+            const generatedInvNo = `CI${ymd}${newInvId}`;
+            
+            // 3. Update the record with the generated inv_no
+            await conn.query('UPDATE tbl_invoice_labour SET inv_no = ? WHERE inv_id = ?', [generatedInvNo, newInvId]);
+            invoice.inv_no = generatedInvNo; 
 
             // Insert items into tbl_invoice_labour_cost
             for (const item of items) {
@@ -613,6 +621,26 @@ exports.generatePDF = async (req, res) => {
 
             // Update ready table
             await conn.query('UPDATE tbl_readyfor_labour SET ready_status = 0 WHERE inv_id = ?', [req.params.id]);
+
+            // Re-fetch finalized data from tbl_invoice_labour for the PDF generator
+            const [finalizedInvoices] = await conn.query(
+                `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address  
+                 FROM tbl_invoice_labour i 
+                 LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+                 LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+                 LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
+                 LEFT JOIN tbl_insurance_company c ON i.insurance_id = c.com_id
+                 WHERE i.inv_id = ?`,
+                [newInvId]
+            );
+            if (finalizedInvoices.length > 0) {
+                invoice = finalizedInvoices[0];
+                invoice.inv_advisername = invoice.adv_name || invoice.inv_advisername;
+                invoice.inv_mechna = invoice.mech_name || invoice.inv_mechna;
+                
+                const [finalizedItems] = await conn.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [newInvId]);
+                items = finalizedItems;
+            }
         }
 
         const { generateInvoicePDF } = require('../utils/pdfGenerator');
@@ -682,17 +710,26 @@ exports.generateWord = async (req, res) => {
             [items] = await conn.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [req.params.id]);
         }
 
-        // 3. If it's from Ready table, finalize it (same logic as PDF)
+        // 3. If it's from Ready table, finalize it
         if (isFromReadyTable) {
-            const preservedInvNo = invoice.inv_no;
-
+            // 1. Insert into tbl_invoice_labour with empty inv_no first
             const finalizedStatus = (invoice.status === 0) ? 0 : 1;
-
             const [insertResult] = await conn.query(
-                'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status, insurance_id, insurance_serveyor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [preservedInvNo, invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0, invoice.insurance_id || null, invoice.insurance_serveyor || '']
+                'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status, insurance_id, insurance_serveyor, inv_cesstotal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                ['', invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0, invoice.insurance_id || null, invoice.insurance_serveyor || '', invoice.inv_cesstotal || 0]
             );
             const newInvId = insertResult.insertId;
+
+            // 2. Generate New Invoice Number using the actual insertId
+            const today = new Date();
+            const ymd = today.getFullYear().toString()
+              + String(today.getMonth() + 1).padStart(2, '0')
+              + String(today.getDate()).padStart(2, '0');
+            const generatedInvNo = `CI${ymd}${newInvId}`;
+            
+            // 3. Update the record with the generated inv_no
+            await conn.query('UPDATE tbl_invoice_labour SET inv_no = ? WHERE inv_id = ?', [generatedInvNo, newInvId]);
+            invoice.inv_no = generatedInvNo; 
 
             for (const item of items) {
                 await conn.query(
@@ -701,6 +738,26 @@ exports.generateWord = async (req, res) => {
                 );
             }
             await conn.query('UPDATE tbl_readyfor_labour SET ready_status = 0 WHERE inv_id = ?', [req.params.id]);
+
+            // Re-fetch finalized data from tbl_invoice_labour for the Word generator
+            const [finalizedInvoices] = await conn.query(
+                `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address  
+                 FROM tbl_invoice_labour i 
+                 LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+                 LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+                 LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
+                 LEFT JOIN tbl_insurance_company c ON i.insurance_id = c.com_id
+                 WHERE i.inv_id = ?`,
+                [newInvId]
+            );
+            if (finalizedInvoices.length > 0) {
+                invoice = finalizedInvoices[0];
+                invoice.inv_advisername = invoice.adv_name || invoice.inv_advisername;
+                invoice.inv_mechna = invoice.mech_name || invoice.inv_mechna;
+                
+                const [finalizedItems] = await conn.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [newInvId]);
+                items = finalizedItems;
+            }
         }
 
         const wordBuffer = await generateInvoiceWord(invoice, items);

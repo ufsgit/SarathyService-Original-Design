@@ -15,7 +15,7 @@ import { SearchableSelectComponent } from '../../../shared/components/searchable
   styleUrls: ['./labour-invoice.component.css']
 })
 export class LabourInvoiceComponent implements OnInit {
-  form: any = { inv_discount: 0, inv_type: 'Cash', inv_total: 0 };
+  form: any = { inv_discount: 0, inv_type: 'Cash', inv_total: 0, inv_no: '' };
   items: any[] = [this.newItem()];
   branches: any[] = []; mechanics: any[] = []; advisors: any[] = []; labourNames: any[] = [];
   editMode = false; invoiceId: number | null = null;
@@ -79,7 +79,7 @@ export class LabourInvoiceComponent implements OnInit {
       this.form.inv_repair_typ = 'Paid service';
       if (this.auth.currentUser?.branchId) {
         this.form.inv_branch = this.auth.currentUser.branchId;
-        this.loadNextNo();
+        // this.loadNextNo(); // Removed auto-generation
         this.loadNextJobCardNo();
         this.loadBranchEmployees(this.auth.currentUser.branchId);
       }
@@ -247,7 +247,7 @@ export class LabourInvoiceComponent implements OnInit {
   }
 
   onBranchChange() {
-    this.loadNextNo();
+    // this.loadNextNo(); // Removed auto-generation
     if (this.form.inv_branch) {
       this.loadBranchEmployees(this.form.inv_branch);
     } else {
@@ -381,7 +381,7 @@ export class LabourInvoiceComponent implements OnInit {
     if (!this.form.inv_branch) missing.push('Branch Name');
     if (!this.form.inv_job_card_no) missing.push('Jobcard No');
     if (!this.form.inv_jcard_date) missing.push('Jobcard Date');
-    if (!this.form.inv_no) missing.push('Invoice No');
+    if (this.isFromPreviousBills && !this.form.inv_no) missing.push('Invoice No');
     if (!this.form.inv_inv_date) missing.push('Invoice Date');
     if (!this.form.in_registr) missing.push('Registration No');
     if (!this.form.inv_modl) missing.push('Model Name');
@@ -390,6 +390,7 @@ export class LabourInvoiceComponent implements OnInit {
     if (!this.form.inv_pho) missing.push('Mobile Number');
     if (!this.form.inv_type) missing.push('Invoice Type');
     if (!this.form.inv_advisername) missing.push('Advisor Name');
+    if (!this.form.inv_mechna) missing.push('Mechanic Name');
     if (!this.form.inv_repair_typ) missing.push('Repair Type');
 
     if (missing.length > 0) {
@@ -397,10 +398,6 @@ export class LabourInvoiceComponent implements OnInit {
       return false;
     }
 
-    if (isBilling && !this.form.inv_mechna) {
-      this.notify.error('Mechanic Name is mandatory for billing.');
-      return false;
-    }
 
     if (isBilling && (this.items.length === 0 || !this.items[0].ic_particular)) {
       this.notify.error('Please add at least one line item');

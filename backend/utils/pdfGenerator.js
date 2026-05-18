@@ -317,12 +317,12 @@ function generateInvoicePDF(inv, items) {
             y += 35;
 
             // Dynamically place Signature Block instead of forcing to bottom
-            // Signature needs about 50 points of space
-            if (y + 50 > doc.page.height - 30) {
+            // Signature needs about 80 points of space to keep the footer together
+            if (y + 80 > doc.page.height - 30) {
                 doc.addPage();
                 y = 40;
             } else {
-                y += 50; 
+                y += 20; 
             }
 
             const fY = y;
@@ -351,7 +351,9 @@ function generateInvoicePDF(inv, items) {
             y = fY + 40;
 
             // --- GATE PASS SECTION ---
-            if (y + 140 > doc.page.height - 30) {
+            // If any part of the Gate Pass (header + fields + signature) 
+            // won't fit, move the WHOLE Gate Pass to a new page.
+            if (y + 180 > doc.page.height - 30) {
                 doc.addPage();
                 y = 40;
             } else {
