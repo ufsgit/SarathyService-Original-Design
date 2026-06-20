@@ -7,7 +7,7 @@
 }
 
 .card-header {
-    background: #2b57f5;
+    background: var(--brand-color);
     color: #fff;
     display: flex;
     justify-content: space-between;
@@ -180,8 +180,8 @@
 
 .page-btn:hover:not(:disabled) {
     background: #f8f9fa;
-    border-color: #2b57f5;
-    color: #2b57f5;
+    border-color: var(--brand-color);
+    color: var(--brand-color);
 }
 
 .page-btn.active {

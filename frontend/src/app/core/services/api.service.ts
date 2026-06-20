@@ -9,6 +9,9 @@ export class ApiService {
 
   constructor(private http: HttpClient) { }
 
+  // --- Brand ---
+  getActiveBrand(): Observable<any> { return this.http.get<any>(`${this.baseUrl}/brand/active`); }
+
   // --- Branches ---
   getBranches(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/branches`); }
   getBranch(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/branches/${id}`); }

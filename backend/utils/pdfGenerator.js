@@ -1,6 +1,7 @@
 const PDFDocument = require('pdfkit');
 const { convertNumberToWords } = require('./numberToWords');
 const path = require('path');
+const fs = require('fs');
 
 const p = (v) => isNaN(parseFloat(v)) ? 0 : parseFloat(v);
 
@@ -56,10 +57,24 @@ function generateInvoicePDF(inv, items) {
             doc.font(FONT_REG).fontSize(7).text('PH : ' + (inv.branch_ph || '+91-9847986565'), L, y);
 
             // Logo Section
-            const logoX = R - 130;
+            const logoX = R - 150;
             const logoY = 15;
             try {
-                doc.image(path.join(__dirname, '../assets/images/bajaj1.png'), logoX, logoY, { width: 130 });
+                let logoPath = path.join(__dirname, '../assets/images/bajaj1.png');
+                if (inv.branch_logo_url) {
+                    const tempPath = path.join(__dirname, '..', inv.branch_logo_url);
+                    if (fs.existsSync(tempPath)) {
+                        logoPath = tempPath;
+                    } else if (inv.active_brand && inv.active_brand.toLowerCase().includes('ktm')) {
+                        logoPath = path.join(__dirname, '../assets/images/KtmLogo.png');
+                    }
+                } else if (inv.active_brand && inv.active_brand.toLowerCase().includes('ktm')) {
+                    logoPath = path.join(__dirname, '../assets/images/KtmLogo.png');
+                }
+                
+                // Using fit to ensure it stays within 150x95 box, maintaining aspect ratio. 
+                // Using align 'right' so if it is narrower it sticks to the right side.
+                doc.image(logoPath, logoX, logoY, { fit: [150, 95], align: 'right' });
             } catch (e) {
                 console.error("Logo image not found", e);
             }

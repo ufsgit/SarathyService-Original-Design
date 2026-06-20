@@ -24,7 +24,7 @@ exports.getById = async (req, res) => {
 // Create branch
 exports.create = async (req, res) => {
     try {
-        const { branch_name, branch_address, branch_ph, branch_id } = req.body;
+        const { branch_name, branch_address, branch_ph, branch_id, logo } = req.body;
         if (!branch_id) return res.status(400).json({ message: 'Branch ID is required' });
         if (!branch_name) return res.status(400).json({ message: 'Branch Name is required' });
 
@@ -35,8 +35,8 @@ exports.create = async (req, res) => {
         if (existing.length > 0) return res.status(409).json({ message: 'Branch ID or Branch Name already exists' });
 
         const [result] = await pool.query(
-            'INSERT INTO tbl_branch (branch_name, branch_address, branch_ph, branch_id) VALUES (?, ?, ?, ?)',
-            [branch_name, branch_address || '', branch_ph || '', branch_id]
+            'INSERT INTO tbl_branch (branch_name, branch_address, branch_ph, branch_id, logo) VALUES (?, ?, ?, ?, ?)',
+            [branch_name, branch_address || '', branch_ph || '', branch_id, logo || null]
         );
         res.status(201).json({ message: 'Branch created', id: result.insertId });
     } catch (err) {
@@ -48,7 +48,7 @@ exports.create = async (req, res) => {
 // Update branch
 exports.update = async (req, res) => {
     try {
-        const { branch_name, branch_address, branch_ph, branch_id } = req.body;
+        const { branch_name, branch_address, branch_ph, branch_id, logo } = req.body;
         const id = req.params.id;
 
         if (!branch_id) return res.status(400).json({ message: 'Branch ID is required' });
@@ -65,8 +65,8 @@ exports.update = async (req, res) => {
         }
 
         await pool.query(
-            'UPDATE tbl_branch SET branch_name = ?, branch_address = ?, branch_ph = ?, branch_id = ? WHERE b_id = ?',
-            [branch_name, branch_address || '', branch_ph || '', branch_id, id]
+            'UPDATE tbl_branch SET branch_name = ?, branch_address = ?, branch_ph = ?, branch_id = ?, logo = ? WHERE b_id = ?',
+            [branch_name, branch_address || '', branch_ph || '', branch_id, logo || null, id]
         );
         res.json({ message: 'Branch updated' });
     } catch (err) {

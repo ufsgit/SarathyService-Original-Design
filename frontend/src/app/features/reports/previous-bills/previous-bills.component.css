@@ -161,9 +161,9 @@
 }
 
 .page-item.active .page-link {
-  background: #2b57f5;
+  background: var(--brand-color);
   color: #fff;
-  border-color: #2b57f5;
+  border-color: var(--brand-color);
   font-weight: 500;
 }
 

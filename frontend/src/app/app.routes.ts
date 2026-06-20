@@ -32,6 +32,8 @@ export const routes: Routes = [
       { path: 'model/add', loadComponent: () => import('./features/vehicle-model/add-model/add-model.component').then(m => m.AddModelComponent), canActivate: [adminGuard] },
       { path: 'model/list', loadComponent: () => import('./features/vehicle-model/list-model/list-model.component').then(m => m.ListModelComponent) },
       { path: 'model/edit/:id', loadComponent: () => import('./features/vehicle-model/edit-model/edit-model.component').then(m => m.EditModelComponent), canActivate: [adminGuard] },
+      // Logo Master
+      { path: 'logomaster', loadComponent: () => import('./admin-logomaster/admin-logomaster').then(m => m.AdminLogomaster), canActivate: [adminGuard] },
       // Insurance Company
       { path: 'insurance/add', loadComponent: () => import('./features/insurance-company/add-insurance/add-insurance.component').then(m => m.AddInsuranceComponent), canActivate: [adminGuard] },
       { path: 'insurance/list', loadComponent: () => import('./features/insurance-company/list-insurance/list-insurance.component').then(m => m.ListInsuranceComponent) },

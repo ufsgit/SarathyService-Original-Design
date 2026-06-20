@@ -6,7 +6,7 @@
 }
 
 .card-header {
-  background: #2b57f5;
+  background: var(--brand-color);
   color: #fff;
   display: flex;
   justify-content: space-between;
@@ -46,8 +46,9 @@
 }
 
 .profile-header {
-  background: #2b57f5; /* Using existing blue theme instead of orange */
-  padding: 15px 25px;
+  background: var(--brand-color); /* Using existing blue theme instead of orange */
+  color: #fff;
+  padding: 15px 20px;
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -77,6 +78,12 @@
 
 .profile-details {
   padding: 25px;
+}
+
+.welcome-msg {
+  font-size: 24px;
+  color: var(--brand-color);
+  margin-bottom: 20px;
 }
 
 .detail-row {

@@ -32,6 +32,14 @@
             <label>Address :</label>
             <textarea [(ngModel)]="form.branch_address" name="address" placeholder="Branch address" rows="3"></textarea>
           </div>
+
+          <div class="form-group">
+            <label>Logo :</label>
+            <select [(ngModel)]="form.logo" name="logo" class="form-control" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+              <option [ngValue]="null">Select Logo (Optional)</option>
+              <option *ngFor="let l of logos" [value]="l.logo_id">{{ l.logo_title }}</option>
+            </select>
+          </div>
         </div>
       </div>
 

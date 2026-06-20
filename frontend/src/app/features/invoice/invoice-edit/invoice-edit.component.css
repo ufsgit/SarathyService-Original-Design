@@ -7,7 +7,7 @@
 }
 
 .card-header {
-    background: #2b57f5;
+    background: var(--brand-color);
     color: #fff;
     display: flex;
     justify-content: space-between;
@@ -137,7 +137,7 @@
 }
 
 .btn-add-item {
-    background: #2b57f5;
+    background: var(--brand-color);
     color: white;
     border: none;
     padding: 6px 16px;

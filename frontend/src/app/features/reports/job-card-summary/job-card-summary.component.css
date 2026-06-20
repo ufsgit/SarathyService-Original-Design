@@ -1,6 +1,6 @@
 .legacy-card {
   background: #fff;
-  border: 1px solid #3366cc;
+  border: 1px solid var(--brand-color);
   border-radius: 4px;
   margin: 10px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -8,7 +8,7 @@
 }
 
 .card-header {
-  background: #3366cc;
+  background: var(--brand-color);
   color: white;
   padding: 8px 15px;
   display: flex;
@@ -288,13 +288,13 @@
 
 .page-btn:hover:not([disabled]) {
   background: #e8eef8;
-  border-color: #3366cc;
-  color: #3366cc;
+  border-color: var(--brand-color);
+  color: var(--brand-color);
 }
 
 .page-btn.active {
-  background: #3366cc;
-  border-color: #3366cc;
+  background: var(--brand-color);
+  border-color: var(--brand-color);
   color: #fff;
   font-weight: bold;
 }
@@ -380,7 +380,7 @@
 .spinner {
   width: 30%;
   height: 100%;
-  background: #3366cc;
+  background: var(--brand-color);
   position: absolute;
   left: -30%;
   animation: bar-glide 1.5s infinite;

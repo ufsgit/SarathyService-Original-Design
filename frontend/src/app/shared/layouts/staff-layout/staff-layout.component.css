@@ -41,12 +41,12 @@
   font-weight: bold;
 }
 .logout-link:hover {
-  color: #fff;
+  color: #f20a0a;
 }
 
 /* ====== Navigation Bar ====== */
 .main-nav {
-  background: #2b57f5;
+  background: var(--brand-color);
 }
 .nav-list {
   list-style: none;
@@ -80,7 +80,7 @@
   position: absolute;
   top: 100%;
   left: 0;
-  background: #2b3a8a;
+  background: var(--brand-color);
   list-style: none;
   margin: 0;
   padding: 0;

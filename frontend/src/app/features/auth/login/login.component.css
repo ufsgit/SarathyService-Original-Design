@@ -1,6 +1,6 @@
 :host {
   --legacy-red: #cc1212;
-  --legacy-blue: #2b57f5;
+  --legacy-blue: var(--brand-color);
   --text-gray: #666;
 }
 .login-page {

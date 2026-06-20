@@ -6,7 +6,7 @@
 }
 
 .detail-header {
-  background: #0056b3;
+  background: var(--brand-color);
   color: #fff;
   padding: 12px 20px;
   font-size: 1.1rem;
@@ -52,7 +52,7 @@
 }
 
 .btn-email {
-  background: #0056b3;
+  background: var(--brand-color);
 }
 
 .details-grid {
@@ -168,7 +168,7 @@
 }
 
 .modal-header {
-  background: #0056b3;
+  background: var(--brand-color);
   color: #fff;
   padding: 15px 20px;
   font-size: 1.2rem;
@@ -210,8 +210,7 @@
 
 .form-group input:focus, .form-group textarea:focus {
   outline: none;
-  border-color: #0056b3;
-  box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
+  border-color: var(--brand-color);
 }
 
 .form-group textarea {
@@ -237,12 +236,12 @@
 }
 
 .btn-yes {
-  background: #007bff;
+  background: var(--brand-color);
   color: #fff;
 }
 
 .btn-yes:hover {
-  background: #0056b3;
+  opacity: 0.9;
   transform: translateY(-1px);
 }
 

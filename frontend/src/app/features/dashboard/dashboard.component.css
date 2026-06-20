@@ -7,7 +7,7 @@
 }
 
 .card-header {
-  background: #2b57f5;
+  background: var(--brand-color);
   color: #fff;
   display: flex;
   justify-content: space-between;
@@ -43,7 +43,7 @@
 
 .admin-welcome {
   font-size: 24px;
-  color: #2b57f5;
+  color: var(--brand-color);
   margin-bottom: 10px;
 }
 
@@ -112,5 +112,5 @@
 }
 
 .login-info-box strong {
-  color: #2b57f5;
+  color: var(--brand-color);
 }

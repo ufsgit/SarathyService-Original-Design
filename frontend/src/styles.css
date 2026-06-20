@@ -6,6 +6,7 @@ html, body { height: 100%; font-family: 'Inter', sans-serif; }
 
 /* ====== Premium Dark Theme ====== */
 :root {
+  --brand-color: #2b57f5;
   --bg-primary: #0f1117;
   --bg-secondary: #1a1d2e;
   --bg-card: #1e2235;
@@ -197,7 +198,7 @@ body {
 }
 
 .blue-header {
-  background: #2b57f5 !important;
+  background: var(--brand-color) !important;
   color: #fff !important;
 }
 
@@ -388,7 +389,7 @@ body {
 }
 
 .search-box input:focus {
-  border-color: #2b57f5;
+  border-color: var(--brand-color);
 }
 
 .search-box input {
@@ -434,8 +435,8 @@ body {
 }
 
 .page-btn:hover:not(:disabled) {
-  border-color: #2b57f5;
-  color: #2b57f5;
+  border-color: var(--brand-color);
+  color: var(--brand-color);
   background: #f0f4ff;
 }
 

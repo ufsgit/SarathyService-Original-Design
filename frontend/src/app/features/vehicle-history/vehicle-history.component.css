@@ -7,7 +7,7 @@
 }
 
 .card-header {
-    background: #2b57f5;
+    background: var(--brand-color);
     color: #fff;
     display: flex;
     justify-content: space-between;
@@ -71,7 +71,7 @@
 }
 
 .btn-search {
-    background: #2b57f5;
+    background: var(--brand-color);
     color: white;
     border: none;
     padding: 7px 18px;
@@ -97,11 +97,11 @@
 
 .section-title {
     background: #f0f4ff;
-    border-left: 4px solid #2b57f5;
+    border-left: 4px solid var(--brand-color);
     padding: 8px 15px;
     font-size: 13px;
     font-weight: bold;
-    color: #2b57f5;
+    color: var(--brand-color);
 }
 
 .customer-info-grid {
@@ -139,7 +139,7 @@
 }
 
 .jc-label {
-    color: #2b57f5;
+    color: var(--brand-color);
 }
 
 .inv-amount {

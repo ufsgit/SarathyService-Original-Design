@@ -30,7 +30,7 @@
 }
 
 .widget-title {
-    background-color: #2a58ad; /* Corporate Blue */
+    background-color: var(--brand-color); /* Corporate Blue */
     color: #fff;
     height: 34px;
     display: flex;
@@ -286,7 +286,7 @@
 
 .spinner {
     border: 4px solid #f3f3f3;
-    border-top: 4px solid #2a58ad;
+    border-top: 4px solid var(--brand-color);
     border-radius: 50%;
     width: 30px;
     height: 30px;

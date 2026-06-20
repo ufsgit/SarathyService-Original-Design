@@ -547,9 +547,10 @@ exports.generatePDF = async (req, res) => {
 
         // 1. Find the invoice (Prefer Ready table)
         const [readyInvoices] = await conn.query(
-            `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address 
+            `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address, lm.logo_url AS branch_logo_url 
              FROM tbl_readyfor_labour i 
              LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+             LEFT JOIN logo_master lm ON b.logo = lm.logo_id
              LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
              LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
              LEFT JOIN tbl_insurance_company c ON i.insurance_id = c.com_id
@@ -565,9 +566,10 @@ exports.generatePDF = async (req, res) => {
             isFromReadyTable = true;
         } else {
             const [invoices] = await conn.query(
-                `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address  
+                `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address, lm.logo_url AS branch_logo_url  
                  FROM tbl_invoice_labour i 
                  LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+                 LEFT JOIN logo_master lm ON b.logo = lm.logo_id
                  LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
                  LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
                  LEFT JOIN tbl_insurance_company c ON i.insurance_id = c.com_id
@@ -624,9 +626,10 @@ exports.generatePDF = async (req, res) => {
 
             // Re-fetch finalized data from tbl_invoice_labour for the PDF generator
             const [finalizedInvoices] = await conn.query(
-                `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address  
+                `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address, lm.logo_url AS branch_logo_url  
                  FROM tbl_invoice_labour i 
                  LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+                 LEFT JOIN logo_master lm ON b.logo = lm.logo_id
                  LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
                  LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
                  LEFT JOIN tbl_insurance_company c ON i.insurance_id = c.com_id
@@ -642,6 +645,10 @@ exports.generatePDF = async (req, res) => {
                 items = finalizedItems;
             }
         }
+
+        // Fetch active brand
+        const [brandConfig] = await conn.query('SELECT brand_name FROM tbl_brand_config WHERE brand_status = 1 LIMIT 1');
+        invoice.active_brand = brandConfig.length > 0 ? brandConfig[0].brand_name : '';
 
         const { generateInvoicePDF } = require('../utils/pdfGenerator');
         const pdfBuffer = await generateInvoicePDF(invoice, items);
