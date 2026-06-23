@@ -2,8 +2,11 @@
   <header class="header">
     <div class="logo-container">
       <img src="/assets/sarathy-logo.png" alt="Sarathy Logo" class="main-logo">
+      <img *ngIf="brandLogo" [src]="brandLogo" [alt]="brandName" class="brand-top-logo">
     </div>
-    <div class="blue-strip"></div>
+    <div class="blue-strip">
+      <span *ngIf="brandName" class="brand-strip-name">{{ brandName }}</span>
+    </div>
   </header>
 
   <main class="login-container">
