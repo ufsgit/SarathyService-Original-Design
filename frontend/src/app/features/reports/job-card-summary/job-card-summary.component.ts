@@ -7,11 +7,12 @@ import { NotificationService } from '../../../core/services/notification.service
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { MatMultiSearchSelectComponent } from '../../../shared/components/mat-multi-search-select/mat-multi-search-select.component';
 
 @Component({
   selector: 'app-job-card-summary',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule, RouterModule, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule, RouterModule, SearchableSelectComponent, MatMultiSearchSelectComponent],
   templateUrl: './job-card-summary.component.html',
   styleUrls: ['./job-card-summary.component.css']
 })
@@ -336,6 +337,9 @@ export class JobCardSummaryComponent implements OnInit {
             }
           } catch(e) {}
         }
+        
+        // Automatically load initial data
+        this.search(true);
       },
       error: () => this.notify.error('Failed to load filter options')
     });

@@ -14,8 +14,14 @@ exports.getJobCardSummary = async (req, res) => {
             whereClause += ' AND i.inv_branch IN (?)';
             params.push(branch);
         }
-        if (mechanic && mechanic.length > 0) { whereClause += ' AND i.inv_mechna IN (?)'; params.push(mechanic); }
-        if (advisor && advisor.length > 0) { whereClause += ' AND i.inv_advisername IN (?)'; params.push(advisor); }
+        if (mechanic && mechanic.length > 0) { 
+            whereClause += ' AND (i.inv_mechna IN (?) OR i.inv_mechna IN (SELECT e_first_name FROM tbl_employee WHERE emp_id IN (?)))'; 
+            params.push(mechanic, mechanic); 
+        }
+        if (advisor && advisor.length > 0) { 
+            whereClause += ' AND (i.inv_advisername IN (?) OR i.inv_advisername IN (SELECT e_first_name FROM tbl_employee WHERE emp_id IN (?)))'; 
+            params.push(advisor, advisor); 
+        }
         if (repair_types && repair_types.length > 0) { whereClause += ' AND i.inv_repair_typ IN (?)'; params.push(repair_types); }
         if (insurance_companies && insurance_companies.length > 0) { whereClause += ' AND i.insurance_id IN (?)'; params.push(insurance_companies); }
         
@@ -58,11 +64,12 @@ exports.getJobCardSummary = async (req, res) => {
         `;
 
         const mainQuery = `
-            SELECT i.*, b.branch_name, e.e_first_name as mechanic_name, a.e_first_name as advisor_name
+            SELECT i.*, b.branch_name, COALESCE(e.e_first_name, i.inv_mechna) as mechanic_name, COALESCE(a.e_first_name, i.inv_advisername) as advisor_name, ic.icompany_name
             FROM tbl_invoice_labour i
             LEFT JOIN tbl_branch b ON i.inv_branch = b.b_id
             LEFT JOIN tbl_employee e ON i.inv_mechna = e.emp_id
             LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+            LEFT JOIN tbl_insurance_company ic ON i.insurance_id = ic.com_id
             ${whereClause}
             ORDER BY i.inv_inv_date DESC, i.inv_id DESC
             LIMIT ? OFFSET ?
@@ -123,8 +130,14 @@ exports.getJobCardStatement = async (req, res) => {
             whereClause += ' AND i.inv_branch IN (?)';
             params.push(branch);
         }
-        if (mechanic && mechanic.length > 0) { whereClause += ' AND i.inv_mechna IN (?)'; params.push(mechanic); }
-        if (advisor && advisor.length > 0) { whereClause += ' AND i.inv_advisername IN (?)'; params.push(advisor); }
+        if (mechanic && mechanic.length > 0) { 
+            whereClause += ' AND (i.inv_mechna IN (?) OR i.inv_mechna IN (SELECT e_first_name FROM tbl_employee WHERE emp_id IN (?)))'; 
+            params.push(mechanic, mechanic); 
+        }
+        if (advisor && advisor.length > 0) { 
+            whereClause += ' AND (i.inv_advisername IN (?) OR i.inv_advisername IN (SELECT e_first_name FROM tbl_employee WHERE emp_id IN (?)))'; 
+            params.push(advisor, advisor); 
+        }
         if (repair_types && repair_types.length > 0) { whereClause += ' AND i.inv_repair_typ IN (?)'; params.push(repair_types); }
         if (insurance_companies && insurance_companies.length > 0) { whereClause += ' AND i.insurance_id IN (?)'; params.push(insurance_companies); }
 
@@ -156,11 +169,12 @@ exports.getJobCardStatement = async (req, res) => {
         `;
 
         const mainQuery = `
-            SELECT i.*, b.branch_name, e.e_first_name as mechanic_name, a.e_first_name as advisor_name
+            SELECT i.*, b.branch_name, COALESCE(e.e_first_name, i.inv_mechna) as mechanic_name, COALESCE(a.e_first_name, i.inv_advisername) as advisor_name, ic.icompany_name
             FROM tbl_invoice_labour i
             LEFT JOIN tbl_branch b ON i.inv_branch = b.b_id
             LEFT JOIN tbl_employee e ON i.inv_mechna = e.emp_id
             LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+            LEFT JOIN tbl_insurance_company ic ON i.insurance_id = ic.com_id
             ${whereClause}
             ORDER BY i.inv_inv_date DESC, i.inv_id DESC
             LIMIT ? OFFSET ?
