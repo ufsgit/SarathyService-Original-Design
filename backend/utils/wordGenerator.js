@@ -13,13 +13,31 @@ function fmt(v, dec) {
 function fmtDate(d) {
     if (!d) return '';
     try {
+        if (typeof d === 'string') {
+            const parts = d.split('T')[0].split('-');
+            if(parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
         const dt = new Date(d);
         if (isNaN(dt)) return String(d).substring(0, 10);
-        const dd = String(dt.getDate()).padStart(2, '0');
-        const mm = String(dt.getMonth() + 1).padStart(2, '0');
-        const yyyy = dt.getFullYear();
-        return `${dd}/${mm}/${yyyy}`;
-    } catch (e) { return String(d).substring(0, 10); }
+        
+        const options = { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' };
+        const parts = new Intl.DateTimeFormat('en-IN', options).formatToParts(dt);
+        let dd, mm, yyyy;
+        for (const p of parts) {
+            if (p.type === 'day') dd = p.value;
+            if (p.type === 'month') mm = p.value;
+            if (p.type === 'year') yyyy = p.value;
+        }
+        if(dd && mm && yyyy) return `${dd}/${mm}/${yyyy}`;
+
+        const fdd = String(dt.getDate()).padStart(2, '0');
+        const fmm = String(dt.getMonth() + 1).padStart(2, '0');
+        const fyyyy = dt.getFullYear();
+        return `${fdd}/${fmm}/${fyyyy}`;
+    } catch (e) { 
+        if (typeof d === 'string') return d.split('T')[0];
+        return String(d).substring(0, 10); 
+    }
 }
 
 async function generateInvoiceWord(inv, items) {

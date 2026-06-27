@@ -65,6 +65,21 @@ export class JobCardDetailComponent implements OnInit {
     // Helper for numeric formatting
     const num = (v: any) => isNaN(parseFloat(v)) ? '0.00' : parseFloat(v).toFixed(2);
 
+    // Helper for date formatting
+    const formatDate = (dateStr: string) => {
+      if (!dateStr) return '';
+      try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr.split('T')[0];
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      } catch {
+        return dateStr;
+      }
+    };
+
     // 1. Create a structured HTML for Excel matching the "professional invoice" requirement with a full grid
     // We'll use a fixed 15-column layout for EVERY row to ensure it looks like a continuous grid.
     let html = `
@@ -127,9 +142,9 @@ export class JobCardDetailComponent implements OnInit {
           <tr>
             <td class="center">1</td>
             <td>${invoice.inv_job_card_no || ''}</td>
-            <td>${invoice.inv_jcard_date || ''}</td>
+            <td>${formatDate(invoice.inv_jcard_date)}</td>
             <td>${invoice.inv_no || ''}</td>
-            <td>${invoice.inv_inv_date || ''}</td>
+            <td>${formatDate(invoice.inv_inv_date)}</td>
             <td>${invoice.in_registr || ''}</td>
             <td>${invoice.inv_cus || ''}</td>
             <td>${invoice.inv_pho || ''}</td>
@@ -250,7 +265,8 @@ export class JobCardDetailComponent implements OnInit {
       this.notify.error('Please enter recipient email');
       return;
     }
-    this.notify.success('Email sent successfully');
+    // this.notify.success('Email sent successfully');
+    this.notify.error('Email Not Configured');
     this.showEmailPopup = false;
   }
 }

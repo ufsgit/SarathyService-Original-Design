@@ -647,8 +647,15 @@ exports.generatePDF = async (req, res) => {
         }
 
         // Fetch active brand
-        const [brandConfig] = await conn.query('SELECT brand_name FROM tbl_brand_config WHERE brand_status = 1 LIMIT 1');
-        invoice.active_brand = brandConfig.length > 0 ? brandConfig[0].brand_name : '';
+        const [brandConfig] = await conn.query('SELECT * FROM tbl_brand_config WHERE brand_status = 1 LIMIT 1');
+        if (brandConfig.length > 0) {
+            invoice.active_brand = brandConfig[0].brand_name;
+            invoice.active_brand_title = brandConfig[0].brand_title;
+            invoice.active_brand_address = brandConfig[0].brand_address;
+            invoice.active_brand_state = brandConfig[0].brand_state_code;
+        } else {
+            invoice.active_brand = '';
+        }
 
         const { generateInvoicePDF } = require('../utils/pdfGenerator');
         const pdfBuffer = await generateInvoicePDF(invoice, items);

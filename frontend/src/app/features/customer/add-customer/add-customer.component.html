@@ -23,7 +23,7 @@
           
           <div class="form-group">
             <label>Registration Number :</label>
-            <input type="text" [(ngModel)]="form.c_reg_no" name="reg" placeholder="Registration no" required>
+            <input type="text" [(ngModel)]="form.c_reg_no" (ngModelChange)="form.c_reg_no = $event.toUpperCase()" style="text-transform: uppercase;" name="reg" placeholder="Registration no" required>
           </div>
           
           <div class="form-group">

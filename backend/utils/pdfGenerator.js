@@ -14,13 +14,31 @@ function fmt(v, dec) {
 function fmtDate(d) {
     if (!d) return '';
     try {
+        if (typeof d === 'string') {
+            const parts = d.split('T')[0].split('-');
+            if(parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
         const dt = new Date(d);
         if (isNaN(dt)) return String(d).substring(0, 10);
-        const dd = String(dt.getDate()).padStart(2, '0');
-        const mm = String(dt.getMonth() + 1).padStart(2, '0');
-        const yyyy = dt.getFullYear();
-        return `${dd}/${mm}/${yyyy}`;
-    } catch (e) { return String(d).substring(0, 10); }
+        
+        const options = { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' };
+        const parts = new Intl.DateTimeFormat('en-IN', options).formatToParts(dt);
+        let dd, mm, yyyy;
+        for (const p of parts) {
+            if (p.type === 'day') dd = p.value;
+            if (p.type === 'month') mm = p.value;
+            if (p.type === 'year') yyyy = p.value;
+        }
+        if(dd && mm && yyyy) return `${dd}/${mm}/${yyyy}`;
+
+        const fdd = String(dt.getDate()).padStart(2, '0');
+        const fmm = String(dt.getMonth() + 1).padStart(2, '0');
+        const fyyyy = dt.getFullYear();
+        return `${fdd}/${fmm}/${fyyyy}`;
+    } catch (e) { 
+        if (typeof d === 'string') return d.split('T')[0];
+        return String(d).substring(0, 10); 
+    }
 }
 
 /**
@@ -46,7 +64,14 @@ function generateInvoicePDF(inv, items) {
             const COLOR_BLUE = '#003087';
 
             // ── HEADER SECTION ──────────────────────────────────────────────
-            doc.font(FONT_BOLD).fontSize(7).text('Branch Address:', L, y);
+            let centerY = 20;
+            doc.fillColor('#000').font(FONT_BOLD).fontSize(10.5).text(inv.active_brand_title || 'SARATHY MOTORS', L, centerY, { width: W, align: 'center' });
+            centerY += 12;
+            doc.font(FONT_REG).fontSize(7.5).text(inv.active_brand_address || 'Sarathy Bajaj Pallimukku Kollam Kerala State', L, centerY, { width: W, align: 'center' });
+            centerY += 8;
+            doc.font(FONT_REG).fontSize(7.5).text(inv.active_brand_state || 'Code: 32 Kerala [State Code :32]', L, centerY, { width: W, align: 'center' });
+
+            doc.fillColor('#000').font(FONT_BOLD).fontSize(7).text('Branch Address:', L, y);
             y += 9;
             doc.fontSize(8).text(inv.branch_name || 'SARATHY MOTORS KTR', L, y);
             y += 9;
@@ -79,15 +104,9 @@ function generateInvoicePDF(inv, items) {
                 console.error("Logo image not found", e);
             }
 
-            y = 105;
-            doc.fillColor('#000').font(FONT_BOLD).fontSize(10.5).text('SARATHY MOTORS', L, y, { width: W, align: 'center' });
-            y += 12;
-            doc.font(FONT_REG).fontSize(7.5).text('Sarathy Bajaj Pallimukku Kollam Kerala State', L, y, { width: W, align: 'center' });
-            y += 8;
-            doc.font(FONT_REG).fontSize(7.5).text('Code: 32 Kerala [State Code :32]', L, y, { width: W, align: 'center' });
             y += 15;
 
-            doc.font(FONT_REG).fontSize(7.5).text('GSTIN:', L, y);
+            doc.fillColor('#000').font(FONT_REG).fontSize(7.5).text('GSTIN:', L, y);
             y += 9;
             doc.font(FONT_BOLD).fontSize(10).text(inv.branch_gst || '32ABQFS6676M1ZA', L, y);
 
@@ -125,7 +144,7 @@ function generateInvoicePDF(inv, items) {
                     ['Customer Name.', inv.inv_cus],
                     ['Insurance GSTIN No:', (inv.inv_insurance_gstin || '')],
                     ['Mobile No.', inv.inv_pho],
-                    ['Delivery Address', (inv.inv_cus_addres || '')],
+                    ['Delivery Address', (inv.branch_address || '')],
                     ['Insurance Address:', (inv.inv_insurance_address || '')],
                     ['Advisor Name.', inv.inv_advisername],
                     ['Mechanic Name.', inv.inv_mechna],
@@ -138,12 +157,10 @@ function generateInvoicePDF(inv, items) {
                     ['Billed TO', inv.inv_cus],
                     ['', 'Mobile : ' + (inv.inv_pho || ''), false],
                     ['', inv.inv_cus_addres || 'BOUGAIN VILLA', false],
-                    ['', '', false],
-                    ['', 'Kerala[State Code :32] INDIA', false],
-                    ['', '', false],
+                    ['', (inv.active_brand_state || 'Kerala[State Code :32]') + ' INDIA', false],
                     ['Customer GSTIN', (inv.inv_cus_gstin || '')],
                     ['Mobile No.', inv.inv_pho],
-                    ['Delivery Address', (inv.inv_cus_addres || '')],
+                    ['Delivery Address', (inv.branch_address || '')],
                     ['Advisor Name', inv.inv_advisername],
                     ['Mechanic Name', inv.inv_mechna],
                     ['Sale Date', fmtDate(inv.inv_sale_date)]
@@ -204,7 +221,7 @@ function generateInvoicePDF(inv, items) {
             const cols = [
                 { h: 'S. No.', w: 20, a: 'center' },
                 { h: 'LABOUR\nCODE', w: 45, a: 'center' },
-                { h: 'LABOUR NAME /\nSAC CODE', w: 120, a: 'left' },
+                { h: 'LABOUR NAME /\nSAC CODE', w: 140, a: 'left' },
                 { h: 'RATE', w: 45, a: 'center' },
                 { h: 'DISC', w: 35, a: 'center' },
                 { h: 'TAXABL\nE\nAMOUNT', w: 50, a: 'center' },
@@ -212,8 +229,7 @@ function generateInvoicePDF(inv, items) {
                 { h: 'SGST/\nUTGST', w: 45, a: 'center' },
                 { h: 'CGST(%)', w: 35, a: 'center' },
                 { h: 'CGST', w: 35, a: 'center' },
-                { h: 'KFC(1%)', w: 30, a: 'center' },
-                { h: 'AMOUNT', w: 40, a: 'center' }
+                { h: 'AMOUNT', w: 50, a: 'center' }
             ];
 
             const headerH = 32;
@@ -262,11 +278,10 @@ function generateInvoicePDF(inv, items) {
                     fmt(sgstA, 2),
                     fmt(item.lc_cgst_p, 0),
                     fmt(cgstA, 2),
-                    fmt(kfc, 2),
                     fmt(amount, 2)
                 ];
 
-                const alignments = ['center', 'center', 'left', 'right', 'right', 'right', 'center', 'right', 'center', 'right', 'right', 'right'];
+                const alignments = ['center', 'center', 'left', 'right', 'right', 'right', 'center', 'right', 'center', 'right', 'right'];
 
                 data.forEach((val, i) => {
                     doc.text(String(val || ''), cx + 2, y + 5, { width: cols[i].w - 4, align: alignments[i] });
@@ -280,10 +295,10 @@ function generateInvoicePDF(inv, items) {
             doc.rect(L, y, W, footerH).stroke();
             doc.font(FONT_BOLD).fontSize(7.5);
             // Place 'TOTAL' under Name column
-            doc.text('TOTAL', L + 20 + 45, y + 5, { width: 120, align: 'right' });
+            doc.text('TOTAL', L + 20 + 45, y + 5, { width: 140, align: 'right' });
 
-            cx = L + 20 + 45 + 120 + 45; // Start of DISC
-            const fTot = [fmt(tDisc, 2), fmt(tTax, 2), '', fmt(tSgst, 2), '', fmt(tCgst, 2), fmt(tKfc, 2), fmt(tAmt, 2)];
+            cx = L + 20 + 45 + 140 + 45; // Start of DISC
+            const fTot = [fmt(tDisc, 2), fmt(tTax, 2), '', fmt(tSgst, 2), '', fmt(tCgst, 2), fmt(tAmt, 2)];
             let ti = 4;
             fTot.forEach(v => {
                 if (v !== '') doc.text(v, cx + 2, y + 5, { width: cols[ti].w - 4, align: 'right' });
@@ -336,8 +351,6 @@ function generateInvoicePDF(inv, items) {
             if (y + 80 > doc.page.height - 30) {
                 doc.addPage();
                 y = 40;
-            } else {
-                y += 20; 
             }
 
             const fY = y;
@@ -360,27 +373,24 @@ function generateInvoicePDF(inv, items) {
 
             const sWd = 140;
             doc.moveTo(R - sWd, fY).lineTo(R, fY).stroke();
-            doc.font(FONT_BOLD).fontSize(8.5).text('SARATHY MOTORS', R - sWd, fY - 12, { width: sWd, align: 'center' });
+            doc.font(FONT_BOLD).fontSize(8.5).text(inv.active_brand_title || 'SARATHY MOTORS', R - sWd, fY - 12, { width: sWd, align: 'center' });
             doc.font(FONT_REG).fontSize(8).text('Authorised Signatory', R - sWd, fY + 4, { width: sWd, align: 'center' });
 
-            y = fY + 40;
+            y = fY + 25;
 
             // --- GATE PASS SECTION ---
-            // If any part of the Gate Pass (header + fields + signature) 
-            // won't fit, move the WHOLE Gate Pass to a new page.
-            if (y + 180 > doc.page.height - 30) {
+            // The Gate Pass now takes about 130 points of vertical space after our compressions.
+            if (y + 130 > doc.page.height - 30) {
                 doc.addPage();
                 y = 40;
-            } else {
-                y += 20; 
             }
 
             doc.moveTo(L, y).lineTo(R, y).dash(3, { space: 3 }).lineWidth(0.8).strokeColor('#000').stroke();
             doc.undash(); 
-            y += 20;
+            y += 10;
 
             doc.font(FONT_BOLD).fontSize(12).text('Gate Pass', L, y, { width: W, align: 'center' });
-            y += 30;
+            y += 20;
 
             const gpCol1 = L;
             const gpCol2 = L + 185;
@@ -394,26 +404,26 @@ function generateInvoicePDF(inv, items) {
             drawGpField('Job Card No.', inv.inv_job_card_no, gpCol1, y);
             drawGpField('Invoice no', inv.inv_no, gpCol2, y);
             drawGpField('Chase No.', inv.inv_chassis, gpCol3, y);
-            y += 18;
+            y += 14;
 
             drawGpField('Jobcard Date', fmtDate(inv.inv_jcard_date), gpCol1, y);
             drawGpField('Service Advisor', inv.inv_advisername, gpCol2, y);
             drawGpField('Engine No', inv.in_engine, gpCol3, y);
-            y += 18;
+            y += 14;
 
             drawGpField('Invoice Date', fmtDate(inv.inv_inv_date), gpCol1, y);
             drawGpField('Vehicle No.', inv.in_registr, gpCol2, y);
             drawGpField('Mechanic Name', inv.inv_mechna, gpCol3, y);
-            y += 18;
+            y += 14;
 
             drawGpField('Model Name', inv.inv_modl, gpCol1, y);
-            y += 35; 
+            y += 25; 
             
             const sigW2 = 140;
             const sigX2 = L + (W / 2) - (sigW2 / 2);
             doc.moveTo(sigX2, y).lineTo(sigX2 + sigW2, y).lineWidth(0.8).stroke();
             y += 4;
-            doc.font(FONT_REG).fontSize(8).text('SARATHY MOTORS', sigX2, y, { width: sigW2, align: 'center' });
+            doc.font(FONT_REG).fontSize(8).text(inv.active_brand_title || 'SARATHY MOTORS', sigX2, y, { width: sigW2, align: 'center' });
             y += 12;
             doc.text('Authorised Signatory', sigX2, y, { width: sigW2, align: 'center' });
 
