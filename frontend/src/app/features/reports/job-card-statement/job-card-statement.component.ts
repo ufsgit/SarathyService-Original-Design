@@ -7,11 +7,12 @@ import { NotificationService } from '../../../core/services/notification.service
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { MatMultiSearchSelectComponent } from '../../../shared/components/mat-multi-search-select/mat-multi-search-select.component';
 
 @Component({
   selector: 'app-job-card-statement',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule, RouterModule, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, MatSelectModule, MatFormFieldModule, RouterModule, SearchableSelectComponent, MatMultiSearchSelectComponent],
   templateUrl: './job-card-statement.component.html',
   styleUrls: ['./job-card-statement.component.css']
 })
@@ -20,8 +21,9 @@ export class JobCardStatementComponent implements OnInit {
   fromDate = signal<string>('');
   toDate = signal<string>('');
   branch = signal<number[]>([]);
-  serviceType = signal<string>('');
+  serviceType = signal<string>('ALL');
   viewBy = signal<string>('Custom Date');
+  isSearchPending = signal<boolean>(false);
   
   // Multiselect filters (Signals)
   labourCodes = signal<any[]>([]);
@@ -41,11 +43,11 @@ export class JobCardStatementComponent implements OnInit {
 
   filters = {
     branch_label: '',
-    service_type: ''
+    service_type: 'ALL'
   };
 
   branchOptions: string[] = [];
-  serviceOptions: string[] = ['Paid Service', 'Free Service', 'Expense'];
+  serviceOptions: string[] = ['ALL', 'Paid Service', 'Free Service', 'Expense'];
 
   results = signal<any[]>([]);
   totals = signal<any>({});
@@ -340,12 +342,19 @@ export class JobCardStatementComponent implements OnInit {
           next: (names: any[]) => {
             const current = this.options();
             this.options.set({ ...current, labourNames: names });
+            this.search(true);
           },
-          error: () => {}
+          error: () => {
+            this.search(true);
+          }
         });
       },
-      error: () => this.notify.error('Failed to load filter options')
+      error: (err) => this.notify.error('Failed to load filter options')
     });
+  }
+
+  markPending() {
+    this.isSearchPending.set(true);
   }
 
   onBranchSelect(label: string) {
@@ -365,6 +374,8 @@ export class JobCardStatementComponent implements OnInit {
   onViewByChange() {}
 
   search(resetPage: boolean = true) {
+    this.isSearchPending.set(false);
+    this.searched.set(true);
     if (!this.fromDate() || !this.toDate()) {
       return;
     }
@@ -468,6 +479,11 @@ export class JobCardStatementComponent implements OnInit {
       default:
         return id;
     }
+  }
+
+  splitLabourCodes(val: string): string[] {
+    if (!val) return [];
+    return val.split(',').map(s => s.trim()).filter(s => s);
   }
 
   trackByInvId(index: number, item: any): number {

@@ -124,6 +124,8 @@ export class MatMultiSearchSelectComponent implements ControlValueAccessor, OnCh
   }
 
   getDisplay(option: any): string {
+    if (this.typeLabel === 'labourCodes' && option.l_name) return `${option.l_name}(${option.l_code})`;
+    if ((this.typeLabel === 'mechanics' || this.typeLabel === 'advisors') && option.e_first_name) return `${option.e_first_name} [${option.e_code}]`;
     return this.displayKey ? option[this.displayKey] : option;
   }
 
@@ -197,6 +199,9 @@ export class MatMultiSearchSelectComponent implements ControlValueAccessor, OnCh
     }
     if (this.typeLabel === 'insuranceCompanies') {
       return opt.icompany_name;
+    }
+    if (this.typeLabel === 'labourCodes') {
+      return `${opt.l_name}(${opt.l_code})`;
     }
     return this.getDisplay(opt);
   }

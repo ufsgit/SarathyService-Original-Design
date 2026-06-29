@@ -17,7 +17,7 @@
         <app-searchable-select 
           [options]="branchOptions" 
           [(ngModel)]="filters.branch_label" 
-          (ngModelChange)="onBranchSelect($event)"
+          (ngModelChange)="onBranchSelect($event); markPending()"
           placeholder="--Select Branch--"
           customClass="compact"
           [disabled]="!isAdmin()">
@@ -28,14 +28,14 @@
         <app-searchable-select 
           [options]="serviceOptions" 
           [(ngModel)]="filters.service_type" 
-          (ngModelChange)="onServiceSelect($event)"
+          (ngModelChange)="onServiceSelect($event); markPending()"
           placeholder="--Select Service--"
           customClass="compact">
         </app-searchable-select>
       </div>
       <div class="filter-row">
         <label>Search Option</label>
-        <select [ngModel]="viewBy()" (ngModelChange)="viewBy.set($event)">
+        <select [ngModel]="viewBy()" (ngModelChange)="viewBy.set($event); markPending()">
           <option value="Custom Date">Custom Date</option>
           <option value="Month to date">Month to date</option>
           <option value="Previous Month">Previous Month</option>
@@ -46,14 +46,14 @@
       <div class="date-row">
         <div class="date-group">
           <label>Inv. Date From</label>
-          <input type="date" [ngModel]="fromDate()" [max]="today" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="fromDate.set($event)">
+          <input type="date" [ngModel]="fromDate()" [max]="today" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="fromDate.set($event); markPending()">
         </div>
         <div class="date-group">
           <label>Inv. Date To</label>
-          <input type="date" [ngModel]="toDate()" [max]="today" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="toDate.set($event)">
+          <input type="date" [ngModel]="toDate()" [max]="today" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="toDate.set($event); markPending()">
         </div>
         <div class="date-group" style="align-self: flex-end;">
-          <button type="button" class="btn-search" (click)="search(true)" style="background-color: #3498db; color: white; border: none; padding: 6px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; height: 32px; min-width: 80px;">Search</button>
+          <button type="button" class="btn-search" [ngClass]="{'btn-pending': isSearchPending()}" (click)="search(true)">Search</button>
         </div>
       </div>
     </div>
@@ -86,8 +86,8 @@
             <th>
               <app-mat-multi-search-select
                 placeholder="--Select Mechanic--"
-                [ngModel]="mechanic()" 
-                (ngModelChange)="mechanic.set($event)"
+                [ngModel]="mechanic()"
+                (ngModelChange)="mechanic.set($event); markPending()"
                 [options]="options().mechanics"
                 displayKey="e_first_name"
                 valueKey="emp_id"
@@ -97,8 +97,8 @@
             <th>
               <app-mat-multi-search-select
                 placeholder="--Select Advisor--"
-                [ngModel]="advisor()" 
-                (ngModelChange)="advisor.set($event)"
+                [ngModel]="advisor()"
+                (ngModelChange)="advisor.set($event); markPending()"
                 [options]="options().advisors"
                 displayKey="e_first_name"
                 valueKey="emp_id"
@@ -108,8 +108,8 @@
             <th>
               <app-mat-multi-search-select
                 placeholder="--Select Repair Type--"
-                [ngModel]="repairTypes()" 
-                (ngModelChange)="repairTypes.set($event)"
+                [ngModel]="repairTypes()"
+                (ngModelChange)="repairTypes.set($event); markPending()"
                 [options]="options().repairTypes"
                 typeLabel="repairTypes"
               ></app-mat-multi-search-select>
@@ -117,8 +117,8 @@
             <th>
               <app-mat-multi-search-select
                 placeholder="--Select Insurance Company--"
-                [ngModel]="insuranceCompanies()" 
-                (ngModelChange)="insuranceCompanies.set($event)"
+                [ngModel]="insuranceCompanies()"
+                (ngModelChange)="insuranceCompanies.set($event); markPending()"
                 [options]="options().insuranceCompanies"
                 displayKey="icompany_name"
                 valueKey="com_id"

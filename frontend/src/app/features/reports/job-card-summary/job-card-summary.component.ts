@@ -21,8 +21,9 @@ export class JobCardSummaryComponent implements OnInit {
   fromDate = signal<string>('');
   toDate = signal<string>('');
   branch = signal<number[]>([]);
-  serviceType = signal<string>('Paid Service');
+  serviceType = signal<string>('ALL');
   viewBy = signal<string>('Custom Date');
+  isSearchPending = signal<boolean>(false);
   
   // Multiselect filters (Signals)
   mechanic = signal<any[]>([]);
@@ -40,11 +41,11 @@ export class JobCardSummaryComponent implements OnInit {
 
   filters = {
     branch_label: '',
-    service_type: 'Paid Service'
+    service_type: 'ALL'
   };
 
   branchOptions: string[] = [];
-  serviceOptions: string[] = ['Paid Service', 'Free Service', 'Expense'];
+  serviceOptions: string[] = ['ALL', 'Paid Service', 'Free Service', 'Expense'];
 
   results = signal<any[]>([]);
   totals = signal<any>({});
@@ -359,10 +360,15 @@ export class JobCardSummaryComponent implements OnInit {
   }
 
 
+  markPending() {
+    this.isSearchPending.set(true);
+  }
+
   // onViewByChange is no longer needed as the effect handles it
   onViewByChange() {}
 
   search(resetPage: boolean = true) {
+    this.isSearchPending.set(false);
     if (!this.fromDate() || !this.toDate()) {
       return;
     }

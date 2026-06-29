@@ -7,8 +7,8 @@ exports.getJobCardSummary = async (req, res) => {
         const offset = (page - 1) * pageSize;
 
         // Base Filter
-        let whereClause = 'WHERE i.inv_inv_date BETWEEN ? AND ?';
-        const params = [from_date, to_date];
+        let whereClause = 'WHERE i.inv_inv_date >= ? AND i.inv_inv_date <= ?';
+        const params = [`${from_date} 00:00:00`, `${to_date} 23:59:59`];
 
         if (branch && branch.length > 0) {
             whereClause += ' AND i.inv_branch IN (?)';
@@ -25,7 +25,7 @@ exports.getJobCardSummary = async (req, res) => {
         if (repair_types && repair_types.length > 0) { whereClause += ' AND i.inv_repair_typ IN (?)'; params.push(repair_types); }
         if (insurance_companies && insurance_companies.length > 0) { whereClause += ' AND i.insurance_id IN (?)'; params.push(insurance_companies); }
         
-        if (service_type) {
+        if (service_type && service_type !== 'ALL') {
             if (service_type === 'Paid Service') {
                 whereClause += " AND (i.inv_type = 'Paid Service' OR i.inv_type = 'Cash')";
             } else if (service_type === 'Free Service') {
@@ -123,8 +123,8 @@ exports.getJobCardStatement = async (req, res) => {
         const offset = (page - 1) * pageSize;
 
         // Base Filter
-        let whereClause = 'WHERE i.inv_inv_date BETWEEN ? AND ?';
-        const params = [from_date, to_date];
+        let whereClause = 'WHERE i.inv_inv_date >= ? AND i.inv_inv_date <= ?';
+        const params = [`${from_date} 00:00:00`, `${to_date} 23:59:59`];
 
         if (branch && branch.length > 0) {
             whereClause += ' AND i.inv_branch IN (?)';
@@ -146,7 +146,7 @@ exports.getJobCardStatement = async (req, res) => {
             params.push(labour_codes);
         }
 
-        if (service_type) {
+        if (service_type && service_type !== 'ALL') {
             if (service_type === 'Paid Service') {
                 whereClause += " AND (i.inv_type = 'Paid Service' OR i.inv_type = 'Cash')";
             } else if (service_type === 'Free Service') {
@@ -207,6 +207,7 @@ exports.getJobCardStatement = async (req, res) => {
             total_labour_codes: labourCountResult[0].total_labour_codes || 0
         };
 
+        let flattenedRows = [];
         // 3. Attach labour items to the paginated rows efficiently
         if (rows.length > 0) {
             const invIds = rows.map(r => r.inv_id);
@@ -215,14 +216,36 @@ exports.getJobCardStatement = async (req, res) => {
                 [invIds]
             );
             
-            // Map items back to invoices
+            // Map items back to invoices and flatten
             for (let inv of rows) {
-                inv.items = allItems.filter(it => it.ic_inv_id === inv.inv_id);
-                inv.labour_code = inv.items.map(it => `${it.lc_lb_name}(${it.lc_lab_code})`).join(', ');
+                let items = allItems.filter(it => it.ic_inv_id === inv.inv_id);
+                
+                // If the user specifically filtered by labour codes, only show those items
+                if (labour_codes && labour_codes.length > 0) {
+                    items = items.filter(it => labour_codes.includes(it.lc_lab_code));
+                }
+
+                if (items.length > 0) {
+                    for (let it of items) {
+                        flattenedRows.push({
+                            ...inv,
+                            labour_code: `${it.lc_lb_name}(${it.lc_lab_code})`,
+                            inv_type: it.lc_type || inv.inv_type,
+                            inv_rate: it.lc_rate,
+                            inv_total: it.lc_amount,
+                            inv_disc_total: it.lc_disc,
+                            inv_taxtotal: it.lc_tax_amunt,
+                            inv_cesstotal: it.lc_cess
+                        });
+                    }
+                } else {
+                    inv.labour_code = '';
+                    flattenedRows.push(inv);
+                }
             }
         }
 
-        res.json({ data: rows, total: totalCount, totals, page: parseInt(page), pageSize: parseInt(pageSize) });
+        res.json({ data: flattenedRows, total: totalCount, totals, page: parseInt(page), pageSize: parseInt(pageSize) });
     } catch (err) {
         console.error('getJobCardStatement error:', err);
         res.status(500).json({ message: 'Server error', error: err.message });

@@ -17,7 +17,7 @@
         <app-searchable-select 
           [options]="branchOptions" 
           [(ngModel)]="filters.branch_label" 
-          (ngModelChange)="onBranchSelect($event)"
+          (ngModelChange)="onBranchSelect($event); markPending()"
           placeholder="--Select Branch--"
           customClass="compact"
           [disabled]="!isAdmin()">
@@ -28,14 +28,14 @@
         <app-searchable-select 
           [options]="serviceOptions" 
           [(ngModel)]="filters.service_type" 
-          (ngModelChange)="onServiceSelect($event)"
+          (ngModelChange)="onServiceSelect($event); markPending()"
           placeholder="--Select Service--"
           customClass="compact">
         </app-searchable-select>
       </div>
       <div class="filter-row">
         <label>Search Option</label>
-        <select [ngModel]="viewBy()" (ngModelChange)="viewBy.set($event)">
+        <select [ngModel]="viewBy()" (ngModelChange)="viewBy.set($event); markPending()">
           <option value="Custom Date">Custom Date</option>
           <option value="Month to date">Month to date</option>
           <option value="Previous Month">Previous Month</option>
@@ -46,14 +46,14 @@
       <div class="date-row">
         <div class="date-group">
           <label>Inv. Date From</label>
-          <input type="date" [ngModel]="fromDate()" [max]="today" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="fromDate.set($event)">
+          <input type="date" [ngModel]="fromDate()" [max]="today" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="fromDate.set($event); markPending()">
         </div>
         <div class="date-group">
           <label>Inv. Date To</label>
-          <input type="date" [ngModel]="toDate()" [max]="today" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="toDate.set($event)">
+          <input type="date" [ngModel]="toDate()" [max]="today" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="toDate.set($event); markPending()">
         </div>
         <div class="date-group" style="align-self: flex-end;">
-          <button type="button" class="btn-search" (click)="search(true)" style="background-color: #3498db; color: white; border: none; padding: 6px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; height: 32px; min-width: 80px;">Search</button>
+          <button type="button" class="btn-search" [ngClass]="{'btn-pending': isSearchPending()}" (click)="search(true)">Search</button>
         </div>
       </div>
     </div>
@@ -85,44 +85,57 @@
             <th><input type="text" class="th-input" value="JobCard Date" readonly></th>
             <th><input type="text" class="th-input th-wide" value="Branch Name" readonly></th>
             <th class="col-labour-code">
-              <mat-select placeholder="--Select Labour Code--" multiple [ngModel]="labourCodes()" (selectionChange)="labourCodes.set($event.value)" panelClass="legacy-select-panel">
-                <mat-select-trigger>
-                  {{getSelectedLabel(labourCodes(), 'labourCodes')}}
-                </mat-select-trigger>
-                <mat-option *ngFor="let l of options().labourNames" [value]="l.l_code">{{l.l_name}}({{l.l_code}})</mat-option>
-              </mat-select>
+              <app-mat-multi-search-select
+                placeholder="--Select Labour Code--"
+                [ngModel]="labourCodes()"
+                (ngModelChange)="labourCodes.set($event); markPending()"
+                [options]="options().labourNames"
+                displayKey="l_name"
+                valueKey="l_code"
+                typeLabel="labourCodes"
+              ></app-mat-multi-search-select>
             </th>
             <th>
-              <mat-select placeholder="--Select Mechanic--" multiple [ngModel]="mechanic()" (selectionChange)="mechanic.set($event.value)" panelClass="legacy-select-panel">
-                <mat-select-trigger>
-                  {{getSelectedLabel(mechanic(), 'mechanics')}}
-                </mat-select-trigger>
-                <mat-option *ngFor="let m of options().mechanics" [value]="m.emp_id">{{m.e_first_name}} [{{m.e_code}}]</mat-option>
-              </mat-select>
+              <app-mat-multi-search-select
+                placeholder="--Select Mechanic--"
+                [ngModel]="mechanic()"
+                (ngModelChange)="mechanic.set($event); markPending()"
+                [options]="options().mechanics"
+                displayKey="e_first_name"
+                valueKey="emp_id"
+                typeLabel="mechanics"
+              ></app-mat-multi-search-select>
             </th>
             <th>
-              <mat-select placeholder="--Select Advisor--" multiple [ngModel]="advisor()" (selectionChange)="advisor.set($event.value)" panelClass="legacy-select-panel">
-                <mat-select-trigger>
-                  {{getSelectedLabel(advisor(), 'advisors')}}
-                </mat-select-trigger>
-                <mat-option *ngFor="let a of options().advisors" [value]="a.emp_id">{{a.e_first_name}} [{{a.e_code}}]</mat-option>
-              </mat-select>
+              <app-mat-multi-search-select
+                placeholder="--Select Advisor--"
+                [ngModel]="advisor()"
+                (ngModelChange)="advisor.set($event); markPending()"
+                [options]="options().advisors"
+                displayKey="e_first_name"
+                valueKey="emp_id"
+                typeLabel="advisors"
+              ></app-mat-multi-search-select>
             </th>
             <th>
-              <mat-select placeholder="--Select Repair Type--" multiple [ngModel]="repairTypes()" (selectionChange)="repairTypes.set($event.value)" panelClass="legacy-select-panel">
-                <mat-select-trigger>
-                  {{getSelectedLabel(repairTypes(), 'repairTypes')}}
-                </mat-select-trigger>
-                <mat-option *ngFor="let t of options().repairTypes" [value]="t">{{t}}</mat-option>
-              </mat-select>
+              <app-mat-multi-search-select
+                placeholder="--Select Repair Type--"
+                [ngModel]="repairTypes()"
+                (ngModelChange)="repairTypes.set($event); markPending()"
+                [options]="options().repairTypes"
+                typeLabel="repairTypes"
+              ></app-mat-multi-search-select>
             </th>
             <th>
-              <mat-select placeholder="--Select Insurance Company--" multiple [ngModel]="insuranceCompanies()" (selectionChange)="insuranceCompanies.set($event.value)" panelClass="legacy-select-panel">
-                <mat-select-trigger>
-                  {{getSelectedLabel(insuranceCompanies(), 'insuranceCompanies')}}
-                </mat-select-trigger>
-                <mat-option *ngFor="let c of options().insuranceCompanies" [value]="c.com_id">{{c.icompany_name}}</mat-option>
-              </mat-select>
+              <app-mat-multi-search-select
+                placeholder="--Select Insurance Company--"
+                [ngModel]="insuranceCompanies()"
+                (ngModelChange)="insuranceCompanies.set($event); markPending()"
+                [options]="options().insuranceCompanies"
+                displayKey="icompany_name"
+                valueKey="com_id"
+                typeLabel="insuranceCompanies"
+              ></app-mat-multi-search-select>
             </th>
             <th><input type="text" class="th-input" value="Model Name" readonly></th>
             <th><input type="text" class="th-input th-sm" value="HSN/SAC" readonly></th>
@@ -157,9 +170,11 @@
             <td>{{r.advisor_name}}</td>
             <td>{{r.inv_repair_typ}}</td>
             <td>
-              {{r.icompany_name}}
-              <div *ngIf="r.inv_cus_gstin" class="cell-sub">GSTIN:</div>
-              <div *ngIf="r.inv_cus_gstin" class="cell-sub">Company Address:</div>
+              <ng-container *ngIf="r.icompany_name">
+                {{r.icompany_name}}
+                <div *ngIf="r.inv_cus_gstin" class="cell-sub">GSTIN:</div>
+                <div *ngIf="r.inv_cus_gstin" class="cell-sub">Company Address:</div>
+              </ng-container>
             </td>
             <td>{{r.inv_modl}}</td>
             <td>998729</td>
@@ -171,9 +186,9 @@
             <td>{{r.inv_chassis}}</td>
             <td>{{r.in_engine}}</td>
             <td>{{r.inv_km}}</td>
-            <td>{{(r.inv_type === 'Paid Service' || r.inv_type === 'Cash') ? r.inv_total : '0'}}</td>
-            <td>{{(r.inv_type === 'Free Service' || r.inv_type === 'Free') ? r.inv_total : '0'}}</td>
-            <td>{{r.inv_type === 'Expense' ? r.inv_total : '0'}}</td>
+            <td>{{(r.inv_type === 'Paid Service' || r.inv_type === 'Cash') ? r.inv_rate : '0'}}</td>
+            <td>{{(r.inv_type === 'Free Service' || r.inv_type === 'Free') ? r.inv_rate : '0'}}</td>
+            <td>{{r.inv_type === 'Expense' ? r.inv_rate : '0'}}</td>
             <td>{{r.inv_cus_gstin}}</td>
             <td>{{r.inv_disc_total || '0'}}</td>
             <td>{{r.inv_taxtotal}}</td>
