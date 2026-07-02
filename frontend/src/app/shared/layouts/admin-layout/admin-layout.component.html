@@ -16,61 +16,61 @@
 <nav class="main-nav">
   <ul class="nav-list">
     <li class="nav-item">
-      <a routerLink="/admin/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" target="_blank">Home</a>
+      <a routerLink="/admin/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" [target]="openInNewTab ? '_blank' : '_self'">Home</a>
     </li>
     
     <li class="nav-item has-dropdown" *ngIf="auth.isAdmin">
       <a>Master Operations</a>
       <ul class="dropdown">
-        <li><a routerLink="/admin/branch/add" routerLinkActive="active" target="_blank">Branch</a></li>
-        <li><a routerLink="/admin/labour/add" routerLinkActive="active" target="_blank">Labour</a></li>
-        <li><a routerLink="/admin/employee/add" routerLinkActive="active" target="_blank">Employee</a></li>
-        <li><a routerLink="/admin/insurance/add" routerLinkActive="active" target="_blank">Insurance Company</a></li>
-        <li><a routerLink="/admin/model/add" routerLinkActive="active" target="_blank">Vehicle Model</a></li>
-        <li><a routerLink="/admin/logomaster" routerLinkActive="active" target="_blank">Logo Master</a></li>
+        <li><a routerLink="/admin/branch/add" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Branch</a></li>
+        <li><a routerLink="/admin/labour/add" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Labour</a></li>
+        <li><a routerLink="/admin/employee/add" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Employee</a></li>
+        <li><a routerLink="/admin/insurance/add" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Insurance Company</a></li>
+        <li><a routerLink="/admin/model/add" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Vehicle Model</a></li>
+        <li><a routerLink="/admin/logomaster" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Logo Master</a></li>
       </ul>
     </li>
 
     <li class="nav-item has-dropdown">
-      <a routerLink="/admin/customer/add" routerLinkActive="active" target="_blank">Customer</a>
+      <a routerLink="/admin/customer/add" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Customer</a>
       <ul class="dropdown">
-        <li><a routerLink="/admin/customer/add" routerLinkActive="active" target="_blank">Add Customer</a></li>
-        <li><a routerLink="/admin/customer/list" routerLinkActive="active" target="_blank">List Customer</a></li>
+        <li><a routerLink="/admin/customer/add" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Add Customer</a></li>
+        <li><a routerLink="/admin/customer/list" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">List Customer</a></li>
       </ul>
     </li>
     <li class="nav-item has-dropdown">
       <a>Reports</a>
       <ul class="dropdown">
-        <li><a routerLink="/admin/reports/job-card-summary" routerLinkActive="active" target="_blank">Job Card Summary</a></li>
-        <li><a routerLink="/admin/reports/job-card-statement" routerLinkActive="active" target="_blank">Job Card Statement</a></li>
+        <li><a routerLink="/admin/reports/job-card-summary" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Job Card Summary</a></li>
+        <li><a routerLink="/admin/reports/job-card-statement" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Job Card Statement</a></li>
       </ul>
     </li>
     <li class="nav-item has-dropdown">
-      <a routerLink="/admin/invoice/labour" routerLinkActive="active" target="_blank">Invoice</a>
+      <a routerLink="/admin/invoice/labour" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Invoice</a>
       <ul class="dropdown">
-        <li><a routerLink="/admin/invoice/labour" routerLinkActive="active" target="_blank">Labour Invoice</a></li>
-        <li><a routerLink="/admin/invoice/insurance" routerLinkActive="active" target="_blank">Insurance Invoice</a></li>
+        <li><a routerLink="/admin/invoice/labour" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Labour Invoice</a></li>
+        <li><a routerLink="/admin/invoice/insurance" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Insurance Invoice</a></li>
       </ul>
     </li>
     <li class="nav-item has-dropdown">
       <a>Ready for bill list</a>
       <ul class="dropdown">
-        <li><a routerLink="/admin/invoice/ready/labour" routerLinkActive="active" target="_blank">Labour</a></li>
-        <li><a routerLink="/admin/invoice/ready/insurance" routerLinkActive="active" target="_blank">Insurance</a></li>
+        <li><a routerLink="/admin/invoice/ready/labour" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Labour</a></li>
+        <li><a routerLink="/admin/invoice/ready/insurance" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Insurance</a></li>
       </ul>
     </li>
     <li class="nav-item has-dropdown">
       <a>Previous Bills</a>
       <ul class="dropdown">
-        <li><a routerLink="/admin/reports/previous-bills/labour" routerLinkActive="active" target="_blank">Labour</a></li>
-        <li><a routerLink="/admin/reports/previous-bills/insurance" routerLinkActive="active" target="_blank">Insurance</a></li>
+        <li><a routerLink="/admin/reports/previous-bills/labour" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Labour</a></li>
+        <li><a routerLink="/admin/reports/previous-bills/insurance" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Insurance</a></li>
       </ul>
     </li>
     <li class="nav-item">
-      <a routerLink="/admin/vehicle-history" routerLinkActive="active" target="_blank">Vehicle History</a>
+      <a routerLink="/admin/vehicle-history" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">Vehicle History</a>
     </li>
     <li class="nav-item">
-      <a routerLink="/admin/change-password" routerLinkActive="active" target="_blank">My Profile</a>
+      <a routerLink="/admin/change-password" routerLinkActive="active" [target]="openInNewTab ? '_blank' : '_self'">My Profile</a>
     </li>
   </ul>
 </nav>

@@ -20,7 +20,13 @@ export class EditCustomerComponent implements OnInit {
     const id=+this.route.snapshot.params['id'];
     this.api.getCustomer(id).subscribe((d:any)=>{
       this.form=d; 
-      if(this.form.c_sales_date) this.form.c_sales_date=this.form.c_sales_date.split('T')[0];
+      if (this.form.c_sales_date) {
+        const d = new Date(this.form.c_sales_date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        this.form.c_sales_date = `${year}-${month}-${day}`;
+      }
     });
     this.api.getModels().subscribe((d:any[])=>{
       this.models=d;

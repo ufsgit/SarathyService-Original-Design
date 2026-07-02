@@ -13,6 +13,8 @@ import { filter } from 'rxjs/operators';
 })
 export class AdminLayoutComponent implements OnInit {
   breadcrumb = 'Home';
+  openInNewTab = true;
+  // openInNewTab = false;
 
   constructor(public auth: AuthService, private router: Router) {}
 

@@ -19,7 +19,7 @@ export class InsuranceInvoiceComponent implements OnInit {
   items: any[] = [this.newItem()];
   branches: any[] = []; mechanics: any[] = []; advisors: any[] = []; companies: any[] = []; labourNames: any[] = [];
   editMode = false; invoiceId: number | null = null;
-  isFromPreviousBills = false; isFinalizing = false;
+  isFromPreviousBills = false; isFromReadyBills = false; isFinalizing = false;
   showAddCustomerModal = false;
   pendingRegNo = '';
   isLoading = false;
@@ -79,6 +79,7 @@ export class InsuranceInvoiceComponent implements OnInit {
     });
 
     this.isFromPreviousBills = this.route.snapshot.queryParams['from'] === 'previous';
+    this.isFromReadyBills = this.route.snapshot.queryParams['from'] === 'ready';
 
     this.invoiceId = this.route.snapshot.params['id'] ? +this.route.snapshot.params['id'] : null;
     if (this.invoiceId) {
@@ -109,9 +110,14 @@ export class InsuranceInvoiceComponent implements OnInit {
         if (this.form.inv_branch) this.form.inv_branch = +this.form.inv_branch;
         this.form.inv_engine = this.form.inv_engine || this.form.in_engine;
 
-        if (this.form.inv_inv_date) this.form.inv_inv_date = this.form.inv_inv_date.split('T')[0];
-        if (this.form.inv_jcard_date) this.form.inv_jcard_date = this.form.inv_jcard_date.split('T')[0];
-        if (this.form.inv_sale_date) this.form.inv_sale_date = this.form.inv_sale_date.split('T')[0];
+        const formatDate = (dateStr: string) => {
+          if (!dateStr) return dateStr;
+          const d = new Date(dateStr);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        };
+        if (this.form.inv_inv_date) this.form.inv_inv_date = formatDate(this.form.inv_inv_date);
+        if (this.form.inv_jcard_date) this.form.inv_jcard_date = formatDate(this.form.inv_jcard_date);
+        if (this.form.inv_sale_date) this.form.inv_sale_date = formatDate(this.form.inv_sale_date);
 
         // Map insurance fields from DB columns
         this.form.inv_insurance_company = this.form.insurance_id;

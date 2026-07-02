@@ -2,7 +2,15 @@
   <div id="content-header">
     <div id="breadcrumb">
       <a title="Go to Home" class="tip-bottom"><i class="icon-home"></i> Home</a>
-      <a class="tip-bottom">INVOICE</a>
+      <ng-container *ngIf="isFromReadyBills">
+        <a class="tip-bottom">Ready for bill list</a>
+      </ng-container>
+      <ng-container *ngIf="isFromPreviousBills">
+        <a class="tip-bottom">Previous Bills</a>
+      </ng-container>
+      <ng-container *ngIf="!isFromReadyBills && !isFromPreviousBills">
+        <a class="tip-bottom">INVOICE</a>
+      </ng-container>
       <a class="current">Labour</a>
     </div>
   </div>
@@ -10,7 +18,9 @@
   <div class="widget-box">
     <div class="widget-title">
       <span class="icon"> <i class="icon-align-justify"></i> </span>
-      <h5>INVOICE (Labour)</h5>
+      <h5 *ngIf="isFromReadyBills">Ready for Bill (Labour)</h5>
+      <h5 *ngIf="isFromPreviousBills">Previous Bills (Labour)</h5>
+      <h5 *ngIf="!isFromReadyBills && !isFromPreviousBills">INVOICE (Labour)</h5>
       <button *ngIf="!isFromPreviousBills" type="button" class="btn-ready-bill" (click)="onAddToReadyForBill()">Add to Ready for Bill</button>
       <button *ngIf="isFromPreviousBills" type="button" class="btn-ready-bill" style="background-color: #e74c3c;" (click)="onSaveBill()">Save Bill</button>
     </div>

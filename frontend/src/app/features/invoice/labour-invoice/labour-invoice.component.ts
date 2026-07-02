@@ -19,7 +19,7 @@ export class LabourInvoiceComponent implements OnInit {
   items: any[] = [this.newItem()];
   branches: any[] = []; mechanics: any[] = []; advisors: any[] = []; labourNames: any[] = [];
   editMode = false; invoiceId: number | null = null;
-  isFromPreviousBills = false; isFinalizing = false;
+  isFromPreviousBills = false; isFromReadyBills = false; isFinalizing = false;
   showAddCustomerModal = false;
   pendingRegNo = '';
   isLoading = false;
@@ -68,6 +68,7 @@ export class LabourInvoiceComponent implements OnInit {
     });
 
     this.isFromPreviousBills = this.route.snapshot.queryParams['from'] === 'previous';
+    this.isFromReadyBills = this.route.snapshot.queryParams['from'] === 'ready';
     this.invoiceId = this.route.snapshot.params['id'] ? +this.route.snapshot.params['id'] : null;
     if (this.invoiceId) {
       this.editMode = true;
@@ -97,9 +98,14 @@ export class LabourInvoiceComponent implements OnInit {
         this.form.inv_engine = this.form.inv_engine || this.form.in_engine;
         this.form.inv_cus_gstin = this.form.inv_cus_gstin || this.form.inv_gstin;
 
-        if (this.form.inv_inv_date) this.form.inv_inv_date = this.form.inv_inv_date.split('T')[0];
-        if (this.form.inv_jcard_date) this.form.inv_jcard_date = this.form.inv_jcard_date.split('T')[0];
-        if (this.form.inv_sale_date) this.form.inv_sale_date = this.form.inv_sale_date.split('T')[0];
+        const formatDate = (dateStr: string) => {
+          if (!dateStr) return dateStr;
+          const d = new Date(dateStr);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        };
+        if (this.form.inv_inv_date) this.form.inv_inv_date = formatDate(this.form.inv_inv_date);
+        if (this.form.inv_jcard_date) this.form.inv_jcard_date = formatDate(this.form.inv_jcard_date);
+        if (this.form.inv_sale_date) this.form.inv_sale_date = formatDate(this.form.inv_sale_date);
 
         this.items = res.items.map((it: any) => ({
           ic_labour_code: it.lc_lab_code,
