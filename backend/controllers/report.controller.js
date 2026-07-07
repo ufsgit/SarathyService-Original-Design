@@ -27,11 +27,13 @@ exports.getJobCardSummary = async (req, res) => {
         
         if (service_type && service_type !== 'ALL') {
             if (service_type === 'Paid Service') {
-                whereClause += " AND (i.inv_type = 'Paid Service' OR i.inv_type = 'Cash')";
+                whereClause += " AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND (lc.lc_type = 'Paid Service' OR lc.lc_type = 'Cash'))";
             } else if (service_type === 'Free Service') {
-                whereClause += " AND (i.inv_type = 'Free Service' OR i.inv_type = 'Free')";
+                whereClause += " AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND (lc.lc_type = 'Free Service' OR lc.lc_type = 'Free'))";
+            } else if (service_type === 'Expense') {
+                whereClause += " AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND (lc.lc_type = 'Expense' OR lc.lc_type = 'expense'))";
             } else {
-                whereClause += ' AND i.inv_type = ?';
+                whereClause += " AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND lc.lc_type = ?)";
                 params.push(service_type);
             }
         }
@@ -148,11 +150,14 @@ exports.getJobCardStatement = async (req, res) => {
 
         if (service_type && service_type !== 'ALL') {
             if (service_type === 'Paid Service') {
-                whereClause += " AND (i.inv_type = 'Paid Service' OR i.inv_type = 'Cash')";
+                whereClause += " AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND (lc.lc_type = 'Paid Service' OR lc.lc_type = 'Cash'))";
             } else if (service_type === 'Free Service') {
-                whereClause += " AND (i.inv_type = 'Free Service' OR i.inv_type = 'Free')";
+                whereClause += " AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND (lc.lc_type = 'Free Service' OR lc.lc_type = 'Free'))";
+            } else if (service_type === 'Expense') {
+                whereClause += " AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND (lc.lc_type = 'Expense' OR lc.lc_type = 'expense'))";
             } else {
-                whereClause += ' AND i.inv_type = ?'; params.push(service_type);
+                whereClause += " AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND lc.lc_type = ?)";
+                params.push(service_type);
             }
         }
 
@@ -223,6 +228,19 @@ exports.getJobCardStatement = async (req, res) => {
                 // If the user specifically filtered by labour codes, only show those items
                 if (labour_codes && labour_codes.length > 0) {
                     items = items.filter(it => labour_codes.includes(it.lc_lab_code));
+                }
+
+                // Filter items to only match the selected service type
+                if (service_type && service_type !== 'ALL') {
+                    if (service_type === 'Paid Service') {
+                        items = items.filter(it => it.lc_type === 'Paid Service' || it.lc_type === 'Cash');
+                    } else if (service_type === 'Free Service') {
+                        items = items.filter(it => it.lc_type === 'Free Service' || it.lc_type === 'Free');
+                    } else if (service_type === 'Expense') {
+                        items = items.filter(it => it.lc_type === 'Expense' || it.lc_type === 'expense');
+                    } else {
+                        items = items.filter(it => it.lc_type === service_type);
+                    }
                 }
 
                 if (items.length > 0) {

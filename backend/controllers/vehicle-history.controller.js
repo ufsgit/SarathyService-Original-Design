@@ -24,6 +24,8 @@ exports.search = async (req, res) => {
         for (let inv of invoices) {
             const [items] = await pool.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [inv.inv_id]);
             inv.items = items;
+            inv.advisor_name = inv.advisor_name || inv.inv_advisername;
+            inv.mechanic_name = inv.mechanic_name || inv.inv_mechna;
         }
 
         res.json({ customer, invoices });
@@ -78,6 +80,8 @@ exports.generatePDF = async (req, res) => {
         for (let inv of invoices) {
             const [items] = await pool.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [inv.inv_id]);
             inv.items = items;
+            inv.advisor_name = inv.advisor_name || inv.inv_advisername;
+            inv.mechanic_name = inv.mechanic_name || inv.inv_mechna;
         }
 
         const PDFDocument = require('pdfkit');
@@ -100,7 +104,12 @@ exports.generatePDF = async (req, res) => {
             if (!d) return '-';
             const dt = new Date(d);
             if (isNaN(dt)) return String(d).substring(0, 10);
-            return `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()}`;
+            return dt.toLocaleDateString('en-GB', {
+                timeZone: 'Asia/Kolkata',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
         }
 
         // Title
