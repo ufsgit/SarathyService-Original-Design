@@ -144,7 +144,6 @@
             <th><input type="text" class="th-input" value="Taxable Amount" readonly></th>
             <th><input type="text" class="th-input" value="SGST/UTGST(9)" readonly></th>
             <th><input type="text" class="th-input" value="CGST(9)" readonly></th>
-            <th><input type="text" class="th-input" value="KFC(1)" readonly></th>
             <th><input type="text" class="th-input" value="Invoice Type" readonly></th>
             <th><input type="text" class="th-input" value="Invoice Amount" readonly></th>
           </tr>
@@ -185,12 +184,11 @@
             <td>{{r.inv_taxtotal}}</td>
             <td>{{r.inv_sgstotal}}</td>
             <td>{{r.inv_gsttotal}}</td>
-            <td>{{r.inv_cesstotal}}</td>
             <td>{{r.inv_type}}</td>
             <td>{{r.inv_total}}</td>
           </tr>
           <tr *ngIf="results().length === 0 && !loading()">
-            <td colspan="29" class="no-data">No data available in table</td>
+            <td colspan="28" class="no-data">No data available in table</td>
           </tr>
         </tbody>
       </table>
@@ -240,11 +238,6 @@
       <div class="total-field">
         <label>Total CGST Amount</label>
         <input type="text" readonly [value]="(totals().total_cgst || 0) | number:'1.2-2'">
-      </div>
-      <!-- col4 only: KFC under CGST -->
-      <div class="total-field total-field--col4">
-        <label>Total KFC Amount</label>
-        <input type="text" readonly [value]="(totals().total_kfc || 0) | number:'1.2-2'">
       </div>
       <!-- col4 only: Invoice Amount under KFC -->
       <div class="total-field total-field--col4">

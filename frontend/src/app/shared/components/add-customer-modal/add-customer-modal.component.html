@@ -14,11 +14,11 @@
             </div>
             <div class="form-group">
               <label>Chassis No :</label>
-              <input type="text" [(ngModel)]="form.c_chassis_no" name="chassis" placeholder="Chassis no" required>
+              <input type="text" [(ngModel)]="form.c_chassis_no" (ngModelChange)="form.c_chassis_no = $event.toUpperCase()" style="text-transform: uppercase;" name="chassis" placeholder="Chassis no" required>
             </div>
             <div class="form-group">
               <label>Customer Name:</label>
-              <input type="text" [(ngModel)]="form.c_name" name="name" placeholder="Customer name" required>
+              <input type="text" [(ngModel)]="form.c_name" (ngModelChange)="form.c_name = $event.toUpperCase()" style="text-transform: uppercase;" name="name" placeholder="Customer name" required>
             </div>
             <div class="form-group">
               <label>Address:</label>
@@ -41,7 +41,7 @@
             </div>
             <div class="form-group">
               <label>Engine No :</label>
-              <input type="text" [(ngModel)]="form.c_engine_no" name="engine" placeholder="Engine number" required>
+              <input type="text" [(ngModel)]="form.c_engine_no" (ngModelChange)="form.c_engine_no = $event.toUpperCase()" style="text-transform: uppercase;" name="engine" placeholder="Engine number" required>
             </div>
             <div class="form-group">
               <label>Contact No :</label>

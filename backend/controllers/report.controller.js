@@ -43,13 +43,7 @@ exports.getJobCardSummary = async (req, res) => {
             SELECT 
                 COUNT(*) as total_count,
                 COALESCE(SUM(CASE WHEN i.inv_repair_typ LIKE '%Free%' THEN 1 ELSE 0 END), 0) as total_free_service,
-                COALESCE(SUM(CASE WHEN i.inv_repair_typ NOT LIKE '%Free%' THEN 1 ELSE 0 END), 0) as total_paid_service,
-                COALESCE(SUM(CAST(NULLIF(i.inv_taxtotal, '') AS DECIMAL(12,2))), 0) as total_taxable,
-                COALESCE(SUM(CAST(NULLIF(i.inv_disc_total, '') AS DECIMAL(12,2))), 0) as total_discount,
-                COALESCE(SUM(CAST(NULLIF(i.inv_sgstotal, '') AS DECIMAL(12,2))), 0) as total_sgst,
-                COALESCE(SUM(CAST(NULLIF(i.inv_gsttotal, '') AS DECIMAL(12,2))), 0) as total_cgst,
-                COALESCE(SUM(CAST(NULLIF(i.inv_cesstotal, '') AS DECIMAL(12,2))), 0) as total_kfc,
-                COALESCE(SUM(CAST(NULLIF(i.inv_total, '') AS DECIMAL(12,2))), 0) as grand_total
+                COALESCE(SUM(CASE WHEN i.inv_repair_typ NOT LIKE '%Free%' THEN 1 ELSE 0 END), 0) as total_paid_service
             FROM tbl_invoice_labour i
             ${whereClause}
         `;
@@ -59,7 +53,13 @@ exports.getJobCardSummary = async (req, res) => {
                 COALESCE(SUM(CASE WHEN lc.lc_type = 'labour' THEN CAST(NULLIF(lc.lc_tax_amunt, '') AS DECIMAL(12,2)) ELSE 0 END), 0) as labour_taxable,
                 COALESCE(SUM(CASE WHEN lc.lc_type = 'spare' OR lc.lc_type = 'parts' THEN CAST(NULLIF(lc.lc_tax_amunt, '') AS DECIMAL(12,2)) ELSE 0 END), 0) as parts_taxable,
                 COALESCE(SUM(CASE WHEN lc.lc_type = 'labour' THEN (CAST(NULLIF(lc.lc_sgst_a, '') AS DECIMAL(12,2)) + CAST(NULLIF(lc.lc_cgst_a, '') AS DECIMAL(12,2))) ELSE 0 END), 0) as labour_gst,
-                COALESCE(SUM(CASE WHEN lc.lc_type = 'spare' OR lc.lc_type = 'parts' THEN (CAST(NULLIF(lc.lc_sgst_a, '') AS DECIMAL(12,2)) + CAST(NULLIF(lc.lc_cgst_a, '') AS DECIMAL(12,2))) ELSE 0 END), 0) as parts_gst
+                COALESCE(SUM(CASE WHEN lc.lc_type = 'spare' OR lc.lc_type = 'parts' THEN (CAST(NULLIF(lc.lc_sgst_a, '') AS DECIMAL(12,2)) + CAST(NULLIF(lc.lc_cgst_a, '') AS DECIMAL(12,2))) ELSE 0 END), 0) as parts_gst,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_tax_amunt, '') AS DECIMAL(12,2))), 0) as total_taxable,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_disc, '') AS DECIMAL(12,2))), 0) as total_discount,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_sgst_a, '') AS DECIMAL(12,2))), 0) as total_sgst,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_cgst_a, '') AS DECIMAL(12,2))), 0) as total_cgst,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_cess, '') AS DECIMAL(12,2))), 0) as total_kfc,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_amount, '') AS DECIMAL(12,2))), 0) as grand_total
             FROM tbl_invoice_labour_cost lc
             JOIN tbl_invoice_labour i ON i.inv_id = lc.ic_inv_id
             ${whereClause}
@@ -96,17 +96,17 @@ exports.getJobCardSummary = async (req, res) => {
             total_paid_service: parseFloat(totalsResult.total_paid_service || 0),
             total_free_service: parseFloat(totalsResult.total_free_service || 0),
             total_expense: parseFloat(totalsResult.total_expense || 0),
-            total_discount: parseFloat(totalsResult.total_discount || 0),
-            total_taxable: parseFloat(totalsResult.total_taxable || 0),
-            total_sgst: parseFloat(totalsResult.total_sgst || 0),
-            total_cgst: parseFloat(totalsResult.total_cgst || 0),
-            total_kfc: parseFloat(totalsResult.total_kfc || 0),
-            grand_total: parseFloat(totalsResult.grand_total || 0),
+            total_discount: parseFloat(detailed.total_discount || 0),
+            total_taxable: parseFloat(detailed.total_taxable || 0),
+            total_sgst: parseFloat(detailed.total_sgst || 0),
+            total_cgst: parseFloat(detailed.total_cgst || 0),
+            total_kfc: parseFloat(detailed.total_kfc || 0),
+            grand_total: parseFloat(detailed.grand_total || 0),
             labour_taxable: parseFloat(detailed.labour_taxable || 0),
             parts_taxable: parseFloat(detailed.parts_taxable || 0),
             labour_amount: parseFloat(detailed.labour_taxable || 0) + parseFloat(detailed.labour_gst || 0),
             parts_amount: parseFloat(detailed.parts_taxable || 0) + parseFloat(detailed.parts_gst || 0),
-            total_gst: parseFloat(totalsResult.total_sgst || 0) + parseFloat(totalsResult.total_cgst || 0)
+            total_gst: parseFloat(detailed.total_sgst || 0) + parseFloat(detailed.total_cgst || 0)
         };
 
         res.json({ data: rows, total: totalCount, totals, page: parseInt(page), pageSize: parseInt(pageSize) });
@@ -161,16 +161,40 @@ exports.getJobCardStatement = async (req, res) => {
             }
         }
 
+        let totalsParams = [...params];
+        let itemConditions = '';
+        
+        if (labour_codes && labour_codes.length > 0) {
+            itemConditions += ' AND lc.lc_lab_code IN (?)';
+            totalsParams.push(labour_codes);
+        }
+        
+        if (service_type && service_type !== 'ALL') {
+            if (service_type === 'Paid Service') {
+                itemConditions += " AND (lc.lc_type = 'Paid Service' OR lc.lc_type = 'Cash')";
+            } else if (service_type === 'Free Service') {
+                itemConditions += " AND (lc.lc_type = 'Free Service' OR lc.lc_type = 'Free')";
+            } else if (service_type === 'Expense') {
+                itemConditions += " AND (lc.lc_type = 'Expense' OR lc.lc_type = 'expense')";
+            } else {
+                itemConditions += " AND lc.lc_type = ?";
+                totalsParams.push(service_type);
+            }
+        }
+
         // SQL Queries
         const totalsQuery = `
             SELECT 
-                COUNT(*) as total_count,
-                COALESCE(SUM(CAST(NULLIF(i.inv_taxtotal, '') AS DECIMAL(12,2))), 0) as total_taxable,
-                COALESCE(SUM(CAST(NULLIF(i.inv_disc_total, '') AS DECIMAL(12,2))), 0) as total_discount,
-                COALESCE(SUM(CAST(NULLIF(i.inv_cesstotal, '') AS DECIMAL(12,2))), 0) as total_kfc,
-                COALESCE(SUM(CAST(NULLIF(i.inv_total, '') AS DECIMAL(12,2))), 0) as grand_total
+                COUNT(DISTINCT i.inv_id) as total_count,
+                COUNT(lc.ic_inv_id) as total_labour_codes,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_tax_amunt, '') AS DECIMAL(12,2))), 0) as total_taxable,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_disc, '') AS DECIMAL(12,2))), 0) as total_discount,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_cess, '') AS DECIMAL(12,2))), 0) as total_kfc,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_amount, '') AS DECIMAL(12,2))), 0) as grand_total
             FROM tbl_invoice_labour i
+            LEFT JOIN tbl_invoice_labour_cost lc ON i.inv_id = lc.ic_inv_id
             ${whereClause}
+            ${itemConditions}
         `;
 
         const mainQuery = `
@@ -188,16 +212,9 @@ exports.getJobCardStatement = async (req, res) => {
         // Execute queries in parallel
         const [
             [totalsRows],
-            [labourCountResult],
             [rows]
         ] = await Promise.all([
-            pool.query(totalsQuery, params),
-            pool.query(`
-                SELECT COUNT(*) as total_labour_codes 
-                FROM tbl_invoice_labour_cost lc
-                JOIN tbl_invoice_labour i ON i.inv_id = lc.ic_inv_id
-                ${whereClause}
-            `, params),
+            pool.query(totalsQuery, totalsParams),
             pool.query(mainQuery, [...params, parseInt(pageSize), parseInt(offset)])
         ]);
 
@@ -209,7 +226,7 @@ exports.getJobCardStatement = async (req, res) => {
             total_discount: parseFloat(totalsResult.total_discount || 0),
             total_kfc: parseFloat(totalsResult.total_kfc || 0),
             grand_total: parseFloat(totalsResult.grand_total || 0),
-            total_labour_codes: labourCountResult[0].total_labour_codes || 0
+            total_labour_codes: totalsResult.total_labour_codes || 0
         };
 
         let flattenedRows = [];

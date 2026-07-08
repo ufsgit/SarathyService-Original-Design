@@ -145,7 +145,7 @@ exports.create = async (req, res) => {
         const [result] = await pool.query(
             `INSERT INTO customer_details (c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [c_name, c_address, c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no, gstin_no, c_sales_date, c_email]
+            [c_name, c_address || '', c_reg_no, c_chassis_no, c_engine_no, model_name, c_contact_no || '', gstin_no || '', c_sales_date || null, c_email || '']
         );
         res.status(201).json({ message: 'Customer created successfully', id: result.insertId });
     } catch (error) {

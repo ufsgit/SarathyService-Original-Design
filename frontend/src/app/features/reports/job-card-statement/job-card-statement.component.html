@@ -153,7 +153,6 @@
             <th><input type="text" class="th-input" value="Customer GSTN" readonly></th>
             <th><input type="text" class="th-input" value="Discount" readonly></th>
             <th><input type="text" class="th-input" value="Taxable Amount" readonly></th>
-            <th><input type="text" class="th-input" value="KFC(1)" readonly></th>
             <th><input type="text" class="th-input" value="Invoice Type" readonly></th>
             <th><input type="text" class="th-input" value="Invoice Amount" readonly></th>
           </tr>
@@ -192,12 +191,11 @@
             <td>{{r.inv_cus_gstin}}</td>
             <td>{{r.inv_disc_total || '0'}}</td>
             <td>{{r.inv_taxtotal}}</td>
-            <td>{{r.inv_cesstotal}}</td>
             <td>{{r.inv_type}}</td>
             <td>{{r.inv_total}}</td>
           </tr>
           <tr *ngIf="results().length === 0 && !loading()">
-            <td colspan="27" class="no-data">No data available in table</td>
+            <td colspan="26" class="no-data">No data available in table</td>
           </tr>
         </tbody>
       </table>
@@ -244,10 +242,6 @@
       <div class="total-field">
         <label>Total Discount</label>
         <input type="text" readonly [value]="(totals().total_discount || 0) | number:'1.2-2'">
-      </div>
-      <div class="total-field">
-        <label>Total KFC Amount</label>
-        <input type="text" readonly [value]="(totals().total_kfc || 0) | number:'1.2-2'">
       </div>
       <!-- Row 2 — Total Invoice Amount in column 4 (right) -->
       <div class="total-field total-field--col4">

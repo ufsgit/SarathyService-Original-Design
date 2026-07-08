@@ -166,7 +166,7 @@ export class JobCardSummaryComponent implements OnInit {
       'Register No', 'Chassis Number', 'Engine Number', 'KM Reading',
       'Insurance Surveyor', 'Paid Service Amount', 'Free Service Amount',
       'Expense Service Amount', 'Customer GSTN', 'Discount', 'Taxable Amount',
-      'SGST/UTGST(9)', 'CGST(9)', 'KFC(1)', 'Invoice Type', 'Invoice Amount'
+      'SGST/UTGST(9)', 'CGST(9)', 'Invoice Type', 'Invoice Amount'
     ];
 
     const rows = data.map(r => [
@@ -196,7 +196,6 @@ export class JobCardSummaryComponent implements OnInit {
       r.inv_taxtotal || '0',
       r.inv_sgstotal || '0',
       r.inv_gsttotal || '0',
-      r.inv_cesstotal || '0',
       r.inv_type || '',
       r.inv_total || '0'
     ]);
@@ -234,7 +233,7 @@ export class JobCardSummaryComponent implements OnInit {
       'Register No', 'Chassis Number', 'Engine Number', 'KM Reading',
       'Insurance Surveyor', 'Paid Service Amount', 'Free Service Amount',
       'Expense Service Amount', 'Customer GSTN', 'Discount', 'Taxable Amount',
-      'SGST/UTGST(9)', 'CGST(9)', 'KFC(1)', 'Invoice Type', 'Invoice Amount'
+      'SGST/UTGST(9)', 'CGST(9)', 'Invoice Type', 'Invoice Amount'
     ];
 
     const rows = data.map(r => [
@@ -264,7 +263,6 @@ export class JobCardSummaryComponent implements OnInit {
       r.inv_taxtotal || '0',
       r.inv_sgstotal || '0',
       r.inv_gsttotal || '0',
-      r.inv_cesstotal || '0',
       r.inv_type || '',
       r.inv_total || '0'
     ]);

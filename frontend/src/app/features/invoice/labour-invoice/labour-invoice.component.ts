@@ -346,7 +346,7 @@ export class LabourInvoiceComponent implements OnInit {
 
     // As per reference screenshot, Total Payable Amount is the sum including taxes
     this.form.inv_total = +grandTotal.toFixed(2);
-    this.form.inv_final_amount = Math.round(grandTotal);
+    this.form.inv_final_amount = +grandTotal.toFixed(2);
   }
 
   onRegBlur() {

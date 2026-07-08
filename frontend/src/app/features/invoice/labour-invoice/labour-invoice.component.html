@@ -72,7 +72,7 @@
         <div class="grid-col">
           <div class="control-group">
             <label>Registration No: <span class="text-danger">*</span></label>
-            <input type="text" name="rno" [(ngModel)]="form.in_registr" (blur)="onRegBlur()" required />
+            <input type="text" name="rno" [(ngModel)]="form.in_registr" (ngModelChange)="form.in_registr = $event.toUpperCase()" style="text-transform: uppercase;" (blur)="onRegBlur()" required />
           </div>
           <div class="control-group">
             <label>Model Name: <span class="text-danger">*</span></label>

@@ -167,7 +167,7 @@ export class JobCardStatementComponent implements OnInit {
       'Invoice no', 'Invoice Customer', 'Mobile Number', 'Invoice Date',
       'Register No', 'Chassis Number', 'Engine Number', 'KM Reading',
       'Paid Service Amount', 'Free Service Amount', 'Expense Service Amount',
-      'Customer GSTN', 'Discount', 'Taxable Amount', 'KFC(1)',
+      'Customer GSTN', 'Discount', 'Taxable Amount',
       'Invoice Type', 'Invoice Amount'
     ];
 
@@ -196,7 +196,6 @@ export class JobCardStatementComponent implements OnInit {
       r.inv_cus_gstin || '',
       r.inv_disc_total || '0',
       r.inv_taxtotal || '0',
-      r.inv_cesstotal || '0',
       r.inv_type || '',
       r.inv_total || '0'
     ]);
@@ -232,7 +231,7 @@ export class JobCardStatementComponent implements OnInit {
       'Invoice no', 'Invoice Customer', 'Mobile Number', 'Invoice Date',
       'Register No', 'Chassis Number', 'Engine Number', 'KM Reading',
       'Paid Service Amount', 'Free Service Amount', 'Expense Service Amount',
-      'Customer GSTN', 'Discount', 'Taxable Amount', 'KFC(1)',
+      'Customer GSTN', 'Discount', 'Taxable Amount',
       'Invoice Type', 'Invoice Amount'
     ];
 
@@ -261,7 +260,6 @@ export class JobCardStatementComponent implements OnInit {
       r.inv_cus_gstin || '',
       r.inv_disc_total || '0',
       r.inv_taxtotal || '0',
-      r.inv_cesstotal || '0',
       r.inv_type || '',
       r.inv_total || '0'
     ]);
