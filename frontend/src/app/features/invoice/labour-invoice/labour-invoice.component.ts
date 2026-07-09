@@ -76,7 +76,6 @@ export class LabourInvoiceComponent implements OnInit {
     } else {
       this.form.inv_inv_date = new Date().toISOString().split('T')[0];
       this.form.inv_jcard_date = new Date().toISOString().split('T')[0];
-      this.form.inv_sale_date = new Date().toISOString().split('T')[0];
       this.form.inv_repair_typ = 'Paid service';
       if (this.auth.currentUser?.branchId) {
         this.form.inv_branch = this.auth.currentUser.branchId;
@@ -361,6 +360,12 @@ export class LabourInvoiceComponent implements OnInit {
           this.form.inv_modl = c.model_name;
           this.form.inv_chassis = c.c_chassis_no;
           this.form.inv_engine = c.c_engine_no;
+          if (c.c_sales_date) {
+            const d = new Date(c.c_sales_date);
+            if (!isNaN(d.getTime())) {
+              this.form.inv_sale_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            }
+          }
         },
         error: () => {
           this.pendingRegNo = this.form.in_registr;
@@ -379,6 +384,12 @@ export class LabourInvoiceComponent implements OnInit {
     this.form.inv_modl = c.model_name;
     this.form.inv_chassis = c.c_chassis_no;
     this.form.inv_engine = c.c_engine_no;
+    if (c.c_sales_date) {
+      const d = new Date(c.c_sales_date);
+      if (!isNaN(d.getTime())) {
+        this.form.inv_sale_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+    }
     this.showAddCustomerModal = false;
   }
 

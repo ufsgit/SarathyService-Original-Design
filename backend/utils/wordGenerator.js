@@ -47,61 +47,77 @@ async function generateInvoiceWord(inv, items) {
         logoImage = fs.readFileSync(logoPath);
     }
 
+    let addr = ["Sarathy Bajaj", "Pallimukku", "Kollam-10,", "Kerala [State Code: 32]"];
+    if (inv.branch_address) {
+        addr = inv.branch_address.split(',').map(s => s.trim()).filter(s => s);
+        while (addr.length < 4) addr.push(""); // pad for alignment
+    }
+
+    const headerParagraphs = [
+        new Paragraph({
+            children: [
+                new TextRun({ text: "Branch Address :", bold: true, size: 20 }),
+            ],
+        }),
+        new Paragraph({
+            children: [
+                new TextRun({ text: (inv.branch_name || "SARATHY MAIN WORKSHOP").toUpperCase(), bold: true, size: 20 }),
+            ],
+        }),
+        new Paragraph({
+            children: [
+                new TextRun({ text: addr[0] }),
+                new TextRun({ text: "\t\t\t\t\t\t", bold: false }),
+                ...(logoImage ? [
+                    new ImageRun({
+                        data: logoImage,
+                        transformation: { width: 140, height: 50 },
+                    }),
+                ] : []),
+            ],
+        }),
+        new Paragraph({
+            children: [
+                new TextRun({ text: addr[1] }),
+                new TextRun({ text: "\t\t\t", bold: false }),
+                new TextRun({ text: "\t\t" + "SARATHY MOTORS", bold: true, size: 28, color: "003087" }),
+            ],
+        }),
+        new Paragraph({
+            children: [
+                new TextRun({ text: addr[2] }),
+                new TextRun({ text: "\t\t\t" }),
+                new TextRun({ text: "\t\t" + "Sarathy Bajaj Pallimukku Kollam Kerala State", size: 16 }),
+            ],
+        }),
+        new Paragraph({
+            children: [
+                new TextRun({ text: addr[3] }),
+                new TextRun({ text: "\t\t\t\t" }),
+                new TextRun({ text: "Code: 32 Kerala [State Code: 32]", size: 16 }),
+            ],
+        })
+    ];
+
+    // If there are more than 4 lines of address, add them before the phone number
+    for (let i = 4; i < addr.length; i++) {
+        headerParagraphs.push(new Paragraph({
+            children: [new TextRun({ text: addr[i] })]
+        }));
+    }
+
     const doc = new Document({
         sections: [{
             properties: {
                 page: {
-                    margin: {
-                        top: 720,
-                        right: 1440,
-                        bottom: 720,
-                        left: 1440,
-                    },
+                    margin: { top: 720, right: 1440, bottom: 720, left: 1440 },
                 },
             },
             children: [
-                // Header (No Table)
+                ...headerParagraphs,
                 new Paragraph({
                     children: [
-                        new TextRun({ text: "Branch Address :", bold: true, size: 20 }),
-                    ],
-                }),
-                new Paragraph({
-                    children: [
-                        new TextRun({ text: (inv.branch_name || "SARATHY MAIN WORKSHOP").toUpperCase(), bold: true, size: 20 }),
-                    ],
-                }),
-                new Paragraph({
-                    children: [
-                        new TextRun({ text: "Sarathy Bajaj" }),
-                        new TextRun({ text: "\t\t\t\t\t\t", bold: false }), // Spacer to move branding right
-                        ...(logoImage ? [
-                            new ImageRun({
-                                data: logoImage,
-                                transformation: { width: 140, height: 50 },
-                            }),
-                        ] : []),
-                    ],
-                }),
-                new Paragraph({
-                    children: [
-                        new TextRun({ text: "Pallimukku" }),
-                        new TextRun({ text: "\t\t\t", bold: false }),
-                        new TextRun({ text: "\t\t" + "SARATHY MOTORS", bold: true, size: 28, color: "003087" }),
-                    ],
-                }),
-                new Paragraph({
-                    children: [
-                        new TextRun({ text: "Kollam-10," }),
-                        new TextRun({ text: "\t\t\t" }),
-                        new TextRun({ text: "\t\t" + "Sarathy Bajaj Pallimukku Kollam Kerala State", size: 16 }),
-                    ],
-                }),
-                new Paragraph({
-                    children: [
-                        new TextRun({ text: "Kerala [State Code:32]" }),
-                        new TextRun({ text: "\t\t\t" }),
-                        new TextRun({ text: "\t\t" + "Code:32 Kerala [State Code:32]", size: 16 }),
+                        new TextRun({ text: "Ph: " + (inv.branch_ph || "+91-9562909065") }),
                     ],
                 }),
                 new Paragraph({

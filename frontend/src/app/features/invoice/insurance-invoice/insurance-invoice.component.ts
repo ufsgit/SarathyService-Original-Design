@@ -417,6 +417,12 @@ export class InsuranceInvoiceComponent implements OnInit {
           this.form.inv_modl = c.model_name; 
           this.form.inv_chassis = c.c_chassis_no; 
           this.form.inv_engine = c.c_engine_no; 
+          if (c.c_sales_date) {
+            const d = new Date(c.c_sales_date);
+            if (!isNaN(d.getTime())) {
+              this.form.inv_sale_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            }
+          }
         },
         error: () => {
           this.pendingRegNo = this.form.in_registr;
@@ -434,6 +440,12 @@ export class InsuranceInvoiceComponent implements OnInit {
     this.form.inv_modl = c.model_name;
     this.form.inv_chassis = c.c_chassis_no;
     this.form.inv_engine = c.c_engine_no;
+    if (c.c_sales_date) {
+      const d = new Date(c.c_sales_date);
+      if (!isNaN(d.getTime())) {
+        this.form.inv_sale_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+    }
     this.showAddCustomerModal = false;
   }
 

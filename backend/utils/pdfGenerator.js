@@ -75,10 +75,18 @@ function generateInvoicePDF(inv, items) {
             y += 9;
             doc.fontSize(8).text(inv.branch_name || 'SARATHY MOTORS KTR', L, y);
             y += 9;
-            doc.font(FONT_REG).fontSize(7).text('Sarathy Bajaj', L, y); y += 8;
-            doc.font(FONT_REG).fontSize(7).text('Pulamon Jun.', L, y); y += 8;
-            doc.font(FONT_REG).fontSize(7).text('Kottarakkara', L, y); y += 8;
-            doc.font(FONT_REG).fontSize(7).text('Kerala [State Code : 32]', L, y); y += 8;
+            if (inv.branch_address) {
+                const addressLines = inv.branch_address.split(',').map(s => s.trim()).filter(s => s);
+                addressLines.forEach(line => {
+                    doc.font(FONT_REG).fontSize(7).text(line, L, y); 
+                    y += 8;
+                });
+            } else {
+                doc.font(FONT_REG).fontSize(7).text('Sarathy Bajaj', L, y); y += 8;
+                doc.font(FONT_REG).fontSize(7).text('Pulamon Jun.', L, y); y += 8;
+                doc.font(FONT_REG).fontSize(7).text('Kottarakkara', L, y); y += 8;
+                doc.font(FONT_REG).fontSize(7).text('Kerala [State Code : 32]', L, y); y += 8;
+            }
             doc.font(FONT_REG).fontSize(7).text('PH : ' + (inv.branch_ph || '+91-9847986565'), L, y);
 
             // Logo Section
