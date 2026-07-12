@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -28,7 +29,7 @@ export class PreviousBillsComponent implements OnInit {
 
   private searchSubject = new Subject<string>();
 
-  constructor(public api: ApiService, private notify: NotificationService, private route: ActivatedRoute, private router: Router) { 
+  constructor(public api: ApiService, private notify: NotificationService, private route: ActivatedRoute, private router: Router, private auth: AuthService) { 
     this.searchSubject.pipe(
       debounceTime(500),
       distinctUntilChanged()
@@ -45,9 +46,21 @@ export class PreviousBillsComponent implements OnInit {
 
   fetchBills(): void {
     this.isLoading.set(true);
+
+    const params: any = {
+      page: this.currentPage,
+      pageSize: this.pageSize,
+      search: this.searchText
+    };
+
+    const user = this.auth.currentUser;
+    if (user && user.role === 'staff' && user.branchId) {
+      params['branchId'] = user.branchId;
+    }
+
     const obs = this.type === 'labour' 
-      ? this.api.getPreviousLabourBills(this.currentPage, this.pageSize, this.searchText)
-      : this.api.getPreviousInsuranceBills(this.currentPage, this.pageSize, this.searchText);
+      ? this.api.getPreviousLabourBills(params)
+      : this.api.getPreviousInsuranceBills(params);
 
     obs.subscribe({
       next: (res: any) => {

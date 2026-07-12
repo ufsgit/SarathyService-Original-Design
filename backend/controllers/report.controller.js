@@ -14,17 +14,17 @@ exports.getJobCardSummary = async (req, res) => {
             whereClause += ' AND i.inv_branch IN (?)';
             params.push(branch);
         }
-        if (mechanic && mechanic.length > 0) { 
-            whereClause += ' AND (i.inv_mechna IN (?) OR i.inv_mechna IN (SELECT e_first_name FROM tbl_employee WHERE emp_id IN (?)))'; 
-            params.push(mechanic, mechanic); 
+        if (mechanic && mechanic.length > 0) {
+            whereClause += ' AND (i.inv_mechna IN (?) OR i.inv_mechna IN (SELECT e_first_name FROM tbl_employee WHERE emp_id IN (?)))';
+            params.push(mechanic, mechanic);
         }
-        if (advisor && advisor.length > 0) { 
-            whereClause += ' AND (i.inv_advisername IN (?) OR i.inv_advisername IN (SELECT e_first_name FROM tbl_employee WHERE emp_id IN (?)))'; 
-            params.push(advisor, advisor); 
+        if (advisor && advisor.length > 0) {
+            whereClause += ' AND (i.inv_advisername IN (?) OR i.inv_advisername IN (SELECT e_first_name FROM tbl_employee WHERE emp_id IN (?)))';
+            params.push(advisor, advisor);
         }
         if (repair_types && repair_types.length > 0) { whereClause += ' AND i.inv_repair_typ IN (?)'; params.push(repair_types); }
         if (insurance_companies && insurance_companies.length > 0) { whereClause += ' AND i.insurance_id IN (?)'; params.push(insurance_companies); }
-        
+
         if (service_type && service_type !== 'ALL') {
             if (service_type === 'Paid Service') {
                 whereClause += " AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND (lc.lc_type = 'Paid Service' OR lc.lc_type = 'Cash'))";
@@ -121,7 +121,7 @@ exports.getJobCardSummary = async (req, res) => {
 exports.getJobCardStatement = async (req, res) => {
     try {
         const { from_date, to_date, branch, service_type, mechanic, advisor,
-                repair_types, insurance_companies, labour_codes, page = 1, pageSize = 10 } = req.body;
+            repair_types, insurance_companies, labour_codes, page = 1, pageSize = 10 } = req.body;
         const offset = (page - 1) * pageSize;
 
         // Base Filter
@@ -132,13 +132,13 @@ exports.getJobCardStatement = async (req, res) => {
             whereClause += ' AND i.inv_branch IN (?)';
             params.push(branch);
         }
-        if (mechanic && mechanic.length > 0) { 
-            whereClause += ' AND (i.inv_mechna IN (?) OR i.inv_mechna IN (SELECT e_first_name FROM tbl_employee WHERE emp_id IN (?)))'; 
-            params.push(mechanic, mechanic); 
+        if (mechanic && mechanic.length > 0) {
+            whereClause += ' AND (i.inv_mechna IN (?) OR i.inv_mechna IN (SELECT e_first_name FROM tbl_employee WHERE emp_id IN (?)))';
+            params.push(mechanic, mechanic);
         }
-        if (advisor && advisor.length > 0) { 
-            whereClause += ' AND (i.inv_advisername IN (?) OR i.inv_advisername IN (SELECT e_first_name FROM tbl_employee WHERE emp_id IN (?)))'; 
-            params.push(advisor, advisor); 
+        if (advisor && advisor.length > 0) {
+            whereClause += ' AND (i.inv_advisername IN (?) OR i.inv_advisername IN (SELECT e_first_name FROM tbl_employee WHERE emp_id IN (?)))';
+            params.push(advisor, advisor);
         }
         if (repair_types && repair_types.length > 0) { whereClause += ' AND i.inv_repair_typ IN (?)'; params.push(repair_types); }
         if (insurance_companies && insurance_companies.length > 0) { whereClause += ' AND i.insurance_id IN (?)'; params.push(insurance_companies); }
@@ -163,12 +163,12 @@ exports.getJobCardStatement = async (req, res) => {
 
         let totalsParams = [...params];
         let itemConditions = '';
-        
+
         if (labour_codes && labour_codes.length > 0) {
             itemConditions += ' AND lc.lc_lab_code IN (?)';
             totalsParams.push(labour_codes);
         }
-        
+
         if (service_type && service_type !== 'ALL') {
             if (service_type === 'Paid Service') {
                 itemConditions += " AND (lc.lc_type = 'Paid Service' OR lc.lc_type = 'Cash')";
@@ -237,11 +237,11 @@ exports.getJobCardStatement = async (req, res) => {
                 'SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id IN (?)',
                 [invIds]
             );
-            
+
             // Map items back to invoices and flatten
             for (let inv of rows) {
                 let items = allItems.filter(it => it.ic_inv_id === inv.inv_id);
-                
+
                 // If the user specifically filtered by labour codes, only show those items
                 if (labour_codes && labour_codes.length > 0) {
                     items = items.filter(it => labour_codes.includes(it.lc_lab_code));
@@ -296,10 +296,16 @@ exports.getPreviousLabourBills = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
         const search = req.query.search || '';
+        const branchId = req.query.branchId;
         const offset = (page - 1) * pageSize;
 
         let whereClause = "WHERE ((status = 0) OR (status = 1 AND (insurance_id IS NULL OR insurance_id = 0) AND inv_repair_typ != 'Accidental Repair')) AND ready_status = 0";
         const params = [];
+
+        if (branchId) {
+            whereClause += " AND inv_branch = ?";
+            params.push(branchId);
+        }
 
         if (search) {
             whereClause += " AND (in_registr LIKE ? OR inv_cus LIKE ? OR inv_pho LIKE ? OR inv_no LIKE ? OR inv_job_card_no LIKE ?)";
@@ -323,7 +329,7 @@ exports.getPreviousLabourBills = async (req, res) => {
 
         res.json({ data: rows, total, page, pageSize });
     } catch (err) {
-        console.log("getPreviousLabourBills error:",err);
+        console.log("getPreviousLabourBills error:", err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
@@ -334,10 +340,16 @@ exports.getPreviousInsuranceBills = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
         const search = req.query.search || '';
+        const branchId = req.query.branchId;
         const offset = (page - 1) * pageSize;
 
         let whereClause = "WHERE (status = 1 AND (insurance_id > 0 OR inv_repair_typ = 'Accidental Repair')) AND ready_status = 0";
         const params = [];
+
+        if (branchId) {
+            whereClause += " AND inv_branch = ?";
+            params.push(branchId);
+        }
 
         if (search) {
             whereClause += " AND (in_registr LIKE ? OR inv_cus LIKE ? OR inv_pho LIKE ? OR inv_no LIKE ? OR inv_job_card_no LIKE ?)";
@@ -361,7 +373,7 @@ exports.getPreviousInsuranceBills = async (req, res) => {
 
         res.json({ data: rows, total, page, pageSize });
     } catch (err) {
-        console.log("getPreviousInsuranceBills error:",err);
+        console.log("getPreviousInsuranceBills error:", err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
@@ -373,7 +385,7 @@ exports.getFilterOptions = async (req, res) => {
         const [mechanics] = await pool.query("SELECT emp_id, e_first_name, e_code FROM tbl_employee WHERE (e_designation LIKE '%mechanic%' OR e_designation = 'Mechanic') AND status = 'Active'");
         const [advisors] = await pool.query("SELECT emp_id, e_first_name, e_code FROM tbl_employee WHERE (e_designation LIKE '%advisor%' OR e_designation = 'Service Advisor') AND status = 'Active'");
         const [insuranceCompanies] = await pool.query("SELECT com_id, icompany_name FROM tbl_insurance_company");
-        
+
         const repairTypes = [
             "First free service", "Second free service", "Third free service",
             "Paid service", "AMC service", "Accidental Repair",
@@ -382,7 +394,7 @@ exports.getFilterOptions = async (req, res) => {
 
         res.json({ branches, mechanics, advisors, insuranceCompanies, repairTypes });
     } catch (err) {
-        console.log("getFilterOptions error:",err);
+        console.log("getFilterOptions error:", err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };

@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-list-customer',
@@ -24,6 +26,9 @@ export class ListCustomerComponent implements OnInit {
 
   pageSize = 10;
   currentPage = 1;
+  totalItems = 0;
+
+  private searchSubject = new Subject<string>();
 
   cols = [
     'Serial No', 'Customer Name', 'Customer Address', 'Registration Number',
@@ -32,7 +37,15 @@ export class ListCustomerComponent implements OnInit {
   ];
 
   basePath = '';
-  constructor(private api: ApiService, private notify: NotificationService, public auth: AuthService) {}
+  constructor(private api: ApiService, private notify: NotificationService, public auth: AuthService) {
+    this.searchSubject.pipe(
+      debounceTime(500),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      this.currentPage = 1;
+      this.load();
+    });
+  }
 
   ngOnInit() {
     this.basePath = this.auth.isAdmin ? '/admin' : '/staff';
@@ -41,10 +54,10 @@ export class ListCustomerComponent implements OnInit {
 
   load() {
     this.loading = true;
-    this.api.getCustomers().subscribe({
-      next: (d: any[]) => {
-        this.customers = d;
-        this.filtered = d;
+    this.api.getPaginatedCustomers(this.currentPage, this.pageSize, this.searchTerm).subscribe({
+      next: (res: any) => {
+        this.customers = res.data || [];
+        this.totalItems = res.total || 0;
         this.loading = false;
       },
       error: () => {
@@ -55,23 +68,15 @@ export class ListCustomerComponent implements OnInit {
   }
 
   applyFilter() {
-    const s = this.searchTerm.toLowerCase();
-    this.filtered = this.customers.filter(c =>
-      (c.c_name || '').toLowerCase().includes(s) ||
-      (c.c_reg_no || '').toLowerCase().includes(s) ||
-      (c.c_contact_no || '').includes(s) ||
-      (c.model_name || '').toLowerCase().includes(s)
-    );
-    this.currentPage = 1; // Reset to first page on filter
+    this.searchSubject.next(this.searchTerm);
   }
 
   get paginatedCustomers() {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filtered.slice(start, start + this.pageSize);
+    return this.customers;
   }
 
   get totalPages() {
-    return Math.ceil(this.filtered.length / this.pageSize);
+    return Math.ceil(this.totalItems / this.pageSize) || 0;
   }
 
   get pages() {
@@ -102,11 +107,13 @@ export class ListCustomerComponent implements OnInit {
   onPageChange(page: number) {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
+      this.load();
     }
   }
 
   onPageSizeChange() {
     this.currentPage = 1;
+    this.load();
   }
 
   del(id: number) {

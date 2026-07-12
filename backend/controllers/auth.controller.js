@@ -81,7 +81,7 @@ exports.changeAdminPassword = async (req, res) => {
         if (rows.length === 0) return res.status(404).json({ message: 'Admin not found' });
 
         const isMatch = await bcrypt.compare(oldPassword, rows[0].pwd);
-        if (!isMatch) return res.status(401).json({ message: 'Old password incorrect' });
+        if (!isMatch) return res.status(400).json({ message: 'Old password incorrect' });
 
         const hashed = await bcrypt.hash(newPassword, 10);
         await pool.query('UPDATE tbl_login SET pwd = ? WHERE login_id = ?', [hashed, req.user.id]);
@@ -100,7 +100,7 @@ exports.changeStaffPassword = async (req, res) => {
         if (rows.length === 0) return res.status(404).json({ message: 'Staff not found' });
 
         const isMatch = await bcrypt.compare(oldPassword, rows[0].pwd);
-        if (!isMatch) return res.status(401).json({ message: 'Old password incorrect' });
+        if (!isMatch) return res.status(400).json({ message: 'Old password incorrect' });
 
         const hashed = await bcrypt.hash(newPassword, 10);
         await pool.query('UPDATE tbl_login SET pwd = ? WHERE login_id = ?', [hashed, req.user.id]);

@@ -49,7 +49,7 @@
             <th>GSTIN No</th>
             <th>Date of Sale</th>
             <th>Email Id</th>
-            <th>Action</th>
+            <th *ngIf="auth.isAdmin">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -65,7 +65,7 @@
             <td>{{ customer.gstin_no }}</td>
             <td>{{ customer.c_sales_date | date:'dd-MM-yyyy' }}</td>
             <td>{{ customer.c_email }}</td>
-            <td>
+            <td *ngIf="auth.isAdmin">
               <div class="action-dropdown">
                 <button class="btn-action">Action▾</button>
                 <div class="action-content">
@@ -75,16 +75,16 @@
               </div>
             </td>
           </tr>
-          <tr *ngIf="filtered.length === 0 && !loading">
-            <td colspan="12" class="no-data">No customers found</td>
+          <tr *ngIf="customers.length === 0 && !loading">
+            <td [attr.colspan]="auth.isAdmin ? 12 : 11" class="no-data">No customers found</td>
           </tr>
         </tbody>
       </table>
     </div>
     
-    <div class="pagination-footer" *ngIf="filtered.length > 0">
+    <div class="pagination-footer" *ngIf="totalItems > 0">
       <div class="pagination-info">
-        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filtered.length) }} of {{ filtered.length }} entries
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalItems) }} of {{ totalItems }} entries
       </div>
       <div class="pagination-controls">
         <button class="btn-page-text" [disabled]="currentPage === 1" (click)="onPageChange(currentPage - 1)">Previous</button>

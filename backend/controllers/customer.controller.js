@@ -219,3 +219,28 @@ exports.search = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+// Get paginated customers with search
+exports.getPaginated = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+        const search = req.query.search || '';
+        const offset = (page - 1) * pageSize;
+
+        let where = '';
+        const params = [];
+        if (search) {
+            where = ' WHERE c_name LIKE ? OR c_reg_no LIKE ? OR c_contact_no LIKE ? OR model_name LIKE ?';
+            const s = `%${search}%`;
+            params.push(s, s, s, s);
+        }
+
+        const [[{ total }]] = await pool.query(`SELECT COUNT(*) as total FROM customer_details${where}`, params);
+        const [rows] = await pool.query(`SELECT * FROM customer_details${where} ORDER BY c_id DESC LIMIT ? OFFSET ?`, [...params, pageSize, offset]);
+
+        res.json({ data: rows, total, page, pageSize });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};

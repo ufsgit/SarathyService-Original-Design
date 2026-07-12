@@ -56,6 +56,9 @@ export class ApiService {
   }
 
   // --- Customers ---
+  getPaginatedCustomers(page: number = 1, pageSize: number = 10, search: string = ''): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/customers/paginated`, { params: { page: page.toString(), pageSize: pageSize.toString(), search } });
+  }
   getCustomers(branchId?: number): Observable<any[]> {
     const params: any = {};
     if (branchId) params['branchId'] = branchId.toString();
@@ -126,11 +129,11 @@ export class ApiService {
   // --- Reports ---
   getJobCardSummary(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/reports/job-card-summary`, data); }
   getJobCardStatement(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/reports/job-card-statement`, data); }
-  getPreviousLabourBills(page: number = 1, pageSize: number = 10, search: string = ''): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/reports/previous-bills/labour`, { params: { page: page.toString(), pageSize: pageSize.toString(), search } });
+  getPreviousLabourBills(params?: any): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/reports/previous-bills/labour`, { params });
   }
-  getPreviousInsuranceBills(page: number = 1, pageSize: number = 10, search: string = ''): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/reports/previous-bills/insurance`, { params: { page: page.toString(), pageSize: pageSize.toString(), search } });
+  getPreviousInsuranceBills(params?: any): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/reports/previous-bills/insurance`, { params });
   }
   getFilterOptions(): Observable<any> { return this.http.get<any>(`${this.baseUrl}/reports/filter-options`); }
 
