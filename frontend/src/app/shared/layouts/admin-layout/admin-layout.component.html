@@ -16,7 +16,7 @@
 <nav class="main-nav">
   <ul class="nav-list">
     <li class="nav-item">
-      <a routerLink="/admin/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" [target]="openInNewTab ? '_blank' : '_self'">Home</a>
+      <a routerLink="/admin/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" [target]="openInNewTab ? '_self' : '_self'">Home</a>
     </li>
     
     <li class="nav-item has-dropdown" *ngIf="auth.isAdmin">
