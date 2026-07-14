@@ -218,12 +218,7 @@ export class LabourInvoiceComponent implements OnInit {
   loadNextNo() {
     if (this.form.inv_branch) {
       this.api.getNextInvoiceNo(this.form.inv_branch).subscribe(res => {
-        const today = new Date();
-        const ymd = today.getFullYear().toString()
-          + String(today.getMonth() + 1).padStart(2, '0')
-          + String(today.getDate()).padStart(2, '0');
-        // Match user's example: CI20260312 + 357322
-        this.display_inv_no = `CI${ymd}${res.nextNo}`;
+        this.display_inv_no = res.nextNo;
       });
     }
   }

@@ -1,6 +1,45 @@
 const pool = require('../config/db');
 const { generateInvoiceWord } = require('../utils/wordGenerator');
 
+/**
+ * Generates the next invoice number dynamically for any brand.
+ */
+function generateNextInvoiceNumber(lastInvoiceNumber, newInvoiceDate, defaultPrefix, defaultBranch) {
+    const dateObj = new Date(newInvoiceDate);
+    const year = dateObj.getFullYear();
+    const month = dateObj.getMonth() + 1; // 0-indexed
+
+    let targetFY = year;
+    if (month < 4) {
+        targetFY = year - 1; // Jan, Feb, Mar belong to the previous year's FY
+    }
+    const targetFYStr = targetFY.toString();
+
+    let prefix = defaultPrefix;
+    let branchCode = defaultBranch;
+    let lastSequenceStr = '00000';
+    let lastFY = '';
+
+    if (lastInvoiceNumber && lastInvoiceNumber.length >= 16) {
+        prefix = lastInvoiceNumber.substring(0, 2);
+        lastFY = lastInvoiceNumber.substring(2, 6);
+        branchCode = lastInvoiceNumber.substring(6, 11);
+        lastSequenceStr = lastInvoiceNumber.substring(11);
+    }
+
+    let newSequenceNum;
+    if (targetFYStr === lastFY) {
+        // Same financial year, just increment
+        newSequenceNum = parseInt(lastSequenceStr, 10) + 1;
+    } else {
+        // New financial year, reset to 1
+        newSequenceNum = 1;
+    }
+
+    // Pad with leading zeros to ensure it's at least 5 digits long
+    const newSequenceStr = newSequenceNum.toString().padStart(5, '0');
+    return `${prefix}${targetFYStr}${branchCode}${newSequenceStr}`;
+}
 // Create labour invoice
 exports.createLabourInvoice = async (req, res) => {
     const conn = await pool.getConnection();
@@ -518,11 +557,19 @@ exports.getReadyInsuranceBills = async (req, res) => {
     }
 };
 
-// Get next sequential counter (MAX(inv_id) + 1)
+// Get next sequential invoice number string preview
 exports.getNextInvoiceNo = async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT MAX(inv_id) as maxId FROM tbl_invoice_labour');
-        res.json({ nextNo: (rows[0].maxId || 0) + 1 });
+        const [lastInvRows] = await pool.query('SELECT inv_no FROM tbl_invoice_labour ORDER BY inv_id DESC LIMIT 1');
+        let lastInvoiceNumber = '';
+        if (lastInvRows.length > 0) {
+            lastInvoiceNumber = lastInvRows[0].inv_no;
+        }
+
+        const today = new Date();
+        const generatedPreview = generateNextInvoiceNumber(lastInvoiceNumber, today, 'CI', '11207');
+
+        res.json({ nextNo: generatedPreview });
     } catch (err) {
         res.status(500).json({ message: 'Server error', error: err.message });
     }
@@ -594,23 +641,25 @@ exports.generatePDF = async (req, res) => {
 
         // 3. If it's from Ready table, finalize it
         if (isFromReadyTable) {
-            // 1. Insert into tbl_invoice_labour with empty inv_no first
+            // 1. Get the latest invoice number with an exclusive row lock
+            const [lastInvRows] = await conn.query('SELECT inv_no FROM tbl_invoice_labour ORDER BY inv_id DESC LIMIT 1 FOR UPDATE');
+            let lastInvoiceNumber = '';
+            if (lastInvRows.length > 0) {
+                lastInvoiceNumber = lastInvRows[0].inv_no;
+            }
+
+            // 2. Generate New Invoice Number dynamically
+            const today = new Date();
+            // Default to 'CI' and '11207' as a fallback if the table is completely empty
+            const generatedInvNo = generateNextInvoiceNumber(lastInvoiceNumber, today, 'CI', '11207');
+
+            // 3. Insert into tbl_invoice_labour with the generated invoice number
             const finalizedStatus = (invoice.status === 0) ? 0 : 1;
             const [insertResult] = await conn.query(
                 'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status, insurance_id, insurance_serveyor, inv_cesstotal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                ['', invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0, invoice.insurance_id || null, invoice.insurance_serveyor || '', invoice.inv_cesstotal || 0]
+                [generatedInvNo, invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0, invoice.insurance_id || null, invoice.insurance_serveyor || '', invoice.inv_cesstotal || 0]
             );
             const newInvId = insertResult.insertId;
-
-            // 2. Generate New Invoice Number using the actual insertId
-            const today = new Date();
-            const ymd = today.getFullYear().toString()
-              + String(today.getMonth() + 1).padStart(2, '0')
-              + String(today.getDate()).padStart(2, '0');
-            const generatedInvNo = `CI${ymd}${newInvId}`;
-            
-            // 3. Update the record with the generated inv_no
-            await conn.query('UPDATE tbl_invoice_labour SET inv_no = ? WHERE inv_id = ?', [generatedInvNo, newInvId]);
             invoice.inv_no = generatedInvNo; 
 
             // Insert items into tbl_invoice_labour_cost
@@ -727,23 +776,25 @@ exports.generateWord = async (req, res) => {
 
         // 3. If it's from Ready table, finalize it
         if (isFromReadyTable) {
-            // 1. Insert into tbl_invoice_labour with empty inv_no first
+            // 1. Get the latest invoice number with an exclusive row lock
+            const [lastInvRows] = await conn.query('SELECT inv_no FROM tbl_invoice_labour ORDER BY inv_id DESC LIMIT 1 FOR UPDATE');
+            let lastInvoiceNumber = '';
+            if (lastInvRows.length > 0) {
+                lastInvoiceNumber = lastInvRows[0].inv_no;
+            }
+
+            // 2. Generate New Invoice Number dynamically
+            const today = new Date();
+            // Default to 'CI' and '11207' as a fallback if the table is completely empty
+            const generatedInvNo = generateNextInvoiceNumber(lastInvoiceNumber, today, 'CI', '11207');
+
+            // 3. Insert into tbl_invoice_labour with the generated invoice number
             const finalizedStatus = (invoice.status === 0) ? 0 : 1;
             const [insertResult] = await conn.query(
                 'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status, insurance_id, insurance_serveyor, inv_cesstotal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                ['', invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0, invoice.insurance_id || null, invoice.insurance_serveyor || '', invoice.inv_cesstotal || 0]
+                [generatedInvNo, invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0, invoice.insurance_id || null, invoice.insurance_serveyor || '', invoice.inv_cesstotal || 0]
             );
             const newInvId = insertResult.insertId;
-
-            // 2. Generate New Invoice Number using the actual insertId
-            const today = new Date();
-            const ymd = today.getFullYear().toString()
-              + String(today.getMonth() + 1).padStart(2, '0')
-              + String(today.getDate()).padStart(2, '0');
-            const generatedInvNo = `CI${ymd}${newInvId}`;
-            
-            // 3. Update the record with the generated inv_no
-            await conn.query('UPDATE tbl_invoice_labour SET inv_no = ? WHERE inv_id = ?', [generatedInvNo, newInvId]);
             invoice.inv_no = generatedInvNo; 
 
             for (const item of items) {
