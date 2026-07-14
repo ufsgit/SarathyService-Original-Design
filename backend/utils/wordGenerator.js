@@ -80,21 +80,21 @@ async function generateInvoiceWord(inv, items) {
             children: [
                 new TextRun({ text: addr[1] }),
                 new TextRun({ text: "\t\t\t", bold: false }),
-                new TextRun({ text: "\t\t" + "SARATHY MOTORS", bold: true, size: 28, color: "003087" }),
+                new TextRun({ text: "\t\t" + (inv.active_brand_title || "SARATHY MOTORS"), bold: true, size: 28, color: "003087" }),
             ],
         }),
         new Paragraph({
             children: [
                 new TextRun({ text: addr[2] }),
                 new TextRun({ text: "\t\t\t" }),
-                new TextRun({ text: "\t\t" + "Sarathy Bajaj Pallimukku Kollam Kerala State", size: 16 }),
+                new TextRun({ text: "\t\t" + (inv.active_brand_address || "Sarathy Bajaj Pallimukku Kollam Kerala State"), size: 16 }),
             ],
         }),
         new Paragraph({
             children: [
                 new TextRun({ text: addr[3] }),
                 new TextRun({ text: "\t\t\t\t" }),
-                new TextRun({ text: "Code: 32 Kerala [State Code: 32]", size: 16 }),
+                new TextRun({ text: (inv.active_brand_state || "Code: 32 Kerala [State Code: 32]"), size: 16 }),
             ],
         })
     ];
@@ -122,7 +122,7 @@ async function generateInvoiceWord(inv, items) {
                 }),
                 new Paragraph({
                     children: [
-                        new TextRun({ text: "GSTIN : " + (inv.branch_gst || "32ABQFS6676M1ZA"), bold: true }),
+                        new TextRun({ text: "GSTIN : " + (inv.active_brand_gstin || inv.branch_gst || ""), bold: true }),
                     ],
                 }),
 
@@ -255,7 +255,7 @@ async function generateInvoiceWord(inv, items) {
                                 new TableCell({
                                     width: { size: 50, type: WidthType.PERCENTAGE },
                                     children: [
-                                        new Paragraph({ children: [new TextRun({ text: (inv.branch_name || "SARATHY MOTORS").toUpperCase(), bold: true, size: 18 })], alignment: AlignmentType.CENTER }),
+                                        new Paragraph({ children: [new TextRun({ text: (inv.active_brand_title || inv.branch_name || "SARATHY MOTORS").toUpperCase(), bold: true, size: 18 })], alignment: AlignmentType.CENTER }),
                                         new Paragraph({ children: [new TextRun({ text: "", size: 12 })] }), // Spacer
                                         new Paragraph({ children: [new TextRun({ text: "___________________________", size: 18 })], alignment: AlignmentType.CENTER }),
                                         new Paragraph({ children: [new TextRun({ text: "Sign of Customer Or His Agent", size: 18 })], alignment: AlignmentType.CENTER }),

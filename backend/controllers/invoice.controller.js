@@ -521,7 +521,7 @@ exports.getReadyInsuranceBills = async (req, res) => {
 // Get next sequential counter (MAX(inv_id) + 1)
 exports.getNextInvoiceNo = async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT MAX(inv_id) as maxId FROM tbl_readyfor_labour');
+        const [rows] = await pool.query('SELECT MAX(inv_id) as maxId FROM tbl_invoice_labour');
         res.json({ nextNo: (rows[0].maxId || 0) + 1 });
     } catch (err) {
         res.status(500).json({ message: 'Server error', error: err.message });
@@ -653,6 +653,7 @@ exports.generatePDF = async (req, res) => {
             invoice.active_brand_title = brandConfig[0].brand_title;
             invoice.active_brand_address = brandConfig[0].brand_address;
             invoice.active_brand_state = brandConfig[0].brand_state_code;
+            invoice.active_brand_gstin = brandConfig[0].brand_gstin;
         } else {
             invoice.active_brand = '';
         }
@@ -772,6 +773,18 @@ exports.generateWord = async (req, res) => {
                 const [finalizedItems] = await conn.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [newInvId]);
                 items = finalizedItems;
             }
+        }
+
+        // Fetch active brand
+        const [brandConfig] = await conn.query('SELECT * FROM tbl_brand_config WHERE brand_status = 1 LIMIT 1');
+        if (brandConfig.length > 0) {
+            invoice.active_brand = brandConfig[0].brand_name;
+            invoice.active_brand_title = brandConfig[0].brand_title;
+            invoice.active_brand_address = brandConfig[0].brand_address;
+            invoice.active_brand_state = brandConfig[0].brand_state_code;
+            invoice.active_brand_gstin = brandConfig[0].brand_gstin;
+        } else {
+            invoice.active_brand = '';
         }
 
         const wordBuffer = await generateInvoiceWord(invoice, items);

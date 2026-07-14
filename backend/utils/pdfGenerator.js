@@ -116,7 +116,8 @@ function generateInvoicePDF(inv, items) {
 
             doc.fillColor('#000').font(FONT_REG).fontSize(7.5).text('GSTIN:', L, y);
             y += 9;
-            doc.font(FONT_BOLD).fontSize(10).text(inv.branch_gst || '32ABQFS6676M1ZA', L, y);
+            let gstin = inv.active_brand_gstin || inv.branch_gst || '';
+            doc.font(FONT_BOLD).fontSize(10).text(gstin, L, y);
 
             const invType = (inv.status == 1 || inv.inv_type === 'insurance') ? 'Insurance' : 'Labour';
             doc.font(FONT_BOLD).fontSize(15).text('TAX INVOICE (' + invType + ')', L, y - 5, { width: W, align: 'center' });

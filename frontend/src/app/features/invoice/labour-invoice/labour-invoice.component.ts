@@ -23,6 +23,7 @@ export class LabourInvoiceComponent implements OnInit {
   showAddCustomerModal = false;
   pendingRegNo = '';
   isLoading = false;
+  display_inv_no = '';
 
   // Searchable Select Options
   branchOptions: string[] = [];
@@ -79,7 +80,7 @@ export class LabourInvoiceComponent implements OnInit {
       this.form.inv_repair_typ = 'Paid service';
       if (this.auth.currentUser?.branchId) {
         this.form.inv_branch = this.auth.currentUser.branchId;
-        // this.loadNextNo(); // Removed auto-generation
+        this.loadNextNo();
         this.loadNextJobCardNo();
         this.loadBranchEmployees(this.auth.currentUser.branchId);
       }
@@ -92,8 +93,12 @@ export class LabourInvoiceComponent implements OnInit {
       next: (res: any) => {
         this.isLoading = false;
         this.form = res.invoice;
-        // Normalize types and fields for legacy records
-        if (this.form.inv_branch) this.form.inv_branch = +this.form.inv_branch;
+        if (this.form.inv_branch) {
+          this.form.inv_branch = +this.form.inv_branch;
+          if (!this.isFromPreviousBills) {
+            this.loadNextNo();
+          }
+        }
         this.form.inv_engine = this.form.inv_engine || this.form.in_engine;
         this.form.inv_cus_gstin = this.form.inv_cus_gstin || this.form.inv_gstin;
 
@@ -218,7 +223,7 @@ export class LabourInvoiceComponent implements OnInit {
           + String(today.getMonth() + 1).padStart(2, '0')
           + String(today.getDate()).padStart(2, '0');
         // Match user's example: CI20260312 + 357322
-        this.form.inv_no = `CI${ymd}${res.nextNo}`;
+        this.display_inv_no = `CI${ymd}${res.nextNo}`;
       });
     }
   }
@@ -252,7 +257,7 @@ export class LabourInvoiceComponent implements OnInit {
   }
 
   onBranchChange() {
-    // this.loadNextNo(); // Removed auto-generation
+    this.loadNextNo();
     if (this.form.inv_branch) {
       this.loadBranchEmployees(this.form.inv_branch);
     } else {
@@ -431,6 +436,9 @@ export class LabourInvoiceComponent implements OnInit {
       return;
     }
     this.form.items = this.items;
+    if (!this.isFromPreviousBills) {
+      this.form.inv_no = ''; // Ensure we do not save the display invoice number
+    }
     this.isLoading = true;
 
     if (this.editMode && this.invoiceId) {
@@ -505,6 +513,9 @@ export class LabourInvoiceComponent implements OnInit {
   saveBeforeAction(callback: Function) {
     if (!this.validateForm(true)) return;
     this.form.items = this.items;
+    if (!this.isFromPreviousBills) {
+      this.form.inv_no = ''; // Ensure we do not save the display invoice number
+    }
     this.isLoading = true;
 
     if (this.editMode && this.invoiceId) {

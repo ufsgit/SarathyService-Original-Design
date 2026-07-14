@@ -8,21 +8,28 @@ END$$
 DELIMITER ;
 
 DELIMITER $$
+DROP PROCEDURE IF EXISTS `sp1_create_brand_config`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp1_create_brand_config`()
 BEGIN
 
-    CREATE TABLE IF NOT EXISTS tbl_brand_config (
+    -- 1. Completely delete the existing table to start fresh
+    DROP TABLE IF EXISTS tbl_brand_config;
+
+    -- 2. Recreate the table with brand_gstin included and brand_status at the end
+    CREATE TABLE tbl_brand_config (
         brand_id         INT          NOT NULL AUTO_INCREMENT,
         brand_name       VARCHAR(100) NOT NULL,
         brand_title      VARCHAR(200) NULL,
         brand_address    VARCHAR(500) NULL,
         brand_state_code VARCHAR(100) NULL,
         brand_color      VARCHAR(10)  NOT NULL DEFAULT '#3e424b' COMMENT 'Hex color code e.g. #f36f21',
+        brand_gstin      VARCHAR(15)  NULL,
         brand_status     TINYINT(1)   NOT NULL DEFAULT 1 COMMENT '1=Active, 0=Inactive',
         PRIMARY KEY (brand_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-    INSERT IGNORE INTO tbl_brand_config
+    -- 3. Insert KTM Configuration
+    INSERT INTO tbl_brand_config
     (
         brand_id,
         brand_name,
@@ -30,6 +37,7 @@ BEGIN
         brand_address,
         brand_state_code,
         brand_color,
+        brand_gstin,
         brand_status
     )
     VALUES
@@ -40,10 +48,12 @@ BEGIN
         'Sarathy Bajaj Pallimukku Kollam Kerala State',
         'Code: 32 Kerala [State Code : 32]',
         '#ff5a00',
+        '32ABECS8915L1Z0',
         1
     );
 
-    INSERT IGNORE INTO tbl_brand_config
+    -- 4. Insert BAJAJ Configuration
+    INSERT INTO tbl_brand_config
     (
         brand_id,
         brand_name,
@@ -51,6 +61,7 @@ BEGIN
         brand_address,
         brand_state_code,
         brand_color,
+        brand_gstin,
         brand_status
     )
     VALUES
@@ -61,13 +72,16 @@ BEGIN
         'Sarathy Bajaj Pallimukku Kollam Kerala State',
         'Code: 32 Kerala [State Code : 32]',
         '#0b5ed7',
+        '32ABQFS6676M1ZA',
         0
     );
 
+    -- 5. Return the newly created config
     SELECT * FROM tbl_brand_config;
 
 END$$
 DELIMITER ;
+
 
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp2_create_logo_master`()
