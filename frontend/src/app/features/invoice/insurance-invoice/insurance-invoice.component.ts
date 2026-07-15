@@ -463,8 +463,10 @@ export class InsuranceInvoiceComponent implements OnInit {
     if (!this.form.inv_pho) missing.push('Mobile Number');
     if (!this.form.inv_insurance_company) missing.push('Insurance Company');
     if (!this.form.inv_type) missing.push('Invoice Type');
-    if (!this.form.inv_advisername) missing.push('Advisor Name');
-    if (!this.form.inv_mechna) missing.push('Mechanic Name');
+    if (isBilling) {
+      if (!this.form.inv_advisername) missing.push('Advisor Name');
+      if (!this.form.inv_mechna) missing.push('Mechanic Name');
+    }
     if (!this.form.inv_repair_typ) missing.push('Repair Type');
     if (!this.form.inv_surveyor) missing.push('Surveyor Name');
 

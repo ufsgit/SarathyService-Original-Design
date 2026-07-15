@@ -153,8 +153,8 @@ function generateInvoicePDF(inv, items) {
                     ['Customer Name.', inv.inv_cus],
                     ['Insurance GSTIN No:', (inv.inv_insurance_gstin || '')],
                     ['Mobile No.', inv.inv_pho],
-                    ['Delivery Address', (inv.branch_address || '')],
-                    ['Insurance Address:', (inv.inv_insurance_address || '')],
+                    ['Delivery Address', (inv.branch_address || '').replace(/\r/g, '')],
+                    ['Insurance Address:', (inv.inv_insurance_address || '').replace(/\r/g, '')],
                     ['Advisor Name.', inv.inv_advisername],
                     ['Mechanic Name.', inv.inv_mechna],
                     ['Surveyor Name.', (inv.insurance_serveyor || '')]
@@ -165,7 +165,7 @@ function generateInvoicePDF(inv, items) {
                     ['Invoice Date', fmtDate(inv.inv_inv_date)],
                     ['Billed TO', inv.inv_cus],
                     ['', 'Mobile : ' + (inv.inv_pho || ''), false],
-                    ['', inv.inv_cus_addres || 'BOUGAIN VILLA', false],
+                    ['', (inv.inv_cus_addres || 'BOUGAIN VILLA').replace(/\r/g, ''), false],
                     ['', (inv.active_brand_state || 'Kerala[State Code :32]') + ' INDIA', false],
                     ['Customer GSTIN', (inv.inv_cus_gstin || '')],
                     ['Mobile No.', inv.inv_pho],
@@ -385,7 +385,7 @@ function generateInvoicePDF(inv, items) {
             doc.font(FONT_BOLD).fontSize(8.5).text(inv.active_brand_title || 'SARATHY MOTORS', R - sWd, fY - 12, { width: sWd, align: 'center' });
             doc.font(FONT_REG).fontSize(8).text('Authorised Signatory', R - sWd, fY + 4, { width: sWd, align: 'center' });
 
-            y = fY + 25;
+            y = fY + 50; // Increased gap before the Gate Pass
 
             // --- GATE PASS SECTION ---
             // The Gate Pass now takes about 130 points of vertical space after our compressions.
@@ -438,14 +438,17 @@ function generateInvoicePDF(inv, items) {
 
             // Ensure footers apply to all pages
             function formatAmPm(date) {
-                let hours = date.getHours();
-                let minutes = date.getMinutes();
+                // Convert to IST (UTC + 5:30)
+                const istTime = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
+                
+                let hours = istTime.getUTCHours();
+                let minutes = istTime.getUTCMinutes();
                 const ampm = hours >= 12 ? 'pm' : 'am';
                 hours = hours % 12;
                 hours = hours ? hours : 12; 
                 minutes = minutes < 10 ? '0' + minutes : minutes;
                 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-                return monthNames[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear() + ', ' + hours + ':' + minutes + ' ' + ampm;
+                return monthNames[istTime.getUTCMonth()] + ' ' + istTime.getUTCDate() + ', ' + istTime.getUTCFullYear() + ', ' + hours + ':' + minutes + ' ' + ampm;
             }
 
             const range = doc.bufferedPageRange();

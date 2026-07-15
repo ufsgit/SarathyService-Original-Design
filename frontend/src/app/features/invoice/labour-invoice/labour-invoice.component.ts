@@ -406,8 +406,10 @@ export class LabourInvoiceComponent implements OnInit {
     if (!this.form.inv_cus) missing.push('Customer Name');
     if (!this.form.inv_pho) missing.push('Mobile Number');
     if (!this.form.inv_type) missing.push('Invoice Type');
-    if (!this.form.inv_advisername) missing.push('Advisor Name');
-    if (!this.form.inv_mechna) missing.push('Mechanic Name');
+    if (isBilling) {
+      if (!this.form.inv_advisername) missing.push('Advisor Name');
+      if (!this.form.inv_mechna) missing.push('Mechanic Name');
+    }
     if (!this.form.inv_repair_typ) missing.push('Repair Type');
 
     if (missing.length > 0) {
