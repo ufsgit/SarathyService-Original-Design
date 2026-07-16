@@ -385,7 +385,7 @@ function generateInvoicePDF(inv, items) {
             doc.font(FONT_BOLD).fontSize(8.5).text(inv.active_brand_title || 'SARATHY MOTORS', R - sWd, fY - 12, { width: sWd, align: 'center' });
             doc.font(FONT_REG).fontSize(8).text('Authorised Signatory', R - sWd, fY + 4, { width: sWd, align: 'center' });
 
-            y = fY + 50; // Increased gap before the Gate Pass
+            y = fY + 100; // Increased gap before the Gate Pass
 
             // --- GATE PASS SECTION ---
             // The Gate Pass now takes about 130 points of vertical space after our compressions.
