@@ -295,7 +295,7 @@ exports.getPreviousLabourBills = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
-        const search = req.query.search || '';
+        const search = String(req.query.search || '').trim();
         const branchId = req.query.branchId;
         const offset = (page - 1) * pageSize;
 
@@ -339,7 +339,7 @@ exports.getPreviousInsuranceBills = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
-        const search = req.query.search || '';
+        const search = String(req.query.search || '').trim();
         const branchId = req.query.branchId;
         const offset = (page - 1) * pageSize;
 

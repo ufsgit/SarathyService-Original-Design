@@ -134,13 +134,14 @@ function generateInvoicePDF(inv, items) {
             const valW2 = (R - colMid) - labelW2 - 5;
 
             function drawField(lbl, val, x, yy, lW, vW, boldLbl = true) {
+                const safeVal = String(val || '').replace(/\r/g, '');
                 if (boldLbl) doc.font(FONT_BOLD); else doc.font(FONT_REG);
                 doc.fontSize(7.5).text(lbl, x, yy, { width: lW });
                 if (lbl) {
                     doc.font(FONT_REG).text(':', x + lW - 8, yy);
-                    doc.font(FONT_REG).text(val || '', x + lW, yy, { width: vW });
+                    doc.font(FONT_REG).text(safeVal, x + lW, yy, { width: vW });
                 } else {
-                    doc.font(FONT_REG).text(val || '', x + lW, yy, { width: vW });
+                    doc.font(FONT_REG).text(safeVal, x + lW, yy, { width: vW });
                 }
             }
 
@@ -196,7 +197,7 @@ function generateInvoicePDF(inv, items) {
                 const boldLbl = f[2] !== false;
                 doc.fontSize(7.5);
                 const lblH = doc.font(boldLbl ? FONT_BOLD : FONT_REG).heightOfString(String(f[0] || ''), { width: labelW });
-                const valH = doc.font(FONT_REG).heightOfString(String(f[1] || ''), { width: valW1 });
+                const valH = doc.font(FONT_REG).heightOfString(String(f[1] || '').replace(/\r/g, ''), { width: valW1 });
                 let dy = Math.max(lblH, valH);
                 if (dy < 9) dy = 9;
 
@@ -211,7 +212,7 @@ function generateInvoicePDF(inv, items) {
                 } else {
                     doc.fontSize(7.5);
                     const lblH = doc.font(FONT_BOLD).heightOfString(String(f[0] || ''), { width: labelW2 });
-                    const valH = doc.font(FONT_REG).heightOfString(String(f[1] || ''), { width: valW2 });
+                    const valH = doc.font(FONT_REG).heightOfString(String(f[1] || '').replace(/\r/g, ''), { width: valW2 });
                     dy = Math.max(lblH, valH);
                     if (dy < 9) dy = 9;
                     drawField(f[0], f[1], colMid, rY, labelW2, valW2);

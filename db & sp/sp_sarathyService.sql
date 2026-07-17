@@ -46,7 +46,7 @@ BEGIN
         1,
         'KTM',
         'SARATHY BIKES PVT LTD',
-        'SARATHY BIKES PVT LTD Kollam KTM Thattamala P O',
+        'Kollam KTM Thattamala P O',
         'Code: 32 Kerala [State Code : 32]',
         '#ff5a00',
         '32ABECS8915L1Z0',

@@ -3,7 +3,8 @@ const pool = require('../config/db');
 // Search vehicle history by registration number
 exports.search = async (req, res) => {
     try {
-        const { reg_no } = req.body;
+        let reg_no = req.body.reg_no;
+        if (reg_no) reg_no = reg_no.trim();
         if (!reg_no) return res.status(400).json({ message: 'Registration number required' });
 
         const [customers] = await pool.query(
@@ -38,7 +39,7 @@ exports.search = async (req, res) => {
 // Autocomplete endpoint for dynamic registration number suggestions
 exports.searchRegNo = async (req, res) => {
     try {
-        const query = req.query.q || '';
+        const query = String(req.query.q || '').trim();
         if (!query) return res.json([]);
 
         const [rows] = await pool.query(
@@ -58,7 +59,8 @@ exports.searchRegNo = async (req, res) => {
 // Generate vehicle history PDF (Match High-Fidelity Template)
 exports.generatePDF = async (req, res) => {
     try {
-        const reg_no = req.query.reg_no;
+        let reg_no = req.query.reg_no;
+        if (reg_no) reg_no = reg_no.trim();
         if (!reg_no) return res.status(400).json({ message: 'Registration number required' });
 
         const [customers] = await pool.query(
@@ -126,8 +128,8 @@ exports.generatePDF = async (req, res) => {
         const col1 = L, col2 = L + 200;
 
         const drawHeaderRow = (l1, v1, l2, v2) => {
-            const str1 = String(v1 || '-');
-            const str2 = String(v2 || '-');
+            const str1 = String(v1 || '-').replace(/\r/g, '');
+            const str2 = String(v2 || '-').replace(/\r/g, '');
 
             const w1 = 145; // Width before hitting second column start
             const w2 = 205; // Width before hitting right margin
