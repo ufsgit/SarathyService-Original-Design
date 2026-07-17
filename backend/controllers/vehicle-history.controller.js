@@ -84,13 +84,16 @@ exports.generatePDF = async (req, res) => {
             inv.mechanic_name = inv.mechanic_name || inv.inv_mechna;
         }
 
+        const [brandConfig] = await pool.query('SELECT brand_title, brand_dealer_code FROM tbl_brand_config WHERE brand_status = 1 LIMIT 1');
+        const activeBrand = brandConfig.length > 0 ? brandConfig[0] : { brand_title: 'SARATHY MOTORS', brand_dealer_code: '-' };
+
         const PDFDocument = require('pdfkit');
         const doc = new PDFDocument({ size: 'A4', margin: 30 });
         const chunks = [];
         doc.on('data', c => chunks.push(c));
         doc.on('end', () => {
             res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `inline; filename=history_${reg_no}.pdf`);
+            res.setHeader('Content-Disposition', `inline; filename="${reg_no} - vehicle history.pdf"`);
             res.send(Buffer.concat(chunks));
         });
 
@@ -145,7 +148,7 @@ exports.generatePDF = async (req, res) => {
             y += maxH + 4;
         };
 
-        drawHeaderRow('Selling Dealer', 'SARATHY MOTORS', 'Dealer Code', 'SARATHY MOTORS');
+        drawHeaderRow('Selling Dealer', activeBrand.brand_title, 'Dealer Code', activeBrand.brand_dealer_code);
         drawHeaderRow('Customer Name', cus.c_name, 'Address', cus.c_address || 'Kollam');
         drawHeaderRow('Contact No', cus.c_contact_no, 'Model', cus.model_name);
         drawHeaderRow('Chassis No', cus.c_chassis_no, 'Engine No', cus.c_engine_no);
@@ -183,7 +186,7 @@ exports.generatePDF = async (req, res) => {
             y += 14;
 
             // Visit Table Body
-            const vData = [fmtDate(inv.inv_jcard_date), inv.inv_km || '-', inv.inv_repair_typ || 'Paid service', inv.branch_name || 'Sarathy Bajaj', '-'];
+            const vData = [fmtDate(inv.inv_jcard_date), inv.inv_km || '-', inv.inv_repair_typ || 'Paid service', inv.branch_name || 'Sarathy Bajaj', activeBrand.brand_dealer_code];
             doc.font(FONT_REG).fontSize(7);
 
             let vRowH = 18;

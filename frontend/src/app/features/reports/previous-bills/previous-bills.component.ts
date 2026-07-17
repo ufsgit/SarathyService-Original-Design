@@ -116,7 +116,7 @@ export class PreviousBillsComponent implements OnInit {
   openPdf(bill: any): void {
     console.log("openPdf:",bill);
     if (!bill?.inv_id) return;
-    const filename = `Jobcard_${bill.inv_job_card_no}`;
+    const filename = `${bill.inv_job_card_no} - previous bill ${this.type}`;
     const url = this.api.getInvoicePDFUrl(bill.inv_id, filename);
     // Append auth token so the protected PDF endpoint can verify the request
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';

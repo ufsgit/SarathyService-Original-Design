@@ -611,7 +611,7 @@ export class InsuranceInvoiceComponent implements OnInit {
   }
 
   private triggerPrint() {
-    const filename = `Jobcard_${this.form.inv_job_card_no || this.invoiceId}`;
+    const filename = `${this.form.inv_no || this.invoiceId} - invoice`;
     const url = this.api.getInvoicePDFUrl(this.invoiceId!, filename);
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;

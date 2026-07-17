@@ -712,7 +712,7 @@ exports.generatePDF = async (req, res) => {
 
         await conn.commit();
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'inline; filename=invoice_' + req.params.id + '.pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${invoice.inv_no || invoice.inv_id} - invoice.pdf"`);
         res.send(pdfBuffer);
     } catch (err) {
         await conn.rollback();
@@ -842,7 +842,7 @@ exports.generateWord = async (req, res) => {
 
         await conn.commit();
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-        res.setHeader('Content-Disposition', 'attachment; filename=invoice_' + req.params.id + '.docx');
+        res.setHeader('Content-Disposition', `attachment; filename="${invoice.inv_no || invoice.inv_id} - invoice.docx"`);
         res.send(wordBuffer);
     } catch (err) {
         await conn.rollback();

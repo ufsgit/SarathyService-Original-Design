@@ -554,7 +554,7 @@ export class LabourInvoiceComponent implements OnInit {
 
   printInvoice() {
     if (!this.invoiceId) return;
-    const filename = `Jobcard_${this.form.inv_job_card_no || this.invoiceId}`;
+    const filename = `${this.form.inv_no || this.invoiceId} - invoice`;
     let url = this.api.getInvoicePDFUrl(this.invoiceId, filename);
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
