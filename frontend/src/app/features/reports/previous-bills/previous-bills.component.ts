@@ -116,7 +116,8 @@ export class PreviousBillsComponent implements OnInit {
   openPdf(bill: any): void {
     console.log("openPdf:",bill);
     if (!bill?.inv_id) return;
-    const url = this.api.getInvoicePDFUrl(bill.inv_id);
+    const filename = `Jobcard_${bill.inv_job_card_no}`;
+    const url = this.api.getInvoicePDFUrl(bill.inv_id, filename);
     // Append auth token so the protected PDF endpoint can verify the request
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     const cb = Date.now();
@@ -124,4 +125,3 @@ export class PreviousBillsComponent implements OnInit {
     window.open(pdfUrl, '_blank');
   }
 }
-

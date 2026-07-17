@@ -128,18 +128,14 @@ exports.create = async (req, res) => {
             return res.status(400).json({ message: validationError });
         }
 
-        // 2. Chassis No & Registration Number Uniqueness check
+        // 2. Registration Number Uniqueness check
         const [existing] = await pool.query(
-            'SELECT * FROM customer_details WHERE c_reg_no = ? OR c_chassis_no = ?',
-            [c_reg_no, c_chassis_no]
+            'SELECT * FROM customer_details WHERE c_reg_no = ?',
+            [c_reg_no]
         );
 
         if (existing.length > 0) {
-            const match = existing[0];
-            let msg = 'Customer already exists with this ';
-            if (match.c_reg_no === c_reg_no) msg += 'Registration Number';
-            else msg += 'Chassis Number';
-            return res.status(400).json({ message: msg });
+            return res.status(400).json({ message: 'Customer already exists with this Registration Number' });
         }
 
         const [result] = await pool.query(
@@ -165,18 +161,14 @@ exports.update = async (req, res) => {
             return res.status(400).json({ message: 'Customer Name, Registration No, Chassis No, Engine No, and Model Name are required' });
         }
 
-        // 2. Chassis No & Registration Number Uniqueness check (excluding current record)
+        // 2. Registration Number Uniqueness check (excluding current record)
         const [existing] = await pool.query(
-            'SELECT * FROM customer_details WHERE (c_reg_no = ? OR c_chassis_no = ?) AND c_id != ?',
-            [c_reg_no, c_chassis_no, id]
+            'SELECT * FROM customer_details WHERE c_reg_no = ? AND c_id != ?',
+            [c_reg_no, id]
         );
 
         if (existing.length > 0) {
-            const match = existing[0];
-            let msg = 'Another customer already exists with this ';
-            if (match.c_reg_no === c_reg_no) msg += 'Registration Number';
-            else msg += 'Chassis Number';
-            return res.status(409).json({ message: msg });
+            return res.status(409).json({ message: 'Another customer already exists with this Registration Number' });
         }
 
         const validationError = validateCustomerInput({ c_contact_no, gstin_no });
@@ -209,11 +201,22 @@ exports.remove = async (req, res) => {
 // Search customers (autocomplete)
 exports.search = async (req, res) => {
     try {
-        const { q } = req.query;
-        const [rows] = await pool.query(
-            'SELECT c_id, c_name, c_reg_no, c_contact_no, model_name FROM customer_details WHERE c_name LIKE ? OR c_reg_no LIKE ? LIMIT 20',
-            [`%${q}%`, `%${q}%`]
-        );
+        const search = (req.query.q || '').trim();
+        let query = 'SELECT c_id, c_name, c_reg_no, c_contact_no, model_name FROM customer_details';
+        const params = [];
+        
+        if (search) {
+            const terms = search.split(/\s+/);
+            const conditions = terms.map(() => '(c_name LIKE ? OR c_reg_no LIKE ? OR c_chassis_no LIKE ?)');
+            query += ' WHERE ' + conditions.join(' AND ');
+            terms.forEach(t => {
+                const s = `%${t}%`;
+                params.push(s, s, s);
+            });
+        }
+        query += ' LIMIT 20';
+        
+        const [rows] = await pool.query(query, params);
         res.json(rows);
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
@@ -225,15 +228,19 @@ exports.getPaginated = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
-        const search = req.query.search || '';
+        const search = (req.query.search || '').trim();
         const offset = (page - 1) * pageSize;
 
         let where = '';
         const params = [];
         if (search) {
-            where = ' WHERE c_name LIKE ? OR c_reg_no LIKE ? OR c_contact_no LIKE ? OR model_name LIKE ?';
-            const s = `%${search}%`;
-            params.push(s, s, s, s);
+            const terms = search.split(/\s+/);
+            const conditions = terms.map(() => '(c_name LIKE ? OR c_reg_no LIKE ? OR c_contact_no LIKE ? OR model_name LIKE ? OR c_chassis_no LIKE ?)');
+            where = ' WHERE ' + conditions.join(' AND ');
+            terms.forEach(t => {
+                const s = `%${t}%`;
+                params.push(s, s, s, s, s);
+            });
         }
 
         const [[{ total }]] = await pool.query(`SELECT COUNT(*) as total FROM customer_details${where}`, params);

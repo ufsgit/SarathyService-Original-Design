@@ -140,6 +140,7 @@
     overflow-x: auto;
     border: 1px solid #ddd;
     border-radius: 4px;
+    min-height: 250px;
 }
 
 .legacy-table {
@@ -216,8 +217,22 @@
     background-color: #f1f1f1;
 }
 
-.action-dropdown:hover .action-content {
+.action-content.show {
     display: block;
+}
+
+/* Make dropdown open upwards for the last 3 rows so it doesn't get cut off at the bottom */
+.legacy-table tbody tr:nth-last-child(-n+3) .action-content {
+    top: auto;
+    bottom: 100%;
+    margin-bottom: 2px;
+}
+
+/* Ensure the very first row ALWAYS opens downwards, even if it's the only row */
+.legacy-table tbody tr:first-child .action-content {
+    top: 100%;
+    bottom: auto;
+    margin-bottom: 0;
 }
 
 .no-data {
@@ -300,4 +315,11 @@
 .btn-page-text:not(:disabled):hover {
     color: #333;
     text-decoration: underline;
+}
+
+/* ====== Custom Column Widths ====== */
+.address-col {
+    max-width: 250px;
+    white-space: normal !important;
+    word-wrap: break-word;
 }

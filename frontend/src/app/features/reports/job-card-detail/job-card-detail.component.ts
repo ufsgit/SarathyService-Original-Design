@@ -232,7 +232,8 @@ export class JobCardDetailComponent implements OnInit {
 
   exportPdf(): void {
     if (!this.id) return;
-    const url = this.api.getInvoicePDFUrl(this.id);
+    const filename = `Jobcard_${this.data?.invoice?.inv_job_card_no || this.id}`;
+    const url = this.api.getInvoicePDFUrl(this.id, filename);
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
     window.open(pdfUrl, '_blank');

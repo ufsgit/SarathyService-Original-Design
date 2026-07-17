@@ -110,7 +110,9 @@ export class ApiService {
   getReadyInsuranceBills(params?: any): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/ready/insurance`, { params }); }
   getNextInvoiceNo(branchId: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/next-no`, { params: { branchId: branchId.toString() } }); }
   getLabourNames(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/invoices/labour-names`); }
-  getInvoicePDFUrl(id: number): string { return `${this.baseUrl}/invoices/${id}/pdf`; }
+  getInvoicePDFUrl(id: number, filename?: string): string { 
+    return filename ? `${this.baseUrl}/invoices/${id}/pdf/${filename}.pdf` : `${this.baseUrl}/invoices/${id}/pdf`; 
+  }
   getInvoiceWordUrl(id: number): string { return `${this.baseUrl}/invoices/${id}/word`; }
 
   // --- Job Cards ---

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -47,7 +48,7 @@ export class LabourInvoiceComponent implements OnInit {
     return option ? option.split(' - ')[0] : option;
   };
 
-  constructor(private api: ApiService, private notify: NotificationService, private router: Router, public auth: AuthService, private route: ActivatedRoute) { }
+  constructor(private api: ApiService, private notify: NotificationService, private router: Router, public auth: AuthService, private route: ActivatedRoute, private titleService: Title) { }
 
   ngOnInit() {
     this.api.getBranches().subscribe(d => {
@@ -93,6 +94,15 @@ export class LabourInvoiceComponent implements OnInit {
       next: (res: any) => {
         this.isLoading = false;
         this.form = res.invoice;
+        
+        if (this.isFromReadyBills) {
+          this.titleService.setTitle(`Ready bill labour (${this.form.inv_job_card_no || ''})`);
+        } else if (this.isFromPreviousBills) {
+          this.titleService.setTitle(`Previous bill labour (${this.form.inv_job_card_no || ''})`);
+        } else {
+          this.titleService.setTitle(`Labour Invoice (${this.form.inv_job_card_no || ''})`);
+        }
+
         if (this.form.inv_branch) {
           this.form.inv_branch = +this.form.inv_branch;
           if (!this.isFromPreviousBills) {
@@ -231,9 +241,7 @@ export class LabourInvoiceComponent implements OnInit {
   }
 
   onJcardDateChange() {
-    if (!this.editMode) {
-      this.loadNextJobCardNo();
-    }
+    // Intentionally left blank: disabled auto-fill job card no on date change per user request
   }
 
   loadBranchEmployees(branchId: number) {
@@ -544,11 +552,17 @@ export class LabourInvoiceComponent implements OnInit {
     this.saveBeforeAction(() => this.triggerPrint());
   }
 
-  private triggerPrint() {
-    const url = this.api.getInvoicePDFUrl(this.invoiceId!);
+  printInvoice() {
+    if (!this.invoiceId) return;
+    const filename = `Jobcard_${this.form.inv_job_card_no || this.invoiceId}`;
+    let url = this.api.getInvoicePDFUrl(this.invoiceId, filename);
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
     window.open(pdfUrl, '_blank');
+  }
+
+  private triggerPrint() {
+    this.printInvoice();
 
     this.notify.success('Invoice finalized and print triggered.');
     setTimeout(() => {

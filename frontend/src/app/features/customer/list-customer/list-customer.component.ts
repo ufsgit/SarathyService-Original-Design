@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -21,6 +21,7 @@ export class ListCustomerComponent implements OnInit {
   searchTerm = '';
   loading = false;
   Math = Math;
+  openDropdownId: number | null = null;
   
   // Pagination
 
@@ -126,6 +127,16 @@ export class ListCustomerComponent implements OnInit {
         error: (e: any) => this.notify.error(e.error?.message || 'Error deleting customer')
       });
     }
+  }
+
+  toggleDropdown(event: Event, id: number) {
+    event.stopPropagation();
+    this.openDropdownId = this.openDropdownId === id ? null : id;
+  }
+
+  @HostListener('document:click', ['$event'])
+  closeDropdown(event: Event) {
+    this.openDropdownId = null;
   }
 }
 

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -50,7 +51,7 @@ export class InsuranceInvoiceComponent implements OnInit {
     return option ? option.split(' - ')[0] : option;
   };
 
-  constructor(private api: ApiService, private notify: NotificationService, private router: Router, public auth: AuthService, private route: ActivatedRoute) {}
+  constructor(private api: ApiService, private notify: NotificationService, private router: Router, public auth: AuthService, private route: ActivatedRoute, private titleService: Title) {}
 
   ngOnInit() {
     this.api.getBranches().subscribe(d => {
@@ -107,6 +108,15 @@ export class InsuranceInvoiceComponent implements OnInit {
       next: (res: any) => {
         this.isLoading = false;
         this.form = res.invoice;
+
+        if (this.isFromReadyBills) {
+          this.titleService.setTitle(`Ready bill insurance (${this.form.inv_job_card_no || ''})`);
+        } else if (this.isFromPreviousBills) {
+          this.titleService.setTitle(`Previous bill insurance (${this.form.inv_job_card_no || ''})`);
+        } else {
+          this.titleService.setTitle(`Insurance Invoice (${this.form.inv_job_card_no || ''})`);
+        }
+
         if (this.form.inv_branch) {
           this.form.inv_branch = +this.form.inv_branch;
           if (!this.isFromPreviousBills) {
@@ -273,9 +283,7 @@ export class InsuranceInvoiceComponent implements OnInit {
   }
 
   onJcardDateChange() {
-    if (!this.editMode) {
-      this.loadNextJobCardNo();
-    }
+    // Intentionally left blank: disabled auto-fill job card no on date change per user request
   }
 
   loadBranchEmployees(branchId: number) {
@@ -603,7 +611,8 @@ export class InsuranceInvoiceComponent implements OnInit {
   }
 
   private triggerPrint() {
-    const url = this.api.getInvoicePDFUrl(this.invoiceId!);
+    const filename = `Jobcard_${this.form.inv_job_card_no || this.invoiceId}`;
+    const url = this.api.getInvoicePDFUrl(this.invoiceId!, filename);
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
     window.open(pdfUrl, '_blank');
