@@ -56,7 +56,7 @@
           </div>
           <div class="control-group">
             <label>Jobcard Date : <span class="text-danger">*</span></label>
-            <input type="date" name="jname" [(ngModel)]="form.inv_jcard_date" (ngModelChange)="onJcardDateChange()" [disabled]="isFromPreviousBills" required />
+            <input type="date" name="jname" [(ngModel)]="form.inv_jcard_date" (ngModelChange)="onJcardDateChange()" required />
           </div>
           <div class="control-group">
             <label>Invoice No : <span class="text-danger">*</span></label>
@@ -64,7 +64,7 @@
           </div>
           <div class="control-group">
             <label>Invoice Date : <span class="text-danger">*</span></label>
-            <input type="date" name="invoicedate" [(ngModel)]="form.inv_inv_date" [disabled]="true" />
+            <input type="date" name="invoicedate" [(ngModel)]="form.inv_inv_date" />
           </div>
         </div>
 

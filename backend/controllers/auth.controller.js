@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 // Unified Login
 exports.login = async (req, res) => {
-    console.log(req.body);
+    console.log('login req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
         const { username, password } = req.body;
 
@@ -75,6 +75,7 @@ exports.login = async (req, res) => {
 
 // Change admin password
 exports.changeAdminPassword = async (req, res) => {
+    console.log('changeAdminPassword req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
         const { oldPassword, newPassword } = req.body;
         const [rows] = await pool.query('SELECT * FROM tbl_login WHERE login_id = ? AND role = 1', [req.user.id]);
@@ -94,6 +95,7 @@ exports.changeAdminPassword = async (req, res) => {
 
 // Change staff password
 exports.changeStaffPassword = async (req, res) => {
+    console.log('changeStaffPassword req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
         const { oldPassword, newPassword } = req.body;
         const [rows] = await pool.query('SELECT * FROM tbl_login WHERE login_id = ? AND role = 2', [req.user.id]);
@@ -113,6 +115,7 @@ exports.changeStaffPassword = async (req, res) => {
 
 // Get profile
 exports.getProfile = async (req, res) => {
+    console.log('getProfile req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
         if (req.user.role === 'admin') {
             const [rows] = await pool.query('SELECT admin_id, admin_username, admin_name, admin_email FROM admin_info WHERE admin_id = ?', [req.user.id]);

@@ -42,6 +42,7 @@ function generateNextInvoiceNumber(lastInvoiceNumber, newInvoiceDate, defaultPre
 }
 // Create labour invoice
 exports.createLabourInvoice = async (req, res) => {
+    console.log('createLabourInvoice req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();
@@ -118,6 +119,7 @@ exports.createLabourInvoice = async (req, res) => {
 
 // Create insurance invoice
 exports.createInsuranceInvoice = async (req, res) => {
+    console.log('createInsuranceInvoice req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();
@@ -195,6 +197,7 @@ exports.createInsuranceInvoice = async (req, res) => {
 
 // Get labour invoices
 exports.getLabourInvoices = async (req, res) => {
+    console.log('getLabourInvoices req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
         let query = "SELECT i.*, b.branch_name FROM tbl_invoice_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE (i.status = 0 OR (i.status = 1 AND (i.insurance_id IS NULL OR i.insurance_id = 0) AND i.inv_repair_typ != 'Accidental Repair'))";
         const params = [];
@@ -209,6 +212,7 @@ exports.getLabourInvoices = async (req, res) => {
 
 // Get insurance invoices
 exports.getInsuranceInvoices = async (req, res) => {
+    console.log('getInsuranceInvoices req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
         let query = "SELECT i.*, b.branch_name FROM tbl_invoice_labour i LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch WHERE (i.status = 1 AND (i.insurance_id > 0 OR i.inv_repair_typ = 'Accidental Repair'))";
         const params = [];
@@ -224,6 +228,7 @@ exports.getInsuranceInvoices = async (req, res) => {
 // Get single invoice with items
 // Get single invoice details
 exports.getInvoice = async (req, res) => {
+    console.log('getInvoice req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
         // Try finding in tbl_readyfor_labour first (Ready state)
         let [invoices] = await pool.query(
@@ -295,6 +300,7 @@ exports.getInvoice = async (req, res) => {
 
 // Update invoice
 exports.updateInvoice = async (req, res) => {
+    console.log('updateInvoice req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();
@@ -365,7 +371,7 @@ exports.updateInvoice = async (req, res) => {
             await conn.query(
                 `UPDATE ${mainTable} SET 
                     inv_cus=?, inv_cus_addres=?, inv_pho=?, inv_cus_gstin=?, 
-                    inv_job_card_no=?, inv_jcard_date=?, inv_repair_typ=?, inv_km=?, 
+                    inv_job_card_no=?, inv_jcard_date=?, inv_inv_date=?, inv_repair_typ=?, inv_km=?, 
                     in_registr=?, inv_chassis=?, in_engine=?, inv_modl=?,
                     inv_advisername=?, inv_mechna=?, inv_branch=?,
                     inv_disc_total=?, inv_taxtotal=?, inv_sgstotal=?, inv_gsttotal=?, inv_total=?,
@@ -373,7 +379,7 @@ exports.updateInvoice = async (req, res) => {
                 WHERE inv_id=?`,
                 [
                     d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '',
-                    d.inv_job_card_no || '', d.inv_jcard_date, d.inv_repair_typ || '', d.inv_km || '',
+                    d.inv_job_card_no || '', d.inv_jcard_date, d.inv_inv_date, d.inv_repair_typ || '', d.inv_km || '',
                     d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
                     d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || null,
                     d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0,
@@ -413,7 +419,7 @@ exports.updateInvoice = async (req, res) => {
         await conn.query(
             `UPDATE ${mainTable} SET 
                 inv_cus=?, inv_cus_addres=?, inv_pho=?, inv_cus_gstin=?, 
-                inv_job_card_no=?, inv_jcard_date=?, inv_repair_typ=?, inv_km=?, 
+                inv_job_card_no=?, inv_jcard_date=?, inv_inv_date=?, inv_repair_typ=?, inv_km=?, 
                 in_registr=?, inv_chassis=?, in_engine=?, inv_modl=?,
                 inv_advisername=?, inv_mechna=?, inv_branch=?,
                 inv_disc_total=?, inv_taxtotal=?, inv_sgstotal=?, inv_gsttotal=?, inv_total=?,
@@ -421,7 +427,7 @@ exports.updateInvoice = async (req, res) => {
             WHERE inv_id=?`,
             [
                 d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '',
-                d.inv_job_card_no || '', d.inv_jcard_date, d.inv_repair_typ || '', d.inv_km || '',
+                d.inv_job_card_no || '', d.inv_jcard_date, d.inv_inv_date, d.inv_repair_typ || '', d.inv_km || '',
                 d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
                 d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || null,
                 d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0,
@@ -462,6 +468,7 @@ exports.updateInvoice = async (req, res) => {
 
 // Mark invoice as ready
 exports.markReady = async (req, res) => {
+    console.log('markReady req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
         // Try updating tbl_readyfor_labour first
         const [result] = await pool.query('UPDATE tbl_readyfor_labour SET ready_status = 1 WHERE inv_id = ?', [req.params.id]);
@@ -477,6 +484,7 @@ exports.markReady = async (req, res) => {
 
 // Get ready labour bills with pagination
 exports.getReadyLabourBills = async (req, res) => {
+    console.log('getReadyLabourBills req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
         const { page = 1, pageSize = 10, search = '', branchId } = req.query;
         const offset = (parseInt(page) - 1) * parseInt(pageSize);
@@ -518,6 +526,7 @@ exports.getReadyLabourBills = async (req, res) => {
 
 // Get ready insurance bills with pagination
 exports.getReadyInsuranceBills = async (req, res) => {
+    console.log('getReadyInsuranceBills req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
         const { page = 1, pageSize = 10, search = '', branchId } = req.query;
         const offset = (parseInt(page) - 1) * parseInt(pageSize);
@@ -559,6 +568,7 @@ exports.getReadyInsuranceBills = async (req, res) => {
 
 // Get next sequential invoice number string preview
 exports.getNextInvoiceNo = async (req, res) => {
+    console.log('getNextInvoiceNo req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
         const [lastInvRows] = await pool.query('SELECT inv_no FROM tbl_invoice_labour ORDER BY inv_id DESC LIMIT 1');
         let lastInvoiceNumber = '';
@@ -577,6 +587,7 @@ exports.getNextInvoiceNo = async (req, res) => {
 
 // Get labour names for dropdown
 exports.getLabourNames = async (req, res) => {
+    console.log('getLabourNames req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
         const [rows] = await pool.query('SELECT labour_title as l_name, sale_price as l_amount, labour_code as l_code FROM tbl_labour_code ORDER BY labour_title');
         res.json(rows);
@@ -587,6 +598,7 @@ exports.getLabourNames = async (req, res) => {
 
 // Generate PDF and Finalize Bill
 exports.generatePDF = async (req, res) => {
+    console.log('generatePDF req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     console.log("generatePDF", req.params.id);
     const conn = await pool.getConnection();
     try {
@@ -725,6 +737,7 @@ exports.generatePDF = async (req, res) => {
 
 // Generate Word and Finalize Bill
 exports.generateWord = async (req, res) => {
+    console.log('generateWord req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     const conn = await pool.getConnection();
     try {
         await conn.beginTransaction();

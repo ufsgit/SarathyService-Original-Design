@@ -511,6 +511,10 @@ export class InsuranceInvoiceComponent implements OnInit {
             next: () => {
               this.isLoading = false;
               this.notify.success('Invoice updated and marked as Ready for Bill');
+              const basePath = this.auth.isAdmin ? '/admin' : '/staff';
+              setTimeout(() => {
+                this.router.navigate([`${basePath}/invoice/ready/insurance`]);
+              }, 1500);
             },
             error: (e: any) => {
               this.isLoading = false;

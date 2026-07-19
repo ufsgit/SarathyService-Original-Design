@@ -45,7 +45,7 @@ function fmtDate(d) {
  * Generate a Tax Invoice PDF that EXACTLY matches the Sarathy Motors template.
  */
 function generateInvoicePDF(inv, items) {
-    console.log("generateInvoicePDF",inv);
+    console.log("generateInvoicePDF inv:", inv);
     return new Promise(function (resolve, reject) {
         try {
             const doc = new PDFDocument({ size: 'A4', margin: 0, autoFirstPage: true, bufferPages: true });
