@@ -3,6 +3,17 @@ const router = express.Router();
 
 router.use((req, res, next) => {
     console.log(`[Invoice Route] ${req.method} ${req.originalUrl}`, 'body:', req.body, 'query:', req.query, 'params:', req.params);
+    
+    const originalJson = res.json;
+    res.json = function(data) {
+        if (res.statusCode >= 400) {
+            console.error(`[Invoice Route Error] ${req.method} ${req.originalUrl} - Status: ${res.statusCode}`, data);
+        } else {
+            console.log(`[Invoice Route Response] ${req.method} ${req.originalUrl} - Status: ${res.statusCode}`, 'Response Data:', data);
+        }
+        return originalJson.call(this, data);
+    };
+    
     next();
 });
 const invoiceController = require('../controllers/invoice.controller');
