@@ -82,7 +82,6 @@ export class LabourInvoiceComponent implements OnInit {
       if (this.auth.currentUser?.branchId) {
         this.form.inv_branch = this.auth.currentUser.branchId;
         this.loadNextNo();
-        this.loadNextJobCardNo();
         this.loadBranchEmployees(this.auth.currentUser.branchId);
       }
     }
@@ -124,7 +123,6 @@ export class LabourInvoiceComponent implements OnInit {
         if (this.isFromReadyBills) {
           const today = new Date().toISOString().split('T')[0];
           this.form.inv_inv_date = today;
-          this.form.inv_jcard_date = today;
         }
 
         this.items = res.items.map((it: any) => ({
@@ -237,13 +235,6 @@ export class LabourInvoiceComponent implements OnInit {
         this.display_inv_no = res.nextNo;
       });
     }
-  }
-
-  loadNextJobCardNo() {
-    const date = this.form.inv_jcard_date || new Date().toISOString().split('T')[0];
-    this.api.getNextJobCardNo(date).subscribe(res => {
-      this.form.inv_job_card_no = res.nextNumber;
-    });
   }
 
   onJcardDateChange() {

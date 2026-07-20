@@ -171,7 +171,7 @@ export class JobCardStatementComponent implements OnInit {
       'Invoice Type', 'Invoice Amount'
     ];
 
-    const rows = data.map(r => [
+    const rows: any[][] = data.map(r => [
       r.inv_job_card_no || '',
       this.formatDate(r.inv_jcard_date),
       r.branch_name || '',
@@ -190,15 +190,40 @@ export class JobCardStatementComponent implements OnInit {
       r.inv_chassis || '',
       r.in_engine || '',
       r.inv_km || '',
-      (r.inv_type === 'Paid Service' || r.inv_type === 'Cash') ? r.inv_total : '0',
-      (r.inv_type === 'Free Service' || r.inv_type === 'Free') ? r.inv_total : '0',
-      r.inv_type === 'Expense' ? r.inv_total : '0',
+      (r.inv_type === 'Paid Service' || r.inv_type === 'Cash') ? (r.inv_rate || '0') : '0',
+      (r.inv_type === 'Free Service' || r.inv_type === 'Free') ? (r.inv_rate || '0') : '0',
+      r.inv_type === 'Expense' ? (r.inv_rate || '0') : '0',
       r.inv_cus_gstin || '',
       r.inv_disc_total || '0',
       r.inv_taxtotal || '0',
       r.inv_type || '',
       r.inv_total || '0'
     ]);
+
+    let totalTaxable = 0, totalDiscount = 0, totalInvoice = 0, totalExpense = 0, totalFree = 0, totalPaid = 0;
+    data.forEach(r => {
+      totalTaxable += +(r.inv_taxtotal || 0);
+      totalDiscount += +(r.inv_disc_total || 0);
+      totalInvoice += +(r.inv_total || 0);
+      const type = r.inv_type || '';
+      const total = +(r.inv_rate || 0);
+      if (type === 'Paid Service' || type === 'Cash') totalPaid += total;
+      else if (type === 'Free Service' || type === 'Free') totalFree += total;
+      else if (type === 'Expense') totalExpense += total;
+    });
+
+    const summaryRow = new Array(headers.length).fill('');
+    summaryRow[0] = `No.of Labour Codes: ${data.length}`;
+    summaryRow[18] = totalPaid.toFixed(2);
+    summaryRow[19] = totalFree.toFixed(2);
+    summaryRow[20] = totalExpense.toFixed(2);
+    summaryRow[22] = totalDiscount.toFixed(2);
+    summaryRow[23] = totalTaxable.toFixed(2);
+    summaryRow[25] = totalInvoice.toFixed(2);
+    
+    rows.push([]);
+    rows.push(summaryRow);
+
 
     let html = '<table border="1"><thead><tr>';
     headers.forEach(h => html += `<th>${h}</th>`);
@@ -235,7 +260,7 @@ export class JobCardStatementComponent implements OnInit {
       'Invoice Type', 'Invoice Amount'
     ];
 
-    const rows = data.map(r => [
+    const rows: any[][] = data.map(r => [
       r.inv_job_card_no || '',
       this.formatDate(r.inv_jcard_date),
       r.branch_name || '',
@@ -254,15 +279,40 @@ export class JobCardStatementComponent implements OnInit {
       r.inv_chassis || '',
       r.in_engine || '',
       r.inv_km || '',
-      (r.inv_type === 'Paid Service' || r.inv_type === 'Cash') ? r.inv_total : '0',
-      (r.inv_type === 'Free Service' || r.inv_type === 'Free') ? r.inv_total : '0',
-      r.inv_type === 'Expense' ? r.inv_total : '0',
+      (r.inv_type === 'Paid Service' || r.inv_type === 'Cash') ? (r.inv_rate || '0') : '0',
+      (r.inv_type === 'Free Service' || r.inv_type === 'Free') ? (r.inv_rate || '0') : '0',
+      r.inv_type === 'Expense' ? (r.inv_rate || '0') : '0',
       r.inv_cus_gstin || '',
       r.inv_disc_total || '0',
       r.inv_taxtotal || '0',
       r.inv_type || '',
       r.inv_total || '0'
     ]);
+
+    let totalTaxable = 0, totalDiscount = 0, totalInvoice = 0, totalExpense = 0, totalFree = 0, totalPaid = 0;
+    data.forEach(r => {
+      totalTaxable += +(r.inv_taxtotal || 0);
+      totalDiscount += +(r.inv_disc_total || 0);
+      totalInvoice += +(r.inv_total || 0);
+      const type = r.inv_type || '';
+      const total = +(r.inv_rate || 0);
+      if (type === 'Paid Service' || type === 'Cash') totalPaid += total;
+      else if (type === 'Free Service' || type === 'Free') totalFree += total;
+      else if (type === 'Expense') totalExpense += total;
+    });
+
+    const summaryRow = new Array(headers.length).fill('');
+    summaryRow[0] = `No.of Labour Codes: ${data.length}`;
+    summaryRow[18] = totalPaid.toFixed(2);
+    summaryRow[19] = totalFree.toFixed(2);
+    summaryRow[20] = totalExpense.toFixed(2);
+    summaryRow[22] = totalDiscount.toFixed(2);
+    summaryRow[23] = totalTaxable.toFixed(2);
+    summaryRow[25] = totalInvoice.toFixed(2);
+    
+    rows.push([]);
+    rows.push(summaryRow);
+
 
     const csvContent = [
       headers.join(','),
