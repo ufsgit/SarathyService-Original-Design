@@ -90,7 +90,7 @@ export class InsuranceInvoiceComponent implements OnInit {
     } else {
       this.form.inv_inv_date = new Date().toISOString().split('T')[0];
       this.form.inv_jcard_date = new Date().toISOString().split('T')[0];
-      this.form.inv_repair_typ = 'Accidental Repair';
+      this.form.inv_repair_typ = '';
       this.form.inv_type = 'Cash';
 
       if (this.auth.currentUser?.branchId) {

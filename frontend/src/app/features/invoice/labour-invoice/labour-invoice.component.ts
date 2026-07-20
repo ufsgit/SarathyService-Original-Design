@@ -78,7 +78,7 @@ export class LabourInvoiceComponent implements OnInit {
     } else {
       this.form.inv_inv_date = new Date().toISOString().split('T')[0];
       this.form.inv_jcard_date = new Date().toISOString().split('T')[0];
-      this.form.inv_repair_typ = 'Paid service';
+      this.form.inv_repair_typ = '';
       if (this.auth.currentUser?.branchId) {
         this.form.inv_branch = this.auth.currentUser.branchId;
         this.loadNextNo();
