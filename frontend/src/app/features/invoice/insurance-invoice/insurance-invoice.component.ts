@@ -134,6 +134,12 @@ export class InsuranceInvoiceComponent implements OnInit {
         if (this.form.inv_jcard_date) this.form.inv_jcard_date = formatDate(this.form.inv_jcard_date);
         if (this.form.inv_sale_date) this.form.inv_sale_date = formatDate(this.form.inv_sale_date);
 
+        if (this.isFromReadyBills) {
+          const today = new Date().toISOString().split('T')[0];
+          this.form.inv_inv_date = today;
+          this.form.inv_jcard_date = today;
+        }
+
         // Map insurance fields from DB columns
         this.form.inv_insurance_company = this.form.insurance_id;
         this.form.inv_surveyor = this.form.insurance_serveyor || '';
