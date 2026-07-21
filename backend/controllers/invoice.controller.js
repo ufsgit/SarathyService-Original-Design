@@ -642,6 +642,7 @@ exports.generatePDF = async (req, res) => {
                 [req.params.id]
             );
             if (invoices.length === 0) {
+                await conn.rollback();
                 conn.release();
                 return res.status(404).json({ message: 'Not found' });
             }
@@ -780,6 +781,7 @@ exports.generateWord = async (req, res) => {
                 [req.params.id]
             );
             if (invoices.length === 0) {
+                await conn.rollback();
                 conn.release();
                 return res.status(404).json({ message: 'Not found' });
             }
