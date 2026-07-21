@@ -22,11 +22,15 @@ exports.search = async (req, res) => {
              WHERE i.in_registr = ? ORDER BY i.inv_id ASC`, [reg_no]
         );
 
-        for (let inv of invoices) {
-            const [items] = await pool.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [inv.inv_id]);
-            inv.items = items;
-            inv.advisor_name = inv.advisor_name || inv.inv_advisername;
-            inv.mechanic_name = inv.mechanic_name || inv.inv_mechna;
+        if (invoices.length > 0) {
+            const invIds = invoices.map(i => i.inv_id);
+            const [allItems] = await pool.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id IN (?)', [invIds]);
+            
+            for (let inv of invoices) {
+                inv.items = allItems.filter(item => item.ic_inv_id === inv.inv_id);
+                inv.advisor_name = inv.advisor_name || inv.inv_advisername;
+                inv.mechanic_name = inv.mechanic_name || inv.inv_mechna;
+            }
         }
 
         res.json({ customer, invoices });
@@ -47,7 +51,7 @@ exports.searchRegNo = async (req, res) => {
              WHERE c_reg_no LIKE ? 
              ORDER BY LENGTH(c_reg_no) ASC, c_reg_no ASC 
              LIMIT 10`,
-            [`%${query}%`]
+            [`${query}%`]
         );
         res.json(rows.map(r => r.c_reg_no));
     } catch (err) {
@@ -79,11 +83,15 @@ exports.generatePDF = async (req, res) => {
              WHERE i.in_registr = ? ORDER BY i.inv_id ASC`, [reg_no]
         );
 
-        for (let inv of invoices) {
-            const [items] = await pool.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [inv.inv_id]);
-            inv.items = items;
-            inv.advisor_name = inv.advisor_name || inv.inv_advisername;
-            inv.mechanic_name = inv.mechanic_name || inv.inv_mechna;
+        if (invoices.length > 0) {
+            const invIds = invoices.map(i => i.inv_id);
+            const [allItems] = await pool.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id IN (?)', [invIds]);
+            
+            for (let inv of invoices) {
+                inv.items = allItems.filter(item => item.ic_inv_id === inv.inv_id);
+                inv.advisor_name = inv.advisor_name || inv.inv_advisername;
+                inv.mechanic_name = inv.mechanic_name || inv.inv_mechna;
+            }
         }
 
         const [brandConfig] = await pool.query('SELECT brand_title, brand_dealer_code FROM tbl_brand_config WHERE brand_status = 1 LIMIT 1');

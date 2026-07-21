@@ -317,15 +317,25 @@ exports.getPreviousLabourBills = async (req, res) => {
         const [countResult] = await pool.query(`SELECT COUNT(*) as total FROM tbl_invoice_labour ${whereClause}`, params);
         const total = countResult[0].total;
 
-        // Fetch paginated data
-        const [rows] = await pool.query(
-            `SELECT tbl_invoice_labour.*, tbl_branch.branch_name 
-             FROM tbl_invoice_labour 
-             LEFT JOIN tbl_branch ON tbl_invoice_labour.inv_branch = tbl_branch.b_id 
-             ${whereClause} 
-             ORDER BY tbl_invoice_labour.inv_id DESC LIMIT ? OFFSET ?`,
+        // Fetch paginated data (Deferred Join Optimization)
+        const [idRows] = await pool.query(
+            `SELECT inv_id FROM tbl_invoice_labour ${whereClause} ORDER BY inv_id DESC LIMIT ? OFFSET ?`,
             [...params, pageSize, offset]
         );
+
+        let rows = [];
+        if (idRows.length > 0) {
+            const ids = idRows.map(r => r.inv_id);
+            const [fullRows] = await pool.query(
+                `SELECT tbl_invoice_labour.*, tbl_branch.branch_name 
+                 FROM tbl_invoice_labour 
+                 LEFT JOIN tbl_branch ON tbl_invoice_labour.inv_branch = tbl_branch.b_id 
+                 WHERE tbl_invoice_labour.inv_id IN (?)
+                 ORDER BY tbl_invoice_labour.inv_id DESC`,
+                [ids]
+            );
+            rows = fullRows;
+        }
 
         res.json({ data: rows, total, page, pageSize });
     } catch (err) {
@@ -361,15 +371,25 @@ exports.getPreviousInsuranceBills = async (req, res) => {
         const [countResult] = await pool.query(`SELECT COUNT(*) as total FROM tbl_invoice_labour ${whereClause}`, params);
         const total = countResult[0].total;
 
-        // Fetch paginated data
-        const [rows] = await pool.query(
-            `SELECT tbl_invoice_labour.*, tbl_branch.branch_name 
-             FROM tbl_invoice_labour 
-             LEFT JOIN tbl_branch ON tbl_invoice_labour.inv_branch = tbl_branch.b_id 
-             ${whereClause} 
-             ORDER BY tbl_invoice_labour.inv_id DESC LIMIT ? OFFSET ?`,
+        // Fetch paginated data (Deferred Join Optimization)
+        const [idRows] = await pool.query(
+            `SELECT inv_id FROM tbl_invoice_labour ${whereClause} ORDER BY inv_id DESC LIMIT ? OFFSET ?`,
             [...params, pageSize, offset]
         );
+
+        let rows = [];
+        if (idRows.length > 0) {
+            const ids = idRows.map(r => r.inv_id);
+            const [fullRows] = await pool.query(
+                `SELECT tbl_invoice_labour.*, tbl_branch.branch_name 
+                 FROM tbl_invoice_labour 
+                 LEFT JOIN tbl_branch ON tbl_invoice_labour.inv_branch = tbl_branch.b_id 
+                 WHERE tbl_invoice_labour.inv_id IN (?)
+                 ORDER BY tbl_invoice_labour.inv_id DESC`,
+                [ids]
+            );
+            rows = fullRows;
+        }
 
         res.json({ data: rows, total, page, pageSize });
     } catch (err) {

@@ -11,20 +11,42 @@
     <div class="search-bar">
       <div class="form-group" style="position: relative;">
         <label>Registration Number :</label>
-        <input type="text" [(ngModel)]="regNo" name="reg" placeholder="Enter registration number" (keyup.enter)="search()" (input)="onSearchInput($event)" autocomplete="off">
-        
+        <input type="text" [(ngModel)]="regNo" name="reg" placeholder="Enter registration number"
+          (keyup.enter)="search()" (input)="onSearchInput($event)" autocomplete="off">
+
         <!-- Autocomplete Dropdown -->
-        <ul *ngIf="suggestedRegNos && suggestedRegNos.length > 0" class="autocomplete-list">
-          <li *ngFor="let suggestion of suggestedRegNos" (click)="selectRegNo(suggestion)">
-            {{suggestion}}
+        <ul *ngIf="isDropdownLoading || (suggestedRegNos && suggestedRegNos.length > 0)" class="autocomplete-list">
+          <!-- Spinner -->
+          <li *ngIf="isDropdownLoading" class="text-center" style="cursor: default; color: #666;">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Loading...
           </li>
+
+          <!-- Results -->
+          <ng-container *ngIf="!isDropdownLoading">
+            <li *ngFor="let suggestion of suggestedRegNos" (click)="selectRegNo(suggestion)"
+              [ngStyle]="{'cursor': suggestion === 'NO_RESULT' ? 'default' : 'pointer', 'color': suggestion === 'NO_RESULT' ? '#888' : 'inherit'}">
+              {{suggestion === 'NO_RESULT' ? 'No vehicle found' : suggestion}}
+            </li>
+          </ng-container>
         </ul>
       </div>
-      <button class="btn-search" (click)="search()">🔍 Search</button>
+      <div class="search-buttons" style="display: flex; gap: 10px; align-items: center;">
+        <button class="btn-search" (click)="search()">🔍 Search</button>
+      </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div *ngIf="isLoading" style="padding: 3rem 0; text-align: center;">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem; border-width: 0.25em;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <div style="margin-top: 15px; font-weight: 500; font-size: 1.1rem; color: #6c757d;">Fetching Vehicle History...
+      </div>
     </div>
 
     <!-- Customer Details -->
-    <div *ngIf="customer" class="customer-block">
+    <div *ngIf="!isLoading && customer" class="customer-block">
       <div class="section-title">Customer Details</div>
       <div class="customer-info-grid">
         <div class="info-item"><span class="info-label">Name:</span> {{customer.c_name}}</div>
@@ -46,7 +68,8 @@
         </div>
         <span class="inv-amount">₹{{inv.inv_total}}</span>
       </div>
-      <p class="history-meta">KM: {{inv.inv_km}} | Repair: {{inv.inv_repair_typ}} | Date: {{inv.inv_inv_date | date:'dd/MM/yyyy'}}</p>
+      <p class="history-meta">KM: {{inv.inv_km}} | Repair: {{inv.inv_repair_typ}} | Date: {{inv.inv_inv_date |
+        date:'dd/MM/yyyy'}}</p>
       <div *ngIf="inv.items?.length" class="table-container">
         <table class="legacy-table">
           <thead>
@@ -68,11 +91,11 @@
         </table>
       </div>
       <div style="margin-top: 10px; font-size: 13px; color: black;">
-          <span>Supervisor: <strong>{{inv.advisor_name || '-'}}</strong></span>
-          <span style="margin-left: 20px;">Mechanic: <strong>{{inv.mechanic_name || '-'}}</strong></span>
+        <span>Supervisor: <strong>{{inv.advisor_name || '-'}}</strong></span>
+        <span style="margin-left: 20px;">Mechanic: <strong>{{inv.mechanic_name || '-'}}</strong></span>
       </div>
     </div>
 
-    <p *ngIf="searched && invoices.length===0" class="no-data-msg">No service history found</p>
+    <p *ngIf="!isLoading && searched && invoices.length===0" class="no-data-msg">No service history found</p>
   </div>
 </div>

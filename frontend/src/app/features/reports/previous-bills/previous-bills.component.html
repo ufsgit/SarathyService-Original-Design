@@ -9,7 +9,10 @@
     <div class="search-section">
       <div class="search-left">
         <label>Search:</label>
-        <input type="text" [(ngModel)]="searchText" (input)="onSearch()" name="search">
+        <div style="display: flex; gap: 10px;">
+          <input type="text" [(ngModel)]="searchText" name="search" (ngModelChange)="markPending()" (keyup.enter)="onSearch()">
+          <button class="btn-search" [ngClass]="{'btn-pending': isSearchPending}" style="padding: 0 15px;" (click)="onSearch()">Search</button>
+        </div>
       </div>
       <div class="search-right">
         <span>Show</span>

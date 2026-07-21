@@ -177,3 +177,36 @@
   background: #f8f9fa;
   border-color: #ccc;
 }
+
+/* Search Button Styles */
+@keyframes pulse-green {
+  0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+  70% { box-shadow: 0 0 0 8px rgba(40, 167, 69, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+.btn-search {
+  background-color: var(--brand-color);
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  height: 32px;
+  min-width: 80px;
+  transition: all 0.3s ease;
+}
+
+.btn-pending {
+  background-color: #28a745 !important;
+  color: white !important;
+  animation: pulse-green 1.5s infinite;
+  position: relative;
+}
+
+.btn-pending::after {
+  content: '*';
+  margin-left: 4px;
+  font-weight: bold;
+}

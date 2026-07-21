@@ -19,6 +19,11 @@ export class VehicleHistoryComponent implements OnInit, OnDestroy {
   customer: any = null;
   invoices: any[] = [];
   searched = false;
+  isLoading = false;
+  isPdfLoading = false;
+
+  isDropdownLoading = false;
+  lastSearchedRegNo = '';
 
   suggestedRegNos: string[] = [];
   private searchSubject = new Subject<string>();
@@ -27,7 +32,7 @@ export class VehicleHistoryComponent implements OnInit, OnDestroy {
   constructor(
     private api: ApiService,
     private notify: NotificationService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.searchSubscription = this.searchSubject.pipe(
@@ -35,15 +40,29 @@ export class VehicleHistoryComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       switchMap(query => {
         if (!query || query.trim().length === 0) {
+          this.isDropdownLoading = false;
           return of([]);
         }
+        this.isDropdownLoading = true;
         return this.api.searchVehicleRegNo(query).pipe(
-          catchError(() => of([]))
+          catchError(() => {
+            this.isDropdownLoading = false;
+            return of([]);
+          })
         );
       })
     ).subscribe({
-      next: (results: any) => this.suggestedRegNos = results,
-      error: () => this.suggestedRegNos = []
+      next: (results: any) => {
+        this.isDropdownLoading = false;
+        this.suggestedRegNos = results;
+        if (results.length === 0 && this.regNo.trim().length > 0) {
+          this.suggestedRegNos = ['NO_RESULT'];
+        }
+      },
+      error: () => {
+        this.isDropdownLoading = false;
+        this.suggestedRegNos = [];
+      }
     });
   }
 
@@ -58,9 +77,9 @@ export class VehicleHistoryComponent implements OnInit, OnDestroy {
   }
 
   selectRegNo(reg: string) {
+    if (reg === 'NO_RESULT') return;
     this.regNo = reg;
     this.suggestedRegNos = [];
-    this.search();
   }
 
   search() {
@@ -69,22 +88,31 @@ export class VehicleHistoryComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.isLoading = true;
+    this.customer = null;
+    this.invoices = [];
+
     // Step 1: Check if vehicle exists first to give immediate feedback
     this.api.searchVehicleHistory(this.regNo).subscribe({
       next: (d: any) => {
+        this.isLoading = false;
         if (!d.customer) {
           this.notify.error('No vehicle found for this registration number');
           return;
         }
-        
+
         this.customer = d.customer;
         this.invoices = d.invoices;
         this.searched = true;
+        this.lastSearchedRegNo = this.regNo;
 
-        // Step 2: Open the High-Fidelity PDF in a new tab
+        // Open PDF automatically on successful search
         this.openPdf();
       },
-      error: () => this.notify.error('Failed to fetch vehicle history')
+      error: () => {
+        this.isLoading = false;
+        this.notify.error('Failed to fetch vehicle history');
+      }
     });
   }
 
@@ -92,10 +120,10 @@ export class VehicleHistoryComponent implements OnInit, OnDestroy {
     const baseUrl = this.api.getVehicleHistoryPDFUrl(this.regNo);
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     const cb = Date.now();
-    
+
     // Append token for authentication in the new tab
     const pdfUrl = token ? `${baseUrl}&token=${encodeURIComponent(token)}&cb=${cb}` : `${baseUrl}&cb=${cb}`;
-    
+
     window.open(pdfUrl, '_blank');
   }
 }

@@ -5,10 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-
-
 @Component({
   selector: 'app-previous-bills', standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
@@ -19,6 +15,7 @@ export class PreviousBillsComponent implements OnInit {
   bills = signal<any[]>([]); 
   isLoading = signal<boolean>(false);
   type = 'labour'; searchText = '';
+  isSearchPending = false;
   isAdmin = false;
   Math = Math;
   
@@ -27,16 +24,7 @@ export class PreviousBillsComponent implements OnInit {
   totalItems = 0;
   totalPages = 0;
 
-  private searchSubject = new Subject<string>();
-
   constructor(public api: ApiService, private notify: NotificationService, private route: ActivatedRoute, private router: Router, private auth: AuthService) { 
-    this.searchSubject.pipe(
-      debounceTime(500),
-      distinctUntilChanged()
-    ).subscribe(() => {
-      this.currentPage = 1;
-      this.fetchBills();
-    });
   }
   ngOnInit() {
     this.isAdmin = this.router.url.includes('/admin/');
@@ -88,7 +76,13 @@ export class PreviousBillsComponent implements OnInit {
   }
 
   onSearch(): void {
-    this.searchSubject.next(this.searchText);
+    this.isSearchPending = false;
+    this.currentPage = 1;
+    this.fetchBills();
+  }
+
+  markPending(): void {
+    this.isSearchPending = true;
   }
 
   getPageArray(): number[] {

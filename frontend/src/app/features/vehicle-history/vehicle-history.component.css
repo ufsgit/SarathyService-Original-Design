@@ -84,7 +84,36 @@
 }
 
 .btn-search:hover {
-    background: #1e44d4;
+    filter: brightness(0.9);
+}
+
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.autocomplete-list li {
+    padding: 10px 15px;
+    font-size: 14px;
+    color: #000 !important;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.autocomplete-list li:hover {
+    background: #f8f9ff;
 }
 
 /* Customer Block */
