@@ -67,5 +67,20 @@ export class InvoiceEditComponent implements OnInit {
     this.form.inv_total = taxableTotal;
     this.form.inv_final_amount = +grandTotal.toFixed(2);
   }
-  onSubmit(){this.form.items=this.items;this.api.updateInvoice(this.invoice.inv_id,this.form).subscribe({next:()=>{this.notify.success('Updated');this.router.navigate(['/admin/invoice/list']);},error:(e:any)=>this.notify.error(e.error?.message||'Error')});}
+  isSaving = false;
+  onSubmit(){
+    this.form.items=this.items;
+    this.isSaving = true;
+    this.api.updateInvoice(this.invoice.inv_id,this.form).subscribe({
+      next:()=>{
+        this.isSaving = false;
+        this.notify.success('Updated');
+        this.router.navigate(['/admin/invoice/list']);
+      },
+      error:(e:any)=>{
+        this.isSaving = false;
+        this.notify.error(e.error?.message||'Error');
+      }
+    });
+  }
 }

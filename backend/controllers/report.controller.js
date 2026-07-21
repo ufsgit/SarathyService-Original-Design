@@ -43,7 +43,13 @@ exports.getJobCardSummary = async (req, res) => {
             SELECT 
                 COUNT(*) as total_count,
                 COALESCE(SUM(CASE WHEN i.inv_repair_typ LIKE '%Free%' THEN 1 ELSE 0 END), 0) as total_free_service,
-                COALESCE(SUM(CASE WHEN i.inv_repair_typ NOT LIKE '%Free%' THEN 1 ELSE 0 END), 0) as total_paid_service
+                COALESCE(SUM(CASE WHEN i.inv_repair_typ NOT LIKE '%Free%' THEN 1 ELSE 0 END), 0) as total_paid_service,
+                COALESCE(SUM(CAST(NULLIF(i.inv_taxtotal, '') AS DECIMAL(12,2))), 0) as header_total_taxable,
+                COALESCE(SUM(CAST(NULLIF(i.inv_disc_total, '') AS DECIMAL(12,2))), 0) as header_total_discount,
+                COALESCE(SUM(CAST(NULLIF(i.inv_sgstotal, '') AS DECIMAL(12,2))), 0) as header_total_sgst,
+                COALESCE(SUM(CAST(NULLIF(i.inv_gsttotal, '') AS DECIMAL(12,2))), 0) as header_total_cgst,
+                COALESCE(SUM(CAST(NULLIF(i.inv_cesstotal, '') AS DECIMAL(12,2))), 0) as header_total_kfc,
+                COALESCE(SUM(CAST(NULLIF(i.inv_total, '') AS DECIMAL(12,2))), 0) as header_grand_total
             FROM tbl_invoice_labour i
             ${whereClause}
         `;
@@ -96,17 +102,17 @@ exports.getJobCardSummary = async (req, res) => {
             total_paid_service: parseFloat(totalsResult.total_paid_service || 0),
             total_free_service: parseFloat(totalsResult.total_free_service || 0),
             total_expense: parseFloat(totalsResult.total_expense || 0),
-            total_discount: parseFloat(detailed.total_discount || 0),
-            total_taxable: parseFloat(detailed.total_taxable || 0),
-            total_sgst: parseFloat(detailed.total_sgst || 0),
-            total_cgst: parseFloat(detailed.total_cgst || 0),
-            total_kfc: parseFloat(detailed.total_kfc || 0),
-            grand_total: parseFloat(detailed.grand_total || 0),
+            total_discount: parseFloat(totalsResult.header_total_discount || 0),
+            total_taxable: parseFloat(totalsResult.header_total_taxable || 0),
+            total_sgst: parseFloat(totalsResult.header_total_sgst || 0),
+            total_cgst: parseFloat(totalsResult.header_total_cgst || 0),
+            total_kfc: parseFloat(totalsResult.header_total_kfc || 0),
+            grand_total: parseFloat(totalsResult.header_grand_total || 0),
             labour_taxable: parseFloat(detailed.labour_taxable || 0),
             parts_taxable: parseFloat(detailed.parts_taxable || 0),
             labour_amount: parseFloat(detailed.labour_taxable || 0) + parseFloat(detailed.labour_gst || 0),
             parts_amount: parseFloat(detailed.parts_taxable || 0) + parseFloat(detailed.parts_gst || 0),
-            total_gst: parseFloat(detailed.total_sgst || 0) + parseFloat(detailed.total_cgst || 0)
+            total_gst: parseFloat(totalsResult.header_total_sgst || 0) + parseFloat(totalsResult.header_total_cgst || 0)
         };
 
         res.json({ data: rows, total: totalCount, totals, page: parseInt(page), pageSize: parseInt(pageSize) });

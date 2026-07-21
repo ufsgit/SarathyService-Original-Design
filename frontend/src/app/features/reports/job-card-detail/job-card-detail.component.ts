@@ -28,7 +28,7 @@ export class JobCardDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private api: ApiService,
     private notify: NotificationService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {

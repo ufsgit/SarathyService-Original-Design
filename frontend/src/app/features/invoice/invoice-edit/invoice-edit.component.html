@@ -82,7 +82,7 @@
     </div>
 
     <div class="form-actions">
-      <button type="button" class="btn-submit" (click)="onSubmit()">Update Invoice</button>
+      <button type="button" class="btn-submit" [disabled]="isSaving" (click)="onSubmit()">Update Invoice</button>
     </div>
   </div>
 </div>

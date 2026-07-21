@@ -26,9 +26,9 @@ router.get('/insurance/list', verifyToken, invoiceController.getInsuranceInvoice
 router.get('/ready/labour', verifyToken, invoiceController.getReadyLabourBills);
 router.get('/ready/insurance', verifyToken, invoiceController.getReadyInsuranceBills);
 router.get('/:id', verifyToken, invoiceController.getInvoice);
-router.get('/:id/pdf', verifyToken, invoiceController.generatePDF);
-router.get('/:id/pdf/:filename', verifyToken, invoiceController.generatePDF);
-router.get('/:id/word', verifyToken, invoiceController.generateWord);
+router.get('/:id/pdf', invoiceController.generatePDF);
+router.get('/:id/pdf/:filename', invoiceController.generatePDF);
+router.get('/:id/word', invoiceController.generateWord);
 router.post('/labour', verifyToken, invoiceController.createLabourInvoice);
 router.post('/insurance', verifyToken, invoiceController.createInsuranceInvoice);
 router.put('/:id', verifyToken, invoiceController.updateInvoice);

@@ -21,8 +21,8 @@
       <h5 *ngIf="isFromReadyBills">Ready for Bill (Insurance)</h5>
       <h5 *ngIf="isFromPreviousBills">Previous Bills (Insurance)</h5>
       <h5 *ngIf="!isFromReadyBills && !isFromPreviousBills">INVOICE (Insurance)</h5>
-      <button *ngIf="!isFromPreviousBills" type="button" class="btn-ready-bill" (click)="onAddToReadyForBill()">Add to Ready for Bill</button>
-      <button *ngIf="isFromPreviousBills" type="button" class="btn-ready-bill" style="background-color: #e74c3c;" (click)="onSaveBill()">Save Bill</button>
+      <button *ngIf="!isFromPreviousBills" type="button" class="btn-ready-bill" [disabled]="isLoading" (click)="onAddToReadyForBill()">Add to Ready for Bill</button>
+      <button *ngIf="isFromPreviousBills" type="button" class="btn-ready-bill" style="background-color: #e74c3c;" [disabled]="isLoading" (click)="onSaveBill()">Save Bill</button>
     </div>
 
     <div class="widget-content" style="position: relative; min-height: 200px;">
@@ -172,7 +172,7 @@
         <div class="total-amount-display">
           Total Payable Amount : Rs {{ form.inv_total | number:'1.2-2' }}
         </div>
-        <button *ngIf="!isFromPreviousBills" type="button" class="btn-print" (click)="onPrint()">Print</button>
+        <button *ngIf="!isFromPreviousBills" type="button" class="btn-print" [disabled]="isLoading" (click)="onPrint()">Print</button>
       </div>
 
       <!-- Line Items Table with scroll arrows like legacy system -->

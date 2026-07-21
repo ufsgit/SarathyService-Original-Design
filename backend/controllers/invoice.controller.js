@@ -54,6 +54,7 @@ exports.createLabourInvoice = async (req, res) => {
                 [d.inv_no, d.inv_no]
             );
             if (exists.length > 0) {
+                await conn.rollback();
                 conn.release();
                 return res.status(400).json({ message: 'Invoice number already exists (' + d.inv_no + ')' });
             }
@@ -65,6 +66,7 @@ exports.createLabourInvoice = async (req, res) => {
                 [d.inv_job_card_no, d.inv_job_card_no]
             );
             if (exists.length > 0) {
+                await conn.rollback();
                 conn.release();
                 return res.status(400).json({ message: 'Jobcard number already exists (' + d.inv_job_card_no + ')' });
             }
@@ -131,6 +133,7 @@ exports.createInsuranceInvoice = async (req, res) => {
                 [d.inv_no, d.inv_no]
             );
             if (exists.length > 0) {
+                await conn.rollback();
                 conn.release();
                 return res.status(400).json({ message: 'Invoice number already exists (' + d.inv_no + ')' });
             }
@@ -142,6 +145,7 @@ exports.createInsuranceInvoice = async (req, res) => {
                 [d.inv_job_card_no, d.inv_job_card_no]
             );
             if (exists.length > 0) {
+                await conn.rollback();
                 conn.release();
                 return res.status(400).json({ message: 'Jobcard number already exists (' + d.inv_job_card_no + ')' });
             }
@@ -329,6 +333,7 @@ exports.updateInvoice = async (req, res) => {
                 }
                 const [exists] = await conn.query(duplicateQuery, duplicateParams);
                 if (exists.length > 0) {
+                    await conn.rollback();
                     conn.release();
                     return res.status(400).json({ message: 'Invoice number already exists (' + d.inv_no + ')' });
                 }
@@ -357,6 +362,7 @@ exports.updateInvoice = async (req, res) => {
                 }
                 const [exists] = await conn.query(duplicateQuery, duplicateParams);
                 if (exists.length > 0) {
+                    await conn.rollback();
                     conn.release();
                     return res.status(400).json({ message: 'Jobcard number already exists (' + d.inv_job_card_no + ')' });
                 }
@@ -719,10 +725,12 @@ exports.generatePDF = async (req, res) => {
             invoice.active_brand = '';
         }
 
+        // Commit transaction BEFORE generating PDF to release database locks
+        await conn.commit();
+
         const { generateInvoicePDF } = require('../utils/pdfGenerator');
         const pdfBuffer = await generateInvoicePDF(invoice, items);
 
-        await conn.commit();
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="${invoice.inv_no || invoice.inv_id} - invoice.pdf"`);
         res.send(pdfBuffer);
@@ -851,9 +859,11 @@ exports.generateWord = async (req, res) => {
             invoice.active_brand = '';
         }
 
+        // Commit transaction BEFORE generating Word doc to release database locks
+        await conn.commit();
+
         const wordBuffer = await generateInvoiceWord(invoice, items);
 
-        await conn.commit();
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
         res.setHeader('Content-Disposition', `attachment; filename="${invoice.inv_no || invoice.inv_id} - invoice.docx"`);
         res.send(wordBuffer);

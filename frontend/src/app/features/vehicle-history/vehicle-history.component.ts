@@ -118,12 +118,8 @@ export class VehicleHistoryComponent implements OnInit, OnDestroy {
 
   openPdf() {
     const baseUrl = this.api.getVehicleHistoryPDFUrl(this.regNo);
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     const cb = Date.now();
-
-    // Append token for authentication in the new tab
-    const pdfUrl = token ? `${baseUrl}&token=${encodeURIComponent(token)}&cb=${cb}` : `${baseUrl}&cb=${cb}`;
-
+    const pdfUrl = `${baseUrl}&cb=${cb}`;
     window.open(pdfUrl, '_blank');
   }
 }

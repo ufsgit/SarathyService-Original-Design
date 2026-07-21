@@ -110,10 +110,6 @@ export class ApiService {
   getReadyInsuranceBills(params?: any): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/ready/insurance`, { params }); }
   getNextInvoiceNo(branchId: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/next-no`, { params: { branchId: branchId.toString() } }); }
   getLabourNames(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/invoices/labour-names`); }
-  getInvoicePDFUrl(id: number, filename?: string): string { 
-    return filename ? `${this.baseUrl}/invoices/${id}/pdf/${filename}.pdf` : `${this.baseUrl}/invoices/${id}/pdf`; 
-  }
-  getInvoiceWordUrl(id: number): string { return `${this.baseUrl}/invoices/${id}/word`; }
 
   // --- Job Cards ---
   createJobCard(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/jobcards`, data); }
@@ -122,7 +118,7 @@ export class ApiService {
     return this.http.get<any[]>(url);
   }
   getJobCard(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/jobcards/${id}`); }
-  getNextJobCardNo(date?: string): Observable<any> { 
+  getNextJobCardNo(date?: string): Observable<any> {
     const params: any = {};
     if (date) params['date'] = date;
     return this.http.get<any>(`${this.baseUrl}/jobcards/next-number`, { params });
@@ -133,6 +129,7 @@ export class ApiService {
   getJobCardStatement(data: any): Observable<any> { return this.http.post(`${this.baseUrl}/reports/job-card-statement`, data); }
   getPreviousLabourBills(params?: any): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/reports/previous-bills/labour`, { params });
+
   }
   getPreviousInsuranceBills(params?: any): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/reports/previous-bills/insurance`, { params });
@@ -142,5 +139,12 @@ export class ApiService {
   // --- Vehicle History ---
   searchVehicleHistory(reg_no: string): Observable<any> { return this.http.post(`${this.baseUrl}/vehicle-history/search`, { reg_no }); }
   searchVehicleRegNo(query: string): Observable<string[]> { return this.http.get<string[]>(`${this.baseUrl}/vehicle-history/search-reg`, { params: { q: query } }); }
+  
   getVehicleHistoryPDFUrl(regNo: string): string { return `${this.baseUrl}/vehicle-history/pdf/${encodeURIComponent(regNo + ' - vehicle history.pdf')}?reg_no=${regNo}`; }
+  
+  getInvoicePDFUrl(id: number, filename?: string): string { 
+    return filename ? `${this.baseUrl}/invoices/${id}/pdf/${filename}.pdf` : `${this.baseUrl}/invoices/${id}/pdf`; 
+  }
+  
+  getInvoiceWordUrl(id: number): string { return `${this.baseUrl}/invoices/${id}/word`; }
 }

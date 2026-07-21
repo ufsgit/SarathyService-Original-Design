@@ -12,19 +12,19 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrls: ['./previous-bills.component.css']
 })
 export class PreviousBillsComponent implements OnInit {
-  bills = signal<any[]>([]); 
+  bills = signal<any[]>([]);
   isLoading = signal<boolean>(false);
   type = 'labour'; searchText = '';
   isSearchPending = false;
   isAdmin = false;
   Math = Math;
-  
+
   currentPage = 1;
   pageSize = 10;
   totalItems = 0;
   totalPages = 0;
 
-  constructor(public api: ApiService, private notify: NotificationService, private route: ActivatedRoute, private router: Router, private auth: AuthService) { 
+  constructor(public api: ApiService, private notify: NotificationService, private route: ActivatedRoute, private router: Router, private auth: AuthService) {
   }
   ngOnInit() {
     this.isAdmin = this.router.url.includes('/admin/');
@@ -46,7 +46,7 @@ export class PreviousBillsComponent implements OnInit {
       params['branchId'] = user.branchId;
     }
 
-    const obs = this.type === 'labour' 
+    const obs = this.type === 'labour'
       ? this.api.getPreviousLabourBills(params)
       : this.api.getPreviousInsuranceBills(params);
 
@@ -108,14 +108,12 @@ export class PreviousBillsComponent implements OnInit {
   }
 
   openPdf(bill: any): void {
-    console.log("openPdf:",bill);
+    console.log("openPdf:", bill);
     if (!bill?.inv_id) return;
     const filename = `${bill.inv_job_card_no} - previous bill ${this.type}`;
     const url = this.api.getInvoicePDFUrl(bill.inv_id, filename);
-    // Append auth token so the protected PDF endpoint can verify the request
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     const cb = Date.now();
-    const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}&cb=${cb}` : `${url}?cb=${cb}`;
+    const pdfUrl = `${url}?cb=${cb}`;
     window.open(pdfUrl, '_blank');
   }
 }

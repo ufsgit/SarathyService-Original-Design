@@ -557,9 +557,7 @@ export class LabourInvoiceComponent implements OnInit {
     if (!this.invoiceId) return;
     const filename = `${this.form.inv_no || this.invoiceId} - invoice`;
     let url = this.api.getInvoicePDFUrl(this.invoiceId, filename);
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-    const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
-    window.open(pdfUrl, '_blank');
+    window.open(url, '_blank');
   }
 
   private triggerPrint() {
@@ -581,9 +579,7 @@ export class LabourInvoiceComponent implements OnInit {
 
   private triggerWord() {
     const url = this.api.getInvoiceWordUrl(this.invoiceId!);
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-    const wordUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
-    window.location.href = wordUrl;
+    window.open(url, '_blank');
 
     this.notify.success('Invoice finalized and Word export triggered.');
     setTimeout(() => {
