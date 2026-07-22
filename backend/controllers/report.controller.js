@@ -333,7 +333,7 @@ exports.getPreviousLabourBills = async (req, res) => {
         if (idRows.length > 0) {
             const ids = idRows.map(r => r.inv_id);
             const [fullRows] = await pool.query(
-                `SELECT tbl_invoice_labour.*, tbl_branch.branch_name 
+                `SELECT tbl_invoice_labour.inv_id, tbl_invoice_labour.in_registr, tbl_invoice_labour.inv_cus, tbl_invoice_labour.inv_cus_addres, tbl_invoice_labour.inv_pho, tbl_invoice_labour.inv_branch, tbl_branch.branch_name, tbl_invoice_labour.inv_job_card_no, tbl_invoice_labour.inv_no, tbl_invoice_labour.inv_jcard_date, tbl_invoice_labour.inv_repair_typ, tbl_invoice_labour.inv_modl, tbl_invoice_labour.inv_total 
                  FROM tbl_invoice_labour 
                  LEFT JOIN tbl_branch ON tbl_invoice_labour.inv_branch = tbl_branch.b_id 
                  WHERE tbl_invoice_labour.inv_id IN (?)
@@ -387,7 +387,7 @@ exports.getPreviousInsuranceBills = async (req, res) => {
         if (idRows.length > 0) {
             const ids = idRows.map(r => r.inv_id);
             const [fullRows] = await pool.query(
-                `SELECT tbl_invoice_labour.*, tbl_branch.branch_name 
+                `SELECT tbl_invoice_labour.inv_id, tbl_invoice_labour.in_registr, tbl_invoice_labour.inv_cus, tbl_invoice_labour.inv_cus_addres, tbl_invoice_labour.inv_pho, tbl_invoice_labour.inv_branch, tbl_branch.branch_name, tbl_invoice_labour.inv_job_card_no, tbl_invoice_labour.inv_no, tbl_invoice_labour.inv_jcard_date, tbl_invoice_labour.inv_repair_typ, tbl_invoice_labour.inv_modl, tbl_invoice_labour.inv_total 
                  FROM tbl_invoice_labour 
                  LEFT JOIN tbl_branch ON tbl_invoice_labour.inv_branch = tbl_branch.b_id 
                  WHERE tbl_invoice_labour.inv_id IN (?)

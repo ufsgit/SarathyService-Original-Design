@@ -515,13 +515,14 @@ exports.getReadyLabourBills = async (req, res) => {
         const total = countResult[0].total;
 
         const dataQuery = `
-            SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, i.inv_branch 
+            SELECT i.inv_id, i.in_registr, i.inv_cus, i.inv_pho, i.inv_cus_addres, b.branch_name, i.inv_branch, i.inv_job_card_no, i.inv_no, i.in_engine, i.in_engine AS inv_engine, i.inv_jcard_date, i.inv_repair_typ, i.inv_modl, i.inv_total 
             FROM tbl_readyfor_labour i 
             LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
             ${whereClause} 
             ORDER BY i.inv_id DESC 
             LIMIT ? OFFSET ?
         `;
+        console.log(dataQuery);
         const [rows] = await pool.query(dataQuery, [...params, limit, offset]);
 
         res.json({ data: rows, total, page: parseInt(page), pageSize: limit });
@@ -557,7 +558,7 @@ exports.getReadyInsuranceBills = async (req, res) => {
         const total = countResult[0].total;
 
         const dataQuery = `
-            SELECT i.*, b.branch_name, i.in_engine AS inv_engine, i.in_registr AS in_registr, i.inv_branch 
+            SELECT i.inv_id, i.in_registr, i.inv_cus, i.inv_pho, i.inv_cus_addres, b.branch_name, i.inv_branch, i.inv_job_card_no, i.inv_no, i.in_engine, i.in_engine AS inv_engine, i.inv_jcard_date, i.inv_repair_typ, i.inv_modl, i.inv_total 
             FROM tbl_readyfor_labour i 
             LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
             ${whereClause} 

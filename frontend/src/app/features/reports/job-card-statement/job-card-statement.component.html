@@ -53,7 +53,7 @@
           <input type="date" [ngModel]="toDate()" [max]="today" [readOnly]="viewBy() !== 'Custom Date'" (ngModelChange)="toDate.set($event); markPending()">
         </div>
         <div class="date-group" style="align-self: flex-end;">
-          <button type="button" class="btn-search" [ngClass]="{'btn-pending': isSearchPending()}" [disabled]="isSearchPending()" (click)="search(true)">Search</button>
+          <button type="button" class="btn-search" [ngClass]="{'btn-pending': isSearchPending()}" (click)="search(true)">Search</button>
         </div>
       </div>
     </div>
