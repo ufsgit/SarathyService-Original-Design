@@ -612,14 +612,27 @@ export class InsuranceInvoiceComponent implements OnInit {
   }
 
   private triggerPrint() {
-    const filename = `${this.form.inv_no || this.invoiceId} - invoice`;
-    const url = this.api.getInvoicePDFUrl(this.invoiceId!, filename);
-    window.open(url, '_blank');
+    this.isLoading = true;
+    this.api.finalizeInvoice(this.invoiceId!).subscribe({
+      next: (res: any) => {
+        this.isLoading = false;
+        if (res && res.inv_id) {
+           this.invoiceId = res.inv_id;
+        }
+        const filename = `${this.form.inv_no || this.invoiceId} - invoice`;
+        const url = this.api.getInvoicePDFUrl(this.invoiceId!, filename);
+        window.open(url, '_blank');
 
-    this.notify.success('Invoice finalized and print triggered.');
-    setTimeout(() => {
-      this.router.navigate(['/admin/reports/previous-bills/insurance']);
-    }, 1500);
+        this.notify.success('Invoice finalized and print triggered.');
+        setTimeout(() => {
+          this.router.navigate(['/admin/reports/previous-bills/insurance']);
+        }, 1500);
+      },
+      error: (e: any) => {
+        this.isLoading = false;
+        this.notify.error(e.error?.message || 'Error finalizing invoice');
+      }
+    });
   }
 
 

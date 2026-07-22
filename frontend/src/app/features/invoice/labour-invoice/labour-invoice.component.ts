@@ -561,12 +561,24 @@ export class LabourInvoiceComponent implements OnInit {
   }
 
   private triggerPrint() {
-    this.printInvoice();
-
-    this.notify.success('Invoice finalized and print triggered.');
-    setTimeout(() => {
-      this.router.navigate(['/admin/reports/previous-bills/labour']);
-    }, 1500);
+    this.isLoading = true;
+    this.api.finalizeInvoice(this.invoiceId!).subscribe({
+      next: (res: any) => {
+        this.isLoading = false;
+        if (res && res.inv_id) {
+           this.invoiceId = res.inv_id;
+        }
+        this.printInvoice();
+        this.notify.success('Invoice finalized and print triggered.');
+        setTimeout(() => {
+          this.router.navigate(['/admin/reports/previous-bills/labour']);
+        }, 1500);
+      },
+      error: (e: any) => {
+        this.isLoading = false;
+        this.notify.error(e.error?.message || 'Error finalizing invoice');
+      }
+    });
   }
 
   onWordExport() {
