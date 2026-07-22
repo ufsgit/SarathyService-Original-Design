@@ -298,3 +298,8 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+.error-input {
+    border: 1px solid red !important;
+    background-color: #ffe6e6 !important;
+}

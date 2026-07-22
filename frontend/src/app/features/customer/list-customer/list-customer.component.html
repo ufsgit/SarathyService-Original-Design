@@ -49,7 +49,7 @@
             <th>GSTIN No</th>
             <th>Date of Sale</th>
             <th>Email Id</th>
-            <th *ngIf="auth.isAdmin">Action</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -65,7 +65,7 @@
             <td>{{ customer.gstin_no }}</td>
             <td>{{ customer.c_sales_date | date:'dd-MM-yyyy' }}</td>
             <td>{{ customer.c_email }}</td>
-            <td *ngIf="auth.isAdmin">
+            <td>
               <div class="action-dropdown" (click)="$event.stopPropagation()">
                 <button class="btn-action" (click)="toggleDropdown($event, customer.c_id)">Action▾</button>
                 <div class="action-content" [class.show]="openDropdownId === customer.c_id">
@@ -76,7 +76,7 @@
             </td>
           </tr>
           <tr *ngIf="customers.length === 0 && !loading">
-            <td [attr.colspan]="auth.isAdmin ? 12 : 11" class="no-data">No customers found</td>
+            <td [attr.colspan]="12" class="no-data">No customers found</td>
           </tr>
         </tbody>
       </table>

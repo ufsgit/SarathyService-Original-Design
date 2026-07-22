@@ -45,7 +45,7 @@ export class ReadyBillsComponent implements OnInit {
     return pages;
   });
 
-  constructor(public api: ApiService, private notify: NotificationService, private route: ActivatedRoute, private auth: AuthService) {
+  constructor(public api: ApiService, private notify: NotificationService, private route: ActivatedRoute, public auth: AuthService) {
     // Re-fetch data whenever page, pageSize or search changes
     effect(() => {
       this.loadBills();

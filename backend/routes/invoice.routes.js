@@ -20,6 +20,7 @@ const invoiceController = require('../controllers/invoice.controller');
 const { verifyToken } = require('../middleware/auth');
 
 router.get('/next-no', verifyToken, invoiceController.getNextInvoiceNo);
+router.get('/check-jobcard', verifyToken, invoiceController.checkJobCardDuplicate);
 router.get('/labour-names', verifyToken, invoiceController.getLabourNames);
 router.get('/labour/list', verifyToken, invoiceController.getLabourInvoices);
 router.get('/insurance/list', verifyToken, invoiceController.getInsuranceInvoices);

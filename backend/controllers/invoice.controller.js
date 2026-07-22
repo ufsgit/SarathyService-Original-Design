@@ -40,6 +40,27 @@ function generateNextInvoiceNumber(lastInvoiceNumber, newInvoiceDate, defaultPre
     const newSequenceStr = newSequenceNum.toString().padStart(5, '0');
     return `${prefix}${targetFYStr}${branchCode}${newSequenceStr}`;
 }
+
+exports.checkJobCardDuplicate = async (req, res) => {
+    try {
+        const { jobcard, excludeId } = req.query;
+        if (!jobcard) return res.json({ exists: false });
+
+        let query = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ?';
+        let params = [jobcard, jobcard];
+        
+        if (excludeId) {
+            query = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? AND inv_id != ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ? AND inv_id != ?';
+            params = [jobcard, excludeId, jobcard, excludeId];
+        }
+
+        const [exists] = await pool.query(query, params);
+        res.json({ exists: exists.length > 0 });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};
+
 // Create labour invoice
 exports.createLabourInvoice = async (req, res) => {
     console.log('createLabourInvoice req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);

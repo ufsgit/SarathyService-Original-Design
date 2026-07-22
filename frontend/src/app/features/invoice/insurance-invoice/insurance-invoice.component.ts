@@ -25,6 +25,7 @@ export class InsuranceInvoiceComponent implements OnInit {
   pendingRegNo = '';
   isLoading = false;
   display_inv_no = '';
+  jobCardExistsError = false;
 
   // Searchable Select Options
   branchOptions: string[] = [];
@@ -454,6 +455,27 @@ export class InsuranceInvoiceComponent implements OnInit {
     this.showAddCustomerModal = false;
   }
 
+  onJobCardBlur() {
+    if (this.form.inv_job_card_no) {
+      this.api.checkJobCardDuplicate(this.form.inv_job_card_no, this.invoiceId || undefined).subscribe({
+        next: (res) => {
+          this.jobCardExistsError = res.exists;
+          if (this.jobCardExistsError) {
+            this.notify.error('Jobcard number already exists (' + this.form.inv_job_card_no + ')');
+          }
+        },
+        error: (err) => {
+          console.error('Error checking job card:', err);
+          if (err.status === 404) {
+            this.notify.error('Backend needs to be restarted to check job cards.');
+          }
+        }
+      });
+    } else {
+      this.jobCardExistsError = false;
+    }
+  }
+
   private validateForm(isBilling: boolean): boolean {
     const missing: string[] = [];
     if (!this.form.inv_branch) missing.push('Branch Name');
@@ -473,6 +495,11 @@ export class InsuranceInvoiceComponent implements OnInit {
       if (!this.form.inv_mechna) missing.push('Mechanic Name');
     }
     if (!this.form.inv_repair_typ) missing.push('Repair Type');
+
+    if (this.jobCardExistsError) {
+        this.notify.error('Cannot save: Jobcard number already exists.');
+        return false;
+    }
     if (!this.form.inv_surveyor) missing.push('Surveyor Name');
 
     if (missing.length > 0) {
@@ -563,7 +590,8 @@ export class InsuranceInvoiceComponent implements OnInit {
           this.isLoading = false;
           this.notify.success('Invoice updated successfully');
           setTimeout(() => {
-            this.router.navigate(['/admin/reports/previous-bills/insurance']);
+            const basePath = this.auth.isAdmin ? '/admin' : '/staff';
+            this.router.navigate([`${basePath}/reports/previous-bills/insurance`]);
           }, 1500);
         },
         error: (e: any) => {
@@ -625,7 +653,8 @@ export class InsuranceInvoiceComponent implements OnInit {
 
         this.notify.success('Invoice finalized and print triggered.');
         setTimeout(() => {
-          this.router.navigate(['/admin/reports/previous-bills/insurance']);
+          const basePath = this.auth.isAdmin ? '/admin' : '/staff';
+          this.router.navigate([`${basePath}/reports/previous-bills/insurance`]);
         }, 1500);
       },
       error: (e: any) => {

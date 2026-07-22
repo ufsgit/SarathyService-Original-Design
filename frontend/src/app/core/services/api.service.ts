@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -63,6 +63,11 @@ export class ApiService {
     const params: any = {};
     if (branchId) params['branchId'] = branchId.toString();
     return this.http.get<any[]>(`${this.baseUrl}/customers`, { params });
+  }
+  checkJobCardDuplicate(jobcard: string, excludeId?: number): Observable<{exists: boolean}> {
+    let params = new HttpParams().set('jobcard', jobcard);
+    if (excludeId) params = params.set('excludeId', excludeId.toString());
+    return this.http.get<{exists: boolean}>(`${this.baseUrl}/invoices/check-jobcard`, { params });
   }
   getCustomer(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/customers/${id}`); }
   getCustomerByReg(regNo: string): Observable<any> { return this.http.get<any>(`${this.baseUrl}/customers/reg/${regNo}`); }
