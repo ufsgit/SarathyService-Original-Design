@@ -140,83 +140,136 @@ exports.createLabourInvoice = async (req, res) => {
     }
 };
 
-// Create insurance invoice
+// Create insurance invoice not SP
+// exports.createInsuranceInvoice = async (req, res) => {
+//     console.log('createInsuranceInvoice req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
+//     const conn = await pool.getConnection();
+//     try {
+//         await conn.beginTransaction();
+//         const d = req.body;
+
+//         if (d.inv_no) {
+//             const [exists] = await conn.query(
+//                 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_no = ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_no = ?',
+//                 [d.inv_no, d.inv_no]
+//             );
+//             if (exists.length > 0) {
+//                 await conn.rollback();
+//                 conn.release();
+//                 return res.status(400).json({ message: 'Invoice number already exists (' + d.inv_no + ')' });
+//             }
+//         }
+
+//         if (d.inv_job_card_no) {
+//             const [exists] = await conn.query(
+//                 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ?',
+//                 [d.inv_job_card_no, d.inv_job_card_no]
+//             );
+//             if (exists.length > 0) {
+//                 await conn.rollback();
+//                 conn.release();
+//                 return res.status(400).json({ message: 'Jobcard number already exists (' + d.inv_job_card_no + ')' });
+//             }
+//         }
+
+//         const query = `INSERT INTO tbl_readyfor_labour (
+//             inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type,
+//             inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl,
+//             inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, 
+//             inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total,
+//             insurance_id, insurance_serveyor, status, ready_status, inv_cesstotal
+//         ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
+//         const values = [
+//             d.inv_no || '', d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '', d.inv_inv_date, d.inv_type || 'Cash',
+//             d.inv_job_card_no || '', d.inv_jcard_date, d.inv_repair_typ || '', d.inv_km || d.inv_km_in || '', d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
+//             d.inv_sale_date || '', d.inv_taxpay || '', d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || '',
+//             d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0,
+//             d.inv_insurance_company || d.insurance_id || null, d.inv_surveyor || d.insurance_serveyor || '', 1, 0, 0 // status = 1 (Insurance), ready_status = 0
+//         ];
+
+//         const [result] = await conn.query(query, values);
+//         const invId = result.insertId;
+
+//         // Insert items into tbl_readyfor_bill
+//         if (d.items && d.items.length > 0) {
+//             for (const item of d.items) {
+//                 await conn.query(
+//                     `INSERT INTO tbl_readyfor_bill (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
+//             lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess)
+//           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+//                     [invId, item.ic_labour_code || item.lc_lab_code || item.ic_code || '', item.ic_type || item.lc_type || 'spare',
+//                         item.ic_particular || item.lc_lb_name, item.ic_hsn || item.lc_sacode || '998729',
+//                         String(item.ic_rate || item.lc_rate || 0), String(item.ic_disc_per || item.lc_disc_p || 0), String(item.lc_disc || item.ic_disc || 0),
+//                         String(item.ic_taxable_amt || item.lc_tax_amunt || 0),
+//                         String(item.ic_sgst_p || item.lc_sgst_p || 9), String(item.ic_sgst_amt || item.lc_sgst_a || 0),
+//                         String(item.ic_cgst_p || item.lc_cgst_p || 9), String(item.ic_cgst_amt || item.lc_cgst_a || 0),
+//                         String(item.ic_total || item.lc_amount || 0), String(item.lc_cess || 0)]
+//                 );
+//             }
+//         }
+
+//         await conn.commit();
+//         res.status(201).json({ message: 'Insurance invoice created', id: invId });
+//     } catch (err) {
+//         await conn.rollback();
+//         console.error('Create insurance invoice error:', err);
+//         res.status(500).json({ message: 'Server error', error: err.message });
+//     } finally {
+//         conn.release();
+//     }
+// };
+
+// Create insurance invoice SP
 exports.createInsuranceInvoice = async (req, res) => {
-    console.log('createInsuranceInvoice req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
-    const conn = await pool.getConnection();
+    console.log('createInsuranceInvoice_SP req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
-        await conn.beginTransaction();
         const d = req.body;
 
-        if (d.inv_no) {
-            const [exists] = await conn.query(
-                'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_no = ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_no = ?',
-                [d.inv_no, d.inv_no]
-            );
-            if (exists.length > 0) {
-                await conn.rollback();
-                conn.release();
-                return res.status(400).json({ message: 'Invoice number already exists (' + d.inv_no + ')' });
-            }
+        const [result] = await pool.query(
+            'CALL sp_createInsuranceInvoice(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                d.inv_no || '', 
+                d.inv_cus || '', 
+                d.inv_cus_addres || '', 
+                d.inv_pho || '', 
+                d.inv_cus_gstin || d.inv_gstin || '', 
+                d.inv_inv_date, 
+                d.inv_type || 'Cash',
+                d.inv_job_card_no || '', 
+                d.inv_jcard_date, 
+                d.inv_repair_typ || '', 
+                d.inv_km || d.inv_km_in || '', 
+                d.in_registr || '', 
+                d.inv_chassis || '', 
+                d.in_engine || d.inv_engine || '', 
+                d.inv_modl || '',
+                d.inv_sale_date || '', 
+                d.inv_taxpay || '', 
+                d.inv_advisername || '', 
+                d.inv_mechna || '', 
+                d.inv_branch || '',
+                d.inv_discount || 0, 
+                d.inv_taxable_total || d.inv_taxtotal || 0, 
+                d.inv_sgst || 0, 
+                d.inv_cgst || 0, 
+                d.inv_final_amount || d.inv_total || 0,
+                d.inv_insurance_company || d.insurance_id || null, 
+                d.inv_surveyor || d.insurance_serveyor || '',
+                d.items ? JSON.stringify(d.items) : '[]'
+            ]
+        );
+        
+        const row = result && result[0] && result[0][0] ? result[0][0] : null;
+        
+        if (!row || row.invId === 0) {
+            return res.status(400).json({ message: row ? row.message : 'Failed to create invoice' });
         }
 
-        if (d.inv_job_card_no) {
-            const [exists] = await conn.query(
-                'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ?',
-                [d.inv_job_card_no, d.inv_job_card_no]
-            );
-            if (exists.length > 0) {
-                await conn.rollback();
-                conn.release();
-                return res.status(400).json({ message: 'Jobcard number already exists (' + d.inv_job_card_no + ')' });
-            }
-        }
-
-        const query = `INSERT INTO tbl_readyfor_labour (
-            inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type,
-            inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl,
-            inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, 
-            inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total,
-            insurance_id, insurance_serveyor, status, ready_status, inv_cesstotal
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
-
-        const values = [
-            d.inv_no || '', d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '', d.inv_inv_date, d.inv_type || 'Cash',
-            d.inv_job_card_no || '', d.inv_jcard_date, d.inv_repair_typ || '', d.inv_km || d.inv_km_in || '', d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
-            d.inv_sale_date || '', d.inv_taxpay || '', d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || '',
-            d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0,
-            d.inv_insurance_company || d.insurance_id || null, d.inv_surveyor || d.insurance_serveyor || '', 1, 0, 0 // status = 1 (Insurance), ready_status = 0
-        ];
-
-        const [result] = await conn.query(query, values);
-        const invId = result.insertId;
-
-        // Insert items into tbl_readyfor_bill
-        if (d.items && d.items.length > 0) {
-            for (const item of d.items) {
-                await conn.query(
-                    `INSERT INTO tbl_readyfor_bill (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
-            lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess)
-          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-                    [invId, item.ic_labour_code || item.lc_lab_code || item.ic_code || '', item.ic_type || item.lc_type || 'spare',
-                        item.ic_particular || item.lc_lb_name, item.ic_hsn || item.lc_sacode || '998729',
-                        String(item.ic_rate || item.lc_rate || 0), String(item.ic_disc_per || item.lc_disc_p || 0), String(item.lc_disc || item.ic_disc || 0),
-                        String(item.ic_taxable_amt || item.lc_tax_amunt || 0),
-                        String(item.ic_sgst_p || item.lc_sgst_p || 9), String(item.ic_sgst_amt || item.lc_sgst_a || 0),
-                        String(item.ic_cgst_p || item.lc_cgst_p || 9), String(item.ic_cgst_amt || item.lc_cgst_a || 0),
-                        String(item.ic_total || item.lc_amount || 0), String(item.lc_cess || 0)]
-                );
-            }
-        }
-
-        await conn.commit();
-        res.status(201).json({ message: 'Insurance invoice created', id: invId });
+        res.status(201).json({ message: 'Insurance invoice created', id: row.invId });
     } catch (err) {
-        await conn.rollback();
         console.error('Create insurance invoice error:', err);
         res.status(500).json({ message: 'Server error', error: err.message });
-    } finally {
-        conn.release();
     }
 };
 
