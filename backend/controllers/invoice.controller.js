@@ -288,7 +288,7 @@ exports.getLabourInvoices = async (req, res) => {
     }
 };
 
-// Get insurance invoices
+// Get insurance invoices SP
 exports.getInsuranceInvoices = async (req, res) => {
     console.log('getInsuranceInvoices req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
@@ -306,7 +306,7 @@ exports.getInsuranceInvoices = async (req, res) => {
 // Get single invoice with items
 // Get single invoice details
 exports.getInvoice = async (req, res) => {
-    console.log('getInvoice req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
+    console.log('getInvoicespp req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
         // Try finding in tbl_readyfor_labour first (Ready state)
         let [invoices] = await pool.query(
@@ -605,44 +605,72 @@ exports.getReadyLabourBills = async (req, res) => {
     }
 };
 
-// Get ready insurance bills with pagination
+// Get ready insurance bills with pagination not sp
+// exports.getReadyInsuranceBills = async (req, res) => {
+//     console.log('getReadyInsuranceBills req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
+//     try {
+//         const { page = 1, pageSize = 10, search = '', branchId } = req.query;
+//         const offset = (parseInt(page) - 1) * parseInt(pageSize);
+//         const limit = parseInt(pageSize);
+
+//         let whereClause = 'WHERE i.status = 1 AND i.ready_status = 1';
+//         const params = [];
+
+//         if (branchId) {
+//             whereClause += ' AND i.inv_branch = ?';
+//             params.push(branchId);
+//         }
+
+//         if (search) {
+//             whereClause += ' AND (i.in_registr LIKE ? OR i.inv_cus LIKE ? OR i.inv_job_card_no LIKE ? OR i.inv_no LIKE ?)';
+//             const s = `%${search}%`;
+//             params.push(s, s, s, s);
+//         }
+
+//         const countQuery = `SELECT COUNT(*) as total FROM tbl_readyfor_labour i ${whereClause}`;
+//         const [countResult] = await pool.query(countQuery, params);
+//         const total = countResult[0].total;
+
+//         const dataQuery = `
+//             SELECT i.inv_id, i.in_registr, i.inv_cus, i.inv_pho, i.inv_cus_addres, b.branch_name, i.inv_branch, i.inv_job_card_no, i.inv_no, i.in_engine, i.in_engine AS inv_engine, i.inv_jcard_date, i.inv_repair_typ, i.inv_modl, i.inv_total 
+//             FROM tbl_readyfor_labour i 
+//             LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+//             ${whereClause} 
+//             ORDER BY i.inv_id DESC 
+//             LIMIT ? OFFSET ?
+//         `;
+//         const [rows] = await pool.query(dataQuery, [...params, limit, offset]);
+
+//         res.json({ data: rows, total, page: parseInt(page), pageSize: limit });
+//     } catch (err) {
+//         res.status(500).json({ message: 'Server error', error: err.message });
+//     }
+// };
+
+// Get ready insurance bills with pagination SP
 exports.getReadyInsuranceBills = async (req, res) => {
-    console.log('getReadyInsuranceBills req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
+    console.log('getReadyInsuranceBills_SP req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
-        const { page = 1, pageSize = 10, search = '', branchId } = req.query;
+        const { page = 1, pageSize = 10, search = '', branchId = '' } = req.query;
         const offset = (parseInt(page) - 1) * parseInt(pageSize);
         const limit = parseInt(pageSize);
 
-        let whereClause = 'WHERE i.status = 1 AND i.ready_status = 1';
-        const params = [];
+        const params = [
+            branchId || null,
+            search || null,
+            limit,
+            offset
+        ];
 
-        if (branchId) {
-            whereClause += ' AND i.inv_branch = ?';
-            params.push(branchId);
-        }
-
-        if (search) {
-            whereClause += ' AND (i.in_registr LIKE ? OR i.inv_cus LIKE ? OR i.inv_job_card_no LIKE ? OR i.inv_no LIKE ?)';
-            const s = `%${search}%`;
-            params.push(s, s, s, s);
-        }
-
-        const countQuery = `SELECT COUNT(*) as total FROM tbl_readyfor_labour i ${whereClause}`;
-        const [countResult] = await pool.query(countQuery, params);
-        const total = countResult[0].total;
-
-        const dataQuery = `
-            SELECT i.inv_id, i.in_registr, i.inv_cus, i.inv_pho, i.inv_cus_addres, b.branch_name, i.inv_branch, i.inv_job_card_no, i.inv_no, i.in_engine, i.in_engine AS inv_engine, i.inv_jcard_date, i.inv_repair_typ, i.inv_modl, i.inv_total 
-            FROM tbl_readyfor_labour i 
-            LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
-            ${whereClause} 
-            ORDER BY i.inv_id DESC 
-            LIMIT ? OFFSET ?
-        `;
-        const [rows] = await pool.query(dataQuery, [...params, limit, offset]);
+        const [results] = await pool.query('CALL sp_getReadyInsuranceBills(?, ?, ?, ?)', params);
+        
+        // results[0] contains the COUNT result set, results[1] contains the DATA result set
+        const total = results[0][0].total;
+        const rows = results[1];
 
         res.json({ data: rows, total, page: parseInt(page), pageSize: limit });
     } catch (err) {
+        console.error('getReadyInsuranceBills error:', err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
