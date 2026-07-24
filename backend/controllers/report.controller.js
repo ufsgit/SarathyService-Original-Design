@@ -122,7 +122,6 @@ exports.getJobCardSummary = async (req, res) => {
     }
 };
 
-
 // Job Card Statement (flat table with same filters as Summary)
 exports.getJobCardStatement = async (req, res) => {
     try {
@@ -293,60 +292,87 @@ exports.getJobCardStatement = async (req, res) => {
     }
 };
 
-
-
-
 // Previous Labour Bills (with Pagination)
+// exports.getPreviousLabourBills = async (req, res) => {
+//     try {
+//         const page = parseInt(req.query.page) || 1;
+//         const pageSize = parseInt(req.query.pageSize) || 10;
+//         const search = String(req.query.search || '').trim();
+//         const branchId = req.query.branchId;
+//         const offset = (page - 1) * pageSize;
+
+//         let whereClause = "WHERE ((status = 0) OR (status = 1 AND (insurance_id IS NULL OR insurance_id = 0) AND inv_repair_typ != 'Accidental Repair')) AND ready_status = 0";
+//         const params = [];
+
+//         if (branchId) {
+//             whereClause += " AND inv_branch = ?";
+//             params.push(branchId);
+//         }
+
+//         if (search) {
+//             whereClause += " AND (in_registr LIKE ? OR inv_cus LIKE ? OR inv_pho LIKE ? OR inv_no LIKE ? OR inv_job_card_no LIKE ?)";
+//             const s = `%${search}%`;
+//             params.push(s, s, s, s, s);
+//         }
+
+//         // Count total records
+//         const [countResult] = await pool.query(`SELECT COUNT(*) as total FROM tbl_invoice_labour ${whereClause}`, params);
+//         const total = countResult[0].total;
+
+//         // Fetch paginated data (Deferred Join Optimization)
+//         const [idRows] = await pool.query(
+//             `SELECT inv_id FROM tbl_invoice_labour ${whereClause} ORDER BY inv_id DESC LIMIT ? OFFSET ?`,
+//             [...params, pageSize, offset]
+//         );
+
+//         let rows = [];
+//         if (idRows.length > 0) {
+//             const ids = idRows.map(r => r.inv_id);
+//             const [fullRows] = await pool.query(
+//                 `SELECT tbl_invoice_labour.inv_id, tbl_invoice_labour.in_registr, tbl_invoice_labour.inv_cus, tbl_invoice_labour.inv_cus_addres, tbl_invoice_labour.inv_pho, tbl_invoice_labour.inv_branch, tbl_branch.branch_name, tbl_invoice_labour.inv_job_card_no, tbl_invoice_labour.inv_no, tbl_invoice_labour.inv_jcard_date, tbl_invoice_labour.inv_repair_typ, tbl_invoice_labour.inv_modl, tbl_invoice_labour.inv_total 
+//                  FROM tbl_invoice_labour 
+//                  LEFT JOIN tbl_branch ON tbl_invoice_labour.inv_branch = tbl_branch.b_id 
+//                  WHERE tbl_invoice_labour.inv_id IN (?)
+//                  ORDER BY tbl_invoice_labour.inv_id DESC`,
+//                 [ids]
+//             );
+//             rows = fullRows;
+//         }
+
+//         res.json({ data: rows, total, page, pageSize });
+//     } catch (err) {
+//         console.log("getPreviousLabourBills error:", err);
+//         res.status(500).json({ message: 'Server error', error: err.message });
+//     }
+// };
 exports.getPreviousLabourBills = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
-        const search = String(req.query.search || '').trim();
-        const branchId = req.query.branchId;
-        const offset = (page - 1) * pageSize;
+        const search = String(req.query.search || "").trim();
+        const branchId = req.query.branchId || null;
 
-        let whereClause = "WHERE ((status = 0) OR (status = 1 AND (insurance_id IS NULL OR insurance_id = 0) AND inv_repair_typ != 'Accidental Repair')) AND ready_status = 0";
-        const params = [];
-
-        if (branchId) {
-            whereClause += " AND inv_branch = ?";
-            params.push(branchId);
-        }
-
-        if (search) {
-            whereClause += " AND (in_registr LIKE ? OR inv_cus LIKE ? OR inv_pho LIKE ? OR inv_no LIKE ? OR inv_job_card_no LIKE ?)";
-            const s = `%${search}%`;
-            params.push(s, s, s, s, s);
-        }
-
-        // Count total records
-        const [countResult] = await pool.query(`SELECT COUNT(*) as total FROM tbl_invoice_labour ${whereClause}`, params);
-        const total = countResult[0].total;
-
-        // Fetch paginated data (Deferred Join Optimization)
-        const [idRows] = await pool.query(
-            `SELECT inv_id FROM tbl_invoice_labour ${whereClause} ORDER BY inv_id DESC LIMIT ? OFFSET ?`,
-            [...params, pageSize, offset]
+        const [result] = await pool.query(
+            "CALL getPreviousLabourBills(?,?,?,?)",
+            [page, pageSize, search, branchId]
         );
 
-        let rows = [];
-        if (idRows.length > 0) {
-            const ids = idRows.map(r => r.inv_id);
-            const [fullRows] = await pool.query(
-                `SELECT tbl_invoice_labour.inv_id, tbl_invoice_labour.in_registr, tbl_invoice_labour.inv_cus, tbl_invoice_labour.inv_cus_addres, tbl_invoice_labour.inv_pho, tbl_invoice_labour.inv_branch, tbl_branch.branch_name, tbl_invoice_labour.inv_job_card_no, tbl_invoice_labour.inv_no, tbl_invoice_labour.inv_jcard_date, tbl_invoice_labour.inv_repair_typ, tbl_invoice_labour.inv_modl, tbl_invoice_labour.inv_total 
-                 FROM tbl_invoice_labour 
-                 LEFT JOIN tbl_branch ON tbl_invoice_labour.inv_branch = tbl_branch.b_id 
-                 WHERE tbl_invoice_labour.inv_id IN (?)
-                 ORDER BY tbl_invoice_labour.inv_id DESC`,
-                [ids]
-            );
-            rows = fullRows;
-        }
+        const total = result[0][0].total;
+        const rows = result[1];
 
-        res.json({ data: rows, total, page, pageSize });
+        res.json({
+            data: rows,
+            total,
+            page,
+            pageSize
+        });
+
     } catch (err) {
-        console.log("getPreviousLabourBills error:", err);
-        res.status(500).json({ message: 'Server error', error: err.message });
+        console.error("getPreviousLabourBills error:", err);
+        res.status(500).json({
+            message: "Server error",
+            error: err.message
+        });
     }
 };
 
@@ -433,22 +459,46 @@ exports.getPreviousInsuranceBills = async (req, res) => {
 };
 
 // Filter options (branches, mechanics, advisors, insurance companies)
+// exports.getFilterOptions = async (req, res) => {
+//     try {
+//         const [branches] = await pool.query('SELECT b_id, branch_name, branch_id FROM tbl_branch');
+//         const [mechanics] = await pool.query("SELECT emp_id, e_first_name, e_code FROM tbl_employee WHERE (e_designation LIKE '%mechanic%' OR e_designation = 'Mechanic') AND status = 'Active'");
+//         const [advisors] = await pool.query("SELECT emp_id, e_first_name, e_code FROM tbl_employee WHERE (e_designation LIKE '%advisor%' OR e_designation = 'Service Advisor') AND status = 'Active'");
+//         const [insuranceCompanies] = await pool.query("SELECT com_id, icompany_name FROM tbl_insurance_company");
+
+//         const repairTypes = [
+//             "First free service", "Second free service", "Third free service",
+//             "Paid service", "AMC service", "Accidental Repair",
+//             "Other Repairs(within warranty)", "Other Repairs(outside warranty)"
+//         ];
+
+//         res.json({ branches, mechanics, advisors, insuranceCompanies, repairTypes });
+//     } catch (err) {
+//         console.log("getFilterOptions error:", err);
+//         res.status(500).json({ message: 'Server error', error: err.message });
+//     }
+// };
 exports.getFilterOptions = async (req, res) => {
     try {
-        const [branches] = await pool.query('SELECT b_id, branch_name, branch_id FROM tbl_branch');
-        const [mechanics] = await pool.query("SELECT emp_id, e_first_name, e_code FROM tbl_employee WHERE (e_designation LIKE '%mechanic%' OR e_designation = 'Mechanic') AND status = 'Active'");
-        const [advisors] = await pool.query("SELECT emp_id, e_first_name, e_code FROM tbl_employee WHERE (e_designation LIKE '%advisor%' OR e_designation = 'Service Advisor') AND status = 'Active'");
-        const [insuranceCompanies] = await pool.query("SELECT com_id, icompany_name FROM tbl_insurance_company");
+        const [result] = await pool.query(
+            'CALL getFilterOptions()'
+        );
 
-        const repairTypes = [
-            "First free service", "Second free service", "Third free service",
-            "Paid service", "AMC service", "Accidental Repair",
-            "Other Repairs(within warranty)", "Other Repairs(outside warranty)"
-        ];
+        res.json({
+            branches: result[0],
+            mechanics: result[1],
+            advisors: result[2],
+            insuranceCompanies: result[3],
+            repairTypes: result[4].map(x => x.repair_type)
+        });
 
-        res.json({ branches, mechanics, advisors, insuranceCompanies, repairTypes });
     } catch (err) {
         console.log("getFilterOptions error:", err);
-        res.status(500).json({ message: 'Server error', error: err.message });
+
+        res.status(500).json({
+            message: 'Server error',
+            error: err.message
+        });
     }
 };
+
