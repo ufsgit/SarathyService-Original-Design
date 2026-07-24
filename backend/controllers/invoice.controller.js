@@ -288,7 +288,7 @@ exports.getLabourInvoices = async (req, res) => {
     }
 };
 
-// Get insurance invoices SP
+// Get insurance invoices
 exports.getInsuranceInvoices = async (req, res) => {
     console.log('getInsuranceInvoices req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
@@ -544,7 +544,6 @@ exports.updateInvoice = async (req, res) => {
         conn.release();
     }
 };
-
 
 // Mark invoice as ready
 exports.markReady = async (req, res) => {

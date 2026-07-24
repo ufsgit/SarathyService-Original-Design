@@ -350,52 +350,80 @@ exports.getPreviousLabourBills = async (req, res) => {
     }
 };
 
-// Previous Insurance Bills (with Pagination)
+// Previous Insurance Bills (with Pagination) not SP
+// exports.getPreviousInsuranceBills = async (req, res) => {
+//     try {
+//         const page = parseInt(req.query.page) || 1;
+//         const pageSize = parseInt(req.query.pageSize) || 10;
+//         const search = String(req.query.search || '').trim();
+//         const branchId = req.query.branchId;
+//         const offset = (page - 1) * pageSize;
+
+//         let whereClause = "WHERE (status = 1 AND (insurance_id > 0 OR inv_repair_typ = 'Accidental Repair')) AND ready_status = 0";
+//         const params = [];
+
+//         if (branchId) {
+//             whereClause += " AND inv_branch = ?";
+//             params.push(branchId);
+//         }
+
+//         if (search) {
+//             whereClause += " AND (in_registr LIKE ? OR inv_cus LIKE ? OR inv_pho LIKE ? OR inv_no LIKE ? OR inv_job_card_no LIKE ?)";
+//             const s = `%${search}%`;
+//             params.push(s, s, s, s, s);
+//         }
+
+//         // Count total records
+//         const [countResult] = await pool.query(`SELECT COUNT(*) as total FROM tbl_invoice_labour ${whereClause}`, params);
+//         const total = countResult[0].total;
+
+//         // Fetch paginated data (Deferred Join Optimization)
+//         const [idRows] = await pool.query(
+//             `SELECT inv_id FROM tbl_invoice_labour ${whereClause} ORDER BY inv_id DESC LIMIT ? OFFSET ?`,
+//             [...params, pageSize, offset]
+//         );
+
+//         let rows = [];
+//         if (idRows.length > 0) {
+//             const ids = idRows.map(r => r.inv_id);
+//             const [fullRows] = await pool.query(
+//                 `SELECT tbl_invoice_labour.inv_id, tbl_invoice_labour.in_registr, tbl_invoice_labour.inv_cus, tbl_invoice_labour.inv_cus_addres, tbl_invoice_labour.inv_pho, tbl_invoice_labour.inv_branch, tbl_branch.branch_name, tbl_invoice_labour.inv_job_card_no, tbl_invoice_labour.inv_no, tbl_invoice_labour.inv_jcard_date, tbl_invoice_labour.inv_repair_typ, tbl_invoice_labour.inv_modl, tbl_invoice_labour.inv_total 
+//                  FROM tbl_invoice_labour 
+//                  LEFT JOIN tbl_branch ON tbl_invoice_labour.inv_branch = tbl_branch.b_id 
+//                  WHERE tbl_invoice_labour.inv_id IN (?)
+//                  ORDER BY tbl_invoice_labour.inv_id DESC`,
+//                 [ids]
+//             );
+//             rows = fullRows;
+//         }
+
+//         res.json({ data: rows, total, page, pageSize });
+//     } catch (err) {
+//         console.log("getPreviousInsuranceBills error:", err);
+//         res.status(500).json({ message: 'Server error', error: err.message });
+//     }
+// };
+
+// Previous Insurance Bills (with Pagination) SP
 exports.getPreviousInsuranceBills = async (req, res) => {
+    console.log("getPreviousInsuranceBillsSP req.query:", req.query);
     try {
         const page = parseInt(req.query.page) || 1;
         const pageSize = parseInt(req.query.pageSize) || 10;
         const search = String(req.query.search || '').trim();
-        const branchId = req.query.branchId;
+        const branchId = req.query.branchId || null;
         const offset = (page - 1) * pageSize;
 
-        let whereClause = "WHERE (status = 1 AND (insurance_id > 0 OR inv_repair_typ = 'Accidental Repair')) AND ready_status = 0";
-        const params = [];
-
-        if (branchId) {
-            whereClause += " AND inv_branch = ?";
-            params.push(branchId);
-        }
-
-        if (search) {
-            whereClause += " AND (in_registr LIKE ? OR inv_cus LIKE ? OR inv_pho LIKE ? OR inv_no LIKE ? OR inv_job_card_no LIKE ?)";
-            const s = `%${search}%`;
-            params.push(s, s, s, s, s);
-        }
-
-        // Count total records
-        const [countResult] = await pool.query(`SELECT COUNT(*) as total FROM tbl_invoice_labour ${whereClause}`, params);
-        const total = countResult[0].total;
-
-        // Fetch paginated data (Deferred Join Optimization)
-        const [idRows] = await pool.query(
-            `SELECT inv_id FROM tbl_invoice_labour ${whereClause} ORDER BY inv_id DESC LIMIT ? OFFSET ?`,
-            [...params, pageSize, offset]
+        // Call the Stored Procedure
+        const [results] = await pool.query(
+            'CALL sp_getPreviousInsuranceBills(?, ?, ?, ?)',
+            [branchId, search, pageSize, offset]
         );
 
-        let rows = [];
-        if (idRows.length > 0) {
-            const ids = idRows.map(r => r.inv_id);
-            const [fullRows] = await pool.query(
-                `SELECT tbl_invoice_labour.inv_id, tbl_invoice_labour.in_registr, tbl_invoice_labour.inv_cus, tbl_invoice_labour.inv_cus_addres, tbl_invoice_labour.inv_pho, tbl_invoice_labour.inv_branch, tbl_branch.branch_name, tbl_invoice_labour.inv_job_card_no, tbl_invoice_labour.inv_no, tbl_invoice_labour.inv_jcard_date, tbl_invoice_labour.inv_repair_typ, tbl_invoice_labour.inv_modl, tbl_invoice_labour.inv_total 
-                 FROM tbl_invoice_labour 
-                 LEFT JOIN tbl_branch ON tbl_invoice_labour.inv_branch = tbl_branch.b_id 
-                 WHERE tbl_invoice_labour.inv_id IN (?)
-                 ORDER BY tbl_invoice_labour.inv_id DESC`,
-                [ids]
-            );
-            rows = fullRows;
-        }
+        // results[0] contains the total count from the first SELECT in the SP
+        // results[1] contains the paginated rows from the second SELECT in the SP
+        const total = results[0][0].total;
+        const rows = results[1];
 
         res.json({ data: rows, total, page, pageSize });
     } catch (err) {
