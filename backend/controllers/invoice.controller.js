@@ -675,7 +675,7 @@ exports.updateInvoice = async (req, res) => {
         const d = req.body;
 
         const [result] = await conn.query(
-    `CALL updateInvoice(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    `CALL updateInvoice(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
         d.inv_id || 0,
         d.inv_no || "",
@@ -703,10 +703,8 @@ exports.updateInvoice = async (req, res) => {
         d.inv_sgst || 0,
         d.inv_cgst || 0,
         d.inv_final_amount || d.inv_total || 0,
-        null,
-        null,
-        0,
-        0,
+        d.insurance_id || 0,
+        d.insurance_serveyor || "",      
         0,
         JSON.stringify(d.items || []),
         d.isFinalized ? 1 : 0
@@ -976,7 +974,7 @@ exports.finalizeBill = async (req, res) => {
     console.log('finalizeBill req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     const conn = await pool.getConnection();
     try {
-        await conn.beginTransaction();
+        
 
         // 1. Find the invoice in Ready table
         const [readyInvoices] = await conn.query(
@@ -993,8 +991,8 @@ exports.finalizeBill = async (req, res) => {
 
         if (readyInvoices.length === 0) {
             // Already finalized or not found
-            await conn.rollback();
-            conn.release();
+            // await conn.rollback();
+            // conn.release();
             return res.status(200).json({ message: 'Bill already finalized or not found', inv_id: req.params.id });
         }
 
@@ -1007,6 +1005,7 @@ exports.finalizeBill = async (req, res) => {
 
         // 3. Finalize it
         // 1. Get the latest invoice number with an exclusive row lock
+        await conn.beginTransaction();
         const [lastInvRows] = await conn.query('SELECT inv_no FROM tbl_invoice_labour ORDER BY inv_id DESC LIMIT 1 FOR UPDATE');
         let lastInvoiceNumber = '';
         if (lastInvRows.length > 0) {
