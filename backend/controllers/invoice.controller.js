@@ -497,248 +497,250 @@ exports.getInvoice = async (req, res) => {
 };
 
 
-// Update invoice
-exports.updateInvoice = async (req, res) => {
-    console.log('updateInvoice req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
-    const conn = await pool.getConnection();
-    try {
-        // await conn.beginTransaction();
-        const d = req.body;
-
-        if (d.inv_no) {
-            // First check if the invoice number is actually being changed
-            let currentInvNo = null;
-            if (d.isFinalized === true) {
-                const [current] = await conn.query('SELECT inv_no FROM tbl_invoice_labour WHERE inv_id = ?', [req.params.id]);
-                if (current.length > 0)
-                    currentInvNo = current[0].inv_no;
-            } else {
-                const [current] = await conn.query('SELECT inv_no FROM tbl_readyfor_labour WHERE inv_id = ?', [req.params.id]);
-                if (current.length > 0)
-                    currentInvNo = current[0].inv_no;
-            }
-
-            if (currentInvNo !== d.inv_no) {
-                let duplicateQuery = '';
-                let duplicateParams = [];
-                if (d.isFinalized === true) {
-                    duplicateQuery = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_no = ? AND ready_status = 1 UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_no = ? AND inv_id != ?';
-                    duplicateParams = [d.inv_no, d.inv_no, req.params.id];
-                } else {
-                    duplicateQuery = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_no = ? AND inv_id != ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_no = ?';
-                    duplicateParams = [d.inv_no, req.params.id, d.inv_no];
-                }
-                const [exists] = await conn.query(duplicateQuery, duplicateParams);
-                if (exists.length > 0) {
-                    // await conn.rollback();
-                    // conn.release();
-                    return res.status(400).json({ message: 'Invoice number already exists (' + d.inv_no + ')' });
-                }
-            }
-        }
-
-        if (d.inv_job_card_no) {
-            let currentJobCardNo = null;
-            if (d.isFinalized === true) {
-                const [current] = await conn.query('SELECT inv_job_card_no FROM tbl_invoice_labour WHERE inv_id = ?', [req.params.id]);
-                if (current.length > 0) currentJobCardNo = current[0].inv_job_card_no;
-            } else {
-                const [current] = await conn.query('SELECT inv_job_card_no FROM tbl_readyfor_labour WHERE inv_id = ?', [req.params.id]);
-                if (current.length > 0) currentJobCardNo = current[0].inv_job_card_no;
-            }
-
-            if (currentJobCardNo !== d.inv_job_card_no) {
-                let duplicateQuery = '';
-                let duplicateParams = [];
-                if (d.isFinalized === true) {
-                    duplicateQuery = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ? AND inv_id != ?';
-                    duplicateParams = [d.inv_job_card_no, d.inv_job_card_no, req.params.id];
-                } else {
-                    duplicateQuery = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? AND inv_id != ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ?';
-                    duplicateParams = [d.inv_job_card_no, req.params.id, d.inv_job_card_no];
-                }
-                const [exists] = await conn.query(duplicateQuery, duplicateParams);
-                if (exists.length > 0) {
-                    // await conn.rollback();
-                    // conn.release();
-                    return res.status(400).json({ message: 'Jobcard number already exists (' + d.inv_job_card_no + ')' });
-                }
-            }
-        }
-        await conn.beginTransaction();
-        if (d.isFinalized === true) {
-            // Update finalized invoice in-place
-            const mainTable = 'tbl_invoice_labour';
-            const itemsTable = 'tbl_invoice_labour_cost';
-
-            await conn.query(
-                `UPDATE ${mainTable} SET 
-                    inv_cus=?, inv_cus_addres=?, inv_pho=?, inv_cus_gstin=?, 
-                    inv_job_card_no=?, inv_jcard_date=?, inv_inv_date=?, inv_repair_typ=?, inv_km=?, 
-                    in_registr=?, inv_chassis=?, in_engine=?, inv_modl=?,
-                    inv_advisername=?, inv_mechna=?, inv_branch=?,
-                    inv_disc_total=?, inv_taxtotal=?, inv_sgstotal=?, inv_gsttotal=?, inv_total=?,
-                    insurance_id=?, insurance_serveyor=?, inv_sale_date=?, inv_type=?, inv_cesstotal=?
-                WHERE inv_id=?`,
-                [
-                    d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '',
-                    d.inv_job_card_no || '', d.inv_jcard_date, d.inv_inv_date, d.inv_repair_typ || '', d.inv_km || '',
-                    d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
-                    d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || null,
-                    d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0,
-                    d.inv_final_amount || d.inv_total || 0,
-                    d.inv_insurance_company || d.insurance_id || null, d.inv_surveyor || d.insurance_serveyor || '',
-                    d.inv_sale_date || '', d.inv_type || '', d.inv_cesstotal || 0,
-                    req.params.id
-                ]
-            );
-
-            // Delete old items and re-insert
-            await conn.query(`DELETE FROM ${itemsTable} WHERE ic_inv_id = ?`, [req.params.id]);
-            if (d.items && d.items.length > 0) {
-                for (const item of d.items) {
-                    await conn.query(
-                        `INSERT INTO ${itemsTable} (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
-                lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount)
-              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-                        [req.params.id, item.ic_labour_code || item.lc_lab_code || '', item.ic_type || item.lc_type || 'labour',
-                        item.ic_particular || item.lc_lb_name || '', item.ic_hsn || item.lc_sacode || '998729',
-                        String(item.ic_rate || item.lc_rate || 0), String(item.ic_disc_per || item.lc_disc_p || 0), String(item.lc_disc || item.ic_disc || 0),
-                        String(item.ic_taxable_amt || item.lc_tax_amunt || 0),
-                        String(item.ic_sgst_p || item.lc_sgst_p || 9), String(item.ic_sgst_amt || item.lc_sgst_a || 0),
-                        String(item.ic_cgst_p || item.lc_cgst_p || 9), String(item.ic_cgst_amt || item.lc_cgst_a || 0),
-                        String(item.ic_total || item.lc_amount || 0)]
-                    );
-                }
-            }
-
-            await conn.commit();
-            return res.json({ message: 'Invoice updated and remains in Previous Bills' });
-        }
-
-        // Standard update for non-finalized invoices
-        const mainTable = 'tbl_readyfor_labour';
-        const itemsTable = 'tbl_readyfor_bill';
-
-        await conn.query(
-            `UPDATE ${mainTable} SET 
-                inv_cus=?, inv_cus_addres=?, inv_pho=?, inv_cus_gstin=?, 
-                inv_job_card_no=?, inv_jcard_date=?, inv_inv_date=?, inv_repair_typ=?, inv_km=?, 
-                in_registr=?, inv_chassis=?, in_engine=?, inv_modl=?,
-                inv_advisername=?, inv_mechna=?, inv_branch=?,
-                inv_disc_total=?, inv_taxtotal=?, inv_sgstotal=?, inv_gsttotal=?, inv_total=?,
-                insurance_id=?, insurance_serveyor=?, inv_sale_date=?, inv_type=?, inv_cesstotal=?
-            WHERE inv_id=?`,
-            [
-                d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '',
-                d.inv_job_card_no || '', d.inv_jcard_date, d.inv_inv_date, d.inv_repair_typ || '', d.inv_km || '',
-                d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
-                d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || null,
-                d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0,
-                d.inv_insurance_company || d.insurance_id || null, d.inv_surveyor || d.insurance_serveyor || '',
-                d.inv_sale_date || '', d.inv_type || '', d.inv_cesstotal || 0,
-                req.params.id
-            ]
-        );
-
-        // Delete old items and re-insert
-        await conn.query(`DELETE FROM ${itemsTable} WHERE ic_inv_id = ?`, [req.params.id]);
-        if (d.items && d.items.length > 0) {
-            for (const item of d.items) {
-                await conn.query(
-                    `INSERT INTO ${itemsTable} (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
-            lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess)
-          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-                    [req.params.id, item.ic_labour_code || item.lc_lab_code || '', item.ic_type || item.lc_type || 'labour',
-                    item.ic_particular || item.lc_lb_name || '', item.ic_hsn || item.lc_sacode || '998729',
-                    String(item.ic_rate || item.lc_rate || 0), String(item.ic_disc_per || item.lc_disc_p || 0), String(item.lc_disc || item.ic_disc || 0),
-                    String(item.ic_taxable_amt || item.lc_tax_amunt || 0),
-                    String(item.ic_sgst_p || item.lc_sgst_p || 9), String(item.ic_sgst_amt || item.lc_sgst_a || 0),
-                    String(item.ic_cgst_p || item.lc_cgst_p || 9), String(item.ic_cgst_amt || item.lc_cgst_a || 0),
-                    String(item.ic_total || item.lc_amount || 0), String(item.lc_cess || 0)]
-                );
-            }
-        }
-        await conn.commit();
-        res.json({ message: 'Invoice updated' });
-    } catch (err) {
-        await conn.rollback();
-        res.status(500).json({ message: 'Server error', error: err.message });
-    } finally {
-        conn.release();
-    }
-};
-
+// Update invoice not SP
 // exports.updateInvoice = async (req, res) => {
+//     console.log('updateInvoice req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
 //     const conn = await pool.getConnection();
 //     try {
+//         // await conn.beginTransaction();
 //         const d = req.body;
 
-//         const [result] = await conn.query(
-//     `CALL updateInvoice(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-//     [
-//         d.inv_id || 0,
-//         d.inv_no || "",
-//         d.inv_cus || "",
-//         d.inv_cus_addres || "",
-//         d.inv_pho || "",
-//         d.inv_cus_gstin || d.inv_gstin || "",
-//         d.inv_inv_date,
-//         d.inv_type || "Cash",
-//         d.inv_job_card_no || "",
-//         d.inv_jcard_date,
-//         d.inv_repair_typ || "",
-//         d.inv_km || d.inv_km_in || "",
-//         d.in_registr || "",
-//         d.inv_chassis || "",
-//         d.in_engine || d.inv_engine || "",
-//         d.inv_modl || "",
-//         d.inv_sale_date || "",
-//         d.inv_taxpay || "",
-//         d.inv_advisername || "",
-//         d.inv_mechna || "",
-//         d.inv_branch || "",
-//         d.inv_discount || 0,
-//         d.inv_taxable_total || d.inv_taxtotal || 0,
-//         d.inv_sgst || 0,
-//         d.inv_cgst || 0,
-//         d.inv_final_amount || d.inv_total || 0,
-//         d.insurance_id || 0,
-//         d.insurance_serveyor || "",      
-//         0,
-//         JSON.stringify(d.items || []),
-//         d.isFinalized ? 1 : 0
-//     ]
-// );
+//         if (d.inv_no) {
+//             // First check if the invoice number is actually being changed
+//             let currentInvNo = null;
+//             if (d.isFinalized === true) {
+//                 const [current] = await conn.query('SELECT inv_no FROM tbl_invoice_labour WHERE inv_id = ?', [req.params.id]);
+//                 if (current.length > 0)
+//                     currentInvNo = current[0].inv_no;
+//             } else {
+//                 const [current] = await conn.query('SELECT inv_no FROM tbl_readyfor_labour WHERE inv_id = ?', [req.params.id]);
+//                 if (current.length > 0)
+//                     currentInvNo = current[0].inv_no;
+//             }
 
-//        const invId = result[0][0].inv_id;
-
-//         if (invId === -2) {
-//             return res.status(400).json({
-//                 message: `Invoice number already exists: ${d.inv_no}`
-//             });
+//             if (currentInvNo !== d.inv_no) {
+//                 let duplicateQuery = '';
+//                 let duplicateParams = [];
+//                 if (d.isFinalized === true) {
+//                     duplicateQuery = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_no = ? AND ready_status = 1 UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_no = ? AND inv_id != ?';
+//                     duplicateParams = [d.inv_no, d.inv_no, req.params.id];
+//                 } else {
+//                     duplicateQuery = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_no = ? AND inv_id != ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_no = ?';
+//                     duplicateParams = [d.inv_no, req.params.id, d.inv_no];
+//                 }
+//                 const [exists] = await conn.query(duplicateQuery, duplicateParams);
+//                 if (exists.length > 0) {
+//                     // await conn.rollback();
+//                     // conn.release();
+//                     return res.status(400).json({ message: 'Invoice number already exists (' + d.inv_no + ')' });
+//                 }
+//             }
 //         }
 
-//         if (invId === -3) {
-//             return res.status(400).json({
-//                 message: `Jobcard number already exists: ${d.inv_job_card_no}`
-//             });
+//         if (d.inv_job_card_no) {
+//             let currentJobCardNo = null;
+//             if (d.isFinalized === true) {
+//                 const [current] = await conn.query('SELECT inv_job_card_no FROM tbl_invoice_labour WHERE inv_id = ?', [req.params.id]);
+//                 if (current.length > 0) currentJobCardNo = current[0].inv_job_card_no;
+//             } else {
+//                 const [current] = await conn.query('SELECT inv_job_card_no FROM tbl_readyfor_labour WHERE inv_id = ?', [req.params.id]);
+//                 if (current.length > 0) currentJobCardNo = current[0].inv_job_card_no;
+//             }
+
+//             if (currentJobCardNo !== d.inv_job_card_no) {
+//                 let duplicateQuery = '';
+//                 let duplicateParams = [];
+//                 if (d.isFinalized === true) {
+//                     duplicateQuery = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ? AND inv_id != ?';
+//                     duplicateParams = [d.inv_job_card_no, d.inv_job_card_no, req.params.id];
+//                 } else {
+//                     duplicateQuery = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? AND inv_id != ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ?';
+//                     duplicateParams = [d.inv_job_card_no, req.params.id, d.inv_job_card_no];
+//                 }
+//                 const [exists] = await conn.query(duplicateQuery, duplicateParams);
+//                 if (exists.length > 0) {
+//                     // await conn.rollback();
+//                     // conn.release();
+//                     return res.status(400).json({ message: 'Jobcard number already exists (' + d.inv_job_card_no + ')' });
+//                 }
+//             }
+//         }
+//         await conn.beginTransaction();
+//         if (d.isFinalized === true) {
+//             // Update finalized invoice in-place
+//             const mainTable = 'tbl_invoice_labour';
+//             const itemsTable = 'tbl_invoice_labour_cost';
+
+//             await conn.query(
+//                 `UPDATE ${mainTable} SET 
+//                     inv_cus=?, inv_cus_addres=?, inv_pho=?, inv_cus_gstin=?, 
+//                     inv_job_card_no=?, inv_jcard_date=?, inv_inv_date=?, inv_repair_typ=?, inv_km=?, 
+//                     in_registr=?, inv_chassis=?, in_engine=?, inv_modl=?,
+//                     inv_advisername=?, inv_mechna=?, inv_branch=?,
+//                     inv_disc_total=?, inv_taxtotal=?, inv_sgstotal=?, inv_gsttotal=?, inv_total=?,
+//                     insurance_id=?, insurance_serveyor=?, inv_sale_date=?, inv_type=?, inv_cesstotal=?
+//                 WHERE inv_id=?`,
+//                 [
+//                     d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '',
+//                     d.inv_job_card_no || '', d.inv_jcard_date, d.inv_inv_date, d.inv_repair_typ || '', d.inv_km || '',
+//                     d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
+//                     d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || null,
+//                     d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0,
+//                     d.inv_final_amount || d.inv_total || 0,
+//                     d.inv_insurance_company || d.insurance_id || null, d.inv_surveyor || d.insurance_serveyor || '',
+//                     d.inv_sale_date || '', d.inv_type || '', d.inv_cesstotal || 0,
+//                     req.params.id
+//                 ]
+//             );
+
+//             // Delete old items and re-insert
+//             await conn.query(`DELETE FROM ${itemsTable} WHERE ic_inv_id = ?`, [req.params.id]);
+//             if (d.items && d.items.length > 0) {
+//                 for (const item of d.items) {
+//                     await conn.query(
+//                         `INSERT INTO ${itemsTable} (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
+//                 lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount)
+//               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+//                         [req.params.id, item.ic_labour_code || item.lc_lab_code || '', item.ic_type || item.lc_type || 'labour',
+//                         item.ic_particular || item.lc_lb_name || '', item.ic_hsn || item.lc_sacode || '998729',
+//                         String(item.ic_rate || item.lc_rate || 0), String(item.ic_disc_per || item.lc_disc_p || 0), String(item.lc_disc || item.ic_disc || 0),
+//                         String(item.ic_taxable_amt || item.lc_tax_amunt || 0),
+//                         String(item.ic_sgst_p || item.lc_sgst_p || 9), String(item.ic_sgst_amt || item.lc_sgst_a || 0),
+//                         String(item.ic_cgst_p || item.lc_cgst_p || 9), String(item.ic_cgst_amt || item.lc_cgst_a || 0),
+//                         String(item.ic_total || item.lc_amount || 0)]
+//                     );
+//                 }
+//             }
+
+//             await conn.commit();
+//             return res.json({ message: 'Invoice updated and remains in Previous Bills' });
 //         }
 
-//         return res.status(200).json({
-//             message: "Updated successfully",
-//             id: invId
-//         });
+//         // Standard update for non-finalized invoices
+//         const mainTable = 'tbl_readyfor_labour';
+//         const itemsTable = 'tbl_readyfor_bill';
+
+//         await conn.query(
+//             `UPDATE ${mainTable} SET 
+//                 inv_cus=?, inv_cus_addres=?, inv_pho=?, inv_cus_gstin=?, 
+//                 inv_job_card_no=?, inv_jcard_date=?, inv_inv_date=?, inv_repair_typ=?, inv_km=?, 
+//                 in_registr=?, inv_chassis=?, in_engine=?, inv_modl=?,
+//                 inv_advisername=?, inv_mechna=?, inv_branch=?,
+//                 inv_disc_total=?, inv_taxtotal=?, inv_sgstotal=?, inv_gsttotal=?, inv_total=?,
+//                 insurance_id=?, insurance_serveyor=?, inv_sale_date=?, inv_type=?, inv_cesstotal=?
+//             WHERE inv_id=?`,
+//             [
+//                 d.inv_cus || '', d.inv_cus_addres || '', d.inv_pho || '', d.inv_cus_gstin || d.inv_gstin || '',
+//                 d.inv_job_card_no || '', d.inv_jcard_date, d.inv_inv_date, d.inv_repair_typ || '', d.inv_km || '',
+//                 d.in_registr || '', d.inv_chassis || '', d.in_engine || d.inv_engine || '', d.inv_modl || '',
+//                 d.inv_advisername || '', d.inv_mechna || '', d.inv_branch || null,
+//                 d.inv_discount || 0, d.inv_taxable_total || d.inv_taxtotal || 0, d.inv_sgst || 0, d.inv_cgst || 0, d.inv_final_amount || d.inv_total || 0,
+//                 d.inv_insurance_company || d.insurance_id || null, d.inv_surveyor || d.insurance_serveyor || '',
+//                 d.inv_sale_date || '', d.inv_type || '', d.inv_cesstotal || 0,
+//                 req.params.id
+//             ]
+//         );
+
+//         // Delete old items and re-insert
+//         await conn.query(`DELETE FROM ${itemsTable} WHERE ic_inv_id = ?`, [req.params.id]);
+//         if (d.items && d.items.length > 0) {
+//             for (const item of d.items) {
+//                 await conn.query(
+//                     `INSERT INTO ${itemsTable} (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
+//             lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess)
+//           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+//                     [req.params.id, item.ic_labour_code || item.lc_lab_code || '', item.ic_type || item.lc_type || 'labour',
+//                     item.ic_particular || item.lc_lb_name || '', item.ic_hsn || item.lc_sacode || '998729',
+//                     String(item.ic_rate || item.lc_rate || 0), String(item.ic_disc_per || item.lc_disc_p || 0), String(item.lc_disc || item.ic_disc || 0),
+//                     String(item.ic_taxable_amt || item.lc_tax_amunt || 0),
+//                     String(item.ic_sgst_p || item.lc_sgst_p || 9), String(item.ic_sgst_amt || item.lc_sgst_a || 0),
+//                     String(item.ic_cgst_p || item.lc_cgst_p || 9), String(item.ic_cgst_amt || item.lc_cgst_a || 0),
+//                     String(item.ic_total || item.lc_amount || 0), String(item.lc_cess || 0)]
+//                 );
+//             }
+//         }
+//         await conn.commit();
+//         res.json({ message: 'Invoice updated' });
 //     } catch (err) {
-//         console.log(err);
-//         res.status(500).json({
-//             message: 'Server error',
-//             error: err.message
-//         });
+//         await conn.rollback();
+//         res.status(500).json({ message: 'Server error', error: err.message });
 //     } finally {
 //         conn.release();
 //     }
 // };
+
+// Update invoice SP
+exports.updateInvoice = async (req, res) => {
+    const conn = await pool.getConnection();
+    try {
+        const d = req.body;
+        console.log('update table:', d);
+
+        const [result] = await conn.query(
+            `CALL updateInvoice(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+            [
+                d.inv_id || 0,
+                d.inv_no || "",
+                d.inv_cus || "",
+                d.inv_cus_addres || "",
+                d.inv_pho || "",
+                d.inv_cus_gstin || d.inv_gstin || "",
+                d.inv_inv_date,
+                d.inv_type || "Cash",
+                d.inv_job_card_no || "",
+                d.inv_jcard_date,
+                d.inv_repair_typ || "",
+                d.inv_km || d.inv_km_in || "",
+                d.in_registr || "",
+                d.inv_chassis || "",
+                d.in_engine || d.inv_engine || "",
+                d.inv_modl || "",
+                d.inv_sale_date || "",
+                d.inv_taxpay || "",
+                d.inv_advisername || "",
+                d.inv_mechna || "",
+                d.inv_branch || "",
+                d.inv_discount || 0,
+                d.inv_taxable_total || d.inv_taxtotal || 0,
+                d.inv_sgst || 0,
+                d.inv_cgst || 0,
+                d.inv_final_amount || d.inv_total || 0,
+                d.inv_insurance_company || d.insurance_id || 0,
+                d.inv_surveyor || d.insurance_serveyor || "",
+                0,
+                JSON.stringify(d.items || []),
+                d.isFinalized ? 1 : 0
+            ]
+        );
+
+        const invId = result[0][0].inv_id;
+
+        if (invId === -2) {
+            return res.status(400).json({
+                message: `Invoice number already exists: ${d.inv_no}`
+            });
+        }
+
+        if (invId === -3) {
+            return res.status(400).json({
+                message: `Jobcard number already exists: ${d.inv_job_card_no}`
+            });
+        }
+
+        return res.status(200).json({
+            message: "Updated successfully",
+            id: invId
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
+            message: 'Server error',
+            error: err.message
+        });
+    } finally {
+        conn.release();
+    }
+};
 
 // Mark invoice as ready
 // exports.markReady = async (req, res) => {
@@ -969,7 +971,84 @@ exports.getLabourNames = async (req, res) => {
     }
 };
 
-// Finalize Bill
+// Finalize Bill not SP
+// exports.finalizeBill = async (req, res) => {
+//     console.log('finalizeBill req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
+//     const conn = await pool.getConnection();
+//     try {
+
+
+//         // 1. Find the invoice in Ready table
+//         const [readyInvoices] = await conn.query(
+//             `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address, lm.logo_url AS branch_logo_url 
+//              FROM tbl_readyfor_labour i 
+//              LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+//              LEFT JOIN logo_master lm ON b.logo = lm.logo_id
+//              LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+//              LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
+//              LEFT JOIN tbl_insurance_company c ON i.insurance_id = c.com_id
+//              WHERE i.inv_id = ? AND i.ready_status = 1`,
+//             [req.params.id]
+//         );
+
+//         if (readyInvoices.length === 0) {
+//             // Already finalized or not found
+//             // await conn.rollback();
+//             // conn.release();
+//             return res.status(200).json({ message: 'Bill already finalized or not found', inv_id: req.params.id });
+//         }
+
+//         let invoice = readyInvoices[0];
+//         invoice.inv_advisername = invoice.adv_name || invoice.inv_advisername;
+//         invoice.inv_mechna = invoice.mech_name || invoice.inv_mechna;
+
+//         // 2. Fetch items 
+//         const [items] = await conn.query('SELECT * FROM tbl_readyfor_bill WHERE ic_inv_id = ?', [req.params.id]);
+
+//         // 3. Finalize it
+//         // 1. Get the latest invoice number with an exclusive row lock
+//         await conn.beginTransaction();
+//         const [lastInvRows] = await conn.query('SELECT inv_no FROM tbl_invoice_labour ORDER BY inv_id DESC LIMIT 1 FOR UPDATE');
+//         let lastInvoiceNumber = '';
+//         if (lastInvRows.length > 0) {
+//             lastInvoiceNumber = lastInvRows[0].inv_no;
+//         }
+
+//         // 2. Generate New Invoice Number dynamically
+//         const today = new Date();
+//         const generatedInvNo = generateNextInvoiceNumber(lastInvoiceNumber, today, 'CI', '11207');
+
+//         // 3. Insert into tbl_invoice_labour with the generated invoice number
+//         const finalizedStatus = (invoice.status === 0) ? 0 : 1;
+//         const [insertResult] = await conn.query(
+//             'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status, insurance_id, insurance_serveyor, inv_cesstotal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+//             [generatedInvNo, invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0, invoice.insurance_id || null, invoice.insurance_serveyor || '', invoice.inv_cesstotal || 0]
+//         );
+//         const newInvId = insertResult.insertId;
+
+//         // Insert items into tbl_invoice_labour_cost
+//         for (const item of items) {
+//             await conn.query(
+//                 'INSERT INTO tbl_invoice_labour_cost (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt, lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+//                 [newInvId, item.lc_lab_code, item.lc_type, item.lc_lb_name, item.lc_sacode, item.lc_rate, item.lc_disc_p, item.lc_disc, item.lc_tax_amunt, item.lc_sgst_p, item.lc_sgst_a, item.lc_cgst_p, item.lc_cgst_a, item.lc_amount]
+//             );
+//         }
+
+//         // Update ready table
+//         await conn.query('UPDATE tbl_readyfor_labour SET ready_status = 0 WHERE inv_id = ?', [req.params.id]);
+
+//         await conn.commit();
+//         res.json({ message: 'Bill finalized successfully', inv_id: newInvId });
+//     } catch (err) {
+//         await conn.rollback();
+//         console.error('Finalize Bill error:', err);
+//         res.status(500).json({ message: 'Server error', error: err.message });
+//     } finally {
+//         conn.release();
+//     }
+// };
+
+// Finalize Bill SP
 exports.finalizeBill = async (req, res) => {
     console.log('finalizeBill req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     const conn = await pool.getConnection();
