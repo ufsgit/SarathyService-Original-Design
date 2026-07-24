@@ -757,22 +757,31 @@ exports.updateInvoice = async (req, res) => {
 //         res.status(500).json({ message: 'Server error', error: err.message });
 //     }
 // };
-const [result] = await pool.query(
-    'CALL markReady(?)',
-    [req.params.id]
-);
 
-const response = result[0][0];
+exports.markReady = async (req, res) => {
+    try {
+        const [result] = await pool.query(
+        'CALL markReady(?)',
+        [req.params.id]
+        );
+        const response = result[0][0];
+        if (response.status === 0) {
+            return res.status(404).json({
+                message: response.message
+            });
+        }
+        return res.json({
+            message: response.message
+        });
+    } catch (err) {
+        console.log("getFilterOptions error:", err);
 
-if (response.status === 0) {
-    return res.status(404).json({
-        message: response.message
-    });
-}
-
-return res.json({
-    message: response.message
-});
+        res.status(500).json({
+            message: 'Server error',
+            error: err.message
+        });
+    }
+};
 
 
 // Get ready labour bills with pagination
