@@ -87,11 +87,11 @@ exports.checkJobCardDuplicate = async (req, res) => {
         const { jobcard, excludeId } = req.query;
         if (!jobcard) return res.json({ exists: false });
 
-        let query = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ?';
+        let query = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? AND ready_status = 1 UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ?';
         let params = [jobcard, jobcard];
 
         if (excludeId) {
-            query = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? AND inv_id != ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ? AND inv_id != ?';
+            query = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? AND ready_status = 1 AND inv_id != ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ? AND inv_id != ?';
             params = [jobcard, excludeId, jobcard, excludeId];
         }
 
@@ -722,7 +722,7 @@ exports.updateInvoice = async (req, res) => {
         const [result] = await conn.query(
             `CALL updateInvoice(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
             [
-                d.inv_id || 0,
+                req.params.id || d.inv_id || 0,
                 d.inv_no || "",
                 d.inv_cus || "",
                 d.inv_cus_addres || "",
