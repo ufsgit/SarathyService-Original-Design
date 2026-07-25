@@ -98,6 +98,51 @@ END$$
 DELIMITER ;
 
 DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `getFilterOptions`()
+BEGIN
+
+    -- Branches
+    SELECT
+        b_id,
+        branch_name,
+        branch_id
+    FROM tbl_branch;
+
+    -- Mechanics
+    SELECT
+        emp_id,
+        e_first_name,
+        e_code
+    FROM tbl_employee
+    WHERE (e_designation LIKE '%mechanic%'
+           OR e_designation = 'Mechanic')
+      AND status = 'Active';
+
+    -- Advisors
+    SELECT
+        emp_id,
+        e_first_name,
+        e_code
+    FROM tbl_employee
+    WHERE (e_designation LIKE '%advisor%'
+           OR e_designation = 'Service Advisor')
+      AND status = 'Active';
+
+    -- Insurance Companies
+    SELECT
+        com_id,
+        icompany_name
+    FROM tbl_insurance_company;
+
+    -- Repair Types
+    SELECT repair_type
+    FROM tbl_repair_type
+    ORDER BY repair_type;
+
+END$$
+DELIMITER ;
+
+DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `getInvoice`(IN p_inv_id INT)
 BEGIN
 
@@ -565,6 +610,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createInsuranceInvoice`(
     IN p_inv_total VARCHAR(100),
     IN p_insurance_id INT,
     IN p_insurance_serveyor VARCHAR(100),
+    IN p_status int,
+    IN p_ready_status int,
     IN p_items JSON
 )
 BEGIN
@@ -620,7 +667,7 @@ BEGIN
             p_inv_job_card_no, p_inv_jcard_date, p_inv_repair_typ, p_inv_km, p_in_registr, p_inv_chassis, p_in_engine, p_inv_modl,
             p_inv_sale_date, p_inv_taxpay, p_inv_advisername, p_inv_mechna, p_inv_branch, 
             p_inv_disc_total, p_inv_taxtotal, p_inv_sgstotal, p_inv_gsttotal, p_inv_total,
-            p_insurance_id, p_insurance_serveyor, 1, 0, '0'
+            p_insurance_id, p_insurance_serveyor, p_status, p_ready_status, '0'
         );
 
         SET p_invId = LAST_INSERT_ID();
@@ -773,6 +820,240 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_delete_branch`(in b_id_ int)
 BEGIN
 DELETE FROM tbl_branch WHERE b_id = b_id_;
 select b_id_;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_finalizeBill`(
+    IN p_inv_id INT,
+    IN p_inv_no VARCHAR(500),
+    IN p_inv_cus VARCHAR(100),
+    IN p_inv_cus_addres VARCHAR(100),
+    IN p_inv_pho VARCHAR(100),
+    IN p_inv_cus_gstin VARCHAR(100),
+    IN p_inv_inv_date DATE,
+    IN p_inv_type VARCHAR(100),
+    IN p_inv_job_card_no VARCHAR(100),
+    IN p_inv_jcard_date DATE,
+    IN p_inv_repair_typ VARCHAR(100),
+    IN p_inv_km VARCHAR(100),
+    IN p_in_registr VARCHAR(100),
+    IN p_inv_chassis VARCHAR(100),
+    IN p_in_engine VARCHAR(100),
+    IN p_inv_modl VARCHAR(100),
+    IN p_inv_sale_date VARCHAR(100),
+    IN p_inv_taxpay VARCHAR(100),
+    IN p_inv_advisername VARCHAR(100),
+    IN p_inv_mechna VARCHAR(100),
+    IN p_inv_branch VARCHAR(100),
+    IN p_inv_disc_total VARCHAR(100),
+    IN p_inv_taxtotal VARCHAR(100),
+    IN p_inv_sgstotal VARCHAR(100),
+    IN p_inv_gsttotal VARCHAR(100),
+    IN p_inv_total VARCHAR(100),
+    IN p_insurance_id INT,
+    IN p_insurance_serveyor VARCHAR(100),
+    IN p_status int,
+    IN p_ready_status int,
+    IN p_items JSON
+)
+BEGIN
+    DECLARE v_new_inv_id INT;
+    DECLARE v_generated_inv_no VARCHAR(100);
+    DECLARE v_year INT;
+    DECLARE v_month INT;
+    DECLARE v_targetFY VARCHAR(4);
+    DECLARE v_lastInvoice VARCHAR(100);
+    DECLARE v_lastFY VARCHAR(4);
+    DECLARE v_prefix VARCHAR(2) DEFAULT 'CI';
+    DECLARE v_branchCode VARCHAR(5) DEFAULT '11207';
+    DECLARE v_lastSequenceStr VARCHAR(10) DEFAULT '00000';
+    DECLARE v_newSequenceNum INT;
+    DECLARE v_newSequenceStr VARCHAR(10);
+    
+    -- Variables for reading from tbl_readyfor_labour
+    DECLARE r_inv_no VARCHAR(500);
+    DECLARE r_inv_cus VARCHAR(100);
+    DECLARE r_inv_cus_addres VARCHAR(100);
+    DECLARE r_inv_pho VARCHAR(100);
+    DECLARE r_inv_cus_gstin VARCHAR(100);
+    DECLARE r_inv_inv_date DATE;
+    DECLARE r_inv_type VARCHAR(100);
+    DECLARE r_inv_job_card_no VARCHAR(100);
+    DECLARE r_inv_jcard_date DATE;
+    DECLARE r_inv_repair_typ VARCHAR(100);
+    DECLARE r_inv_km VARCHAR(100);
+    DECLARE r_in_registr VARCHAR(100);
+    DECLARE r_inv_chassis VARCHAR(100);
+    DECLARE r_in_engine VARCHAR(100);
+    DECLARE r_inv_modl VARCHAR(100);
+    DECLARE r_inv_sale_date VARCHAR(100);
+    DECLARE r_inv_taxpay VARCHAR(100);
+    DECLARE r_inv_advisername VARCHAR(100);
+    DECLARE r_inv_mechna VARCHAR(100);
+    DECLARE r_inv_branch VARCHAR(100);
+    DECLARE r_inv_disc_total VARCHAR(100);
+    DECLARE r_inv_taxtotal VARCHAR(100);
+    DECLARE r_inv_sgstotal VARCHAR(100);
+    DECLARE r_inv_gsttotal VARCHAR(100);
+    DECLARE r_inv_total VARCHAR(100);
+    DECLARE r_insurance_id INT;
+    DECLARE r_insurance_serveyor VARCHAR(100);
+    DECLARE r_status INT;
+    DECLARE r_inv_cesstotal VARCHAR(100);
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT 0 AS invId, 'Database error occurred during execution' AS message;
+    END;
+    START TRANSACTION;
+    -- ==========================================
+    -- 1. Generate Invoice Number natively
+    -- ==========================================
+    -- Assuming invoice date is today if it's a new bill, or we can use NOW()
+    SET v_year = YEAR(NOW());
+    SET v_month = MONTH(NOW());
+    IF v_month < 4 THEN
+        SET v_targetFY = CAST((v_year - 1) AS CHAR);
+    ELSE
+        SET v_targetFY = CAST(v_year AS CHAR);
+    END IF;
+    -- Get last invoice number
+    SELECT inv_no INTO v_lastInvoice 
+    FROM tbl_invoice_labour 
+    ORDER BY inv_id DESC LIMIT 1 FOR UPDATE;
+    IF v_lastInvoice IS NOT NULL AND CHAR_LENGTH(v_lastInvoice) >= 16 THEN
+        SET v_prefix = SUBSTRING(v_lastInvoice, 1, 2);
+        SET v_lastFY = SUBSTRING(v_lastInvoice, 3, 4);
+        SET v_branchCode = SUBSTRING(v_lastInvoice, 7, 5);
+        SET v_lastSequenceStr = SUBSTRING(v_lastInvoice, 12);
+    ELSE
+        SET v_lastFY = '';
+    END IF;
+    IF v_targetFY = v_lastFY THEN
+        SET v_newSequenceNum = CAST(v_lastSequenceStr AS UNSIGNED) + 1;
+    ELSE
+        SET v_newSequenceNum = 1;
+    END IF;
+    SET v_newSequenceStr = LPAD(v_newSequenceNum, 5, '0');
+    SET v_generated_inv_no = CONCAT(v_prefix, v_targetFY, v_branchCode, v_newSequenceStr);
+    -- ==========================================
+    -- 2. Handle tbl_readyfor_labour
+    -- ==========================================
+    IF p_inv_id IS NOT NULL AND p_inv_id > 0 THEN
+        -- CASE 2: Update existing ready for bill with new parameters and set ready_status = 0
+        UPDATE tbl_readyfor_labour SET
+            inv_cus = p_inv_cus,
+            inv_cus_addres = p_inv_cus_addres,
+            inv_pho = p_inv_pho,
+            inv_cus_gstin = p_inv_cus_gstin,
+            inv_inv_date = p_inv_inv_date,
+            inv_type = p_inv_type,
+            inv_job_card_no = p_inv_job_card_no,
+            inv_jcard_date = p_inv_jcard_date,
+            inv_repair_typ = p_inv_repair_typ,
+            inv_km = p_inv_km,
+            in_registr = p_in_registr,
+            inv_chassis = p_inv_chassis,
+            in_engine = p_in_engine,
+            inv_modl = p_inv_modl,
+            inv_sale_date = p_inv_sale_date,
+            inv_taxpay = p_inv_taxpay,
+            inv_advisername = p_inv_advisername,
+            inv_mechna = p_inv_mechna,
+            inv_branch = p_inv_branch,
+            inv_disc_total = p_inv_disc_total,
+            inv_taxtotal = p_inv_taxtotal,
+            inv_sgstotal = p_inv_sgstotal,
+            inv_gsttotal = p_inv_gsttotal,
+            inv_total = p_inv_total,
+            insurance_id = p_insurance_id,
+            insurance_serveyor = p_insurance_serveyor,
+            status = p_status,
+            ready_status = 0
+        WHERE inv_id = p_inv_id;
+        -- Delete old items
+        DELETE FROM tbl_readyfor_bill WHERE ic_inv_id = p_inv_id;
+        
+        SET v_new_inv_id = p_inv_id; -- Temporary use to insert into ready items
+    ELSE
+        -- CASE 1: Insert into tbl_readyfor_labour with ready_status = 0
+        INSERT INTO tbl_readyfor_labour (
+            inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, insurance_id, insurance_serveyor, status, ready_status, inv_cesstotal
+        ) VALUES (
+            p_inv_no, p_inv_cus, p_inv_cus_addres, p_inv_pho, p_inv_cus_gstin, p_inv_inv_date, p_inv_type, p_inv_job_card_no, p_inv_jcard_date, p_inv_repair_typ, p_inv_km, p_in_registr, p_inv_chassis, p_in_engine, p_inv_modl, p_inv_sale_date, p_inv_taxpay, p_inv_advisername, p_inv_mechna, p_inv_branch, p_inv_disc_total, p_inv_taxtotal, p_inv_sgstotal, p_inv_gsttotal, p_inv_total, p_insurance_id, p_insurance_serveyor, p_status, 0, '0'
+        );
+        SET v_new_inv_id = LAST_INSERT_ID();
+    END IF;
+    -- Insert updated/new items into tbl_readyfor_bill
+    IF p_items IS NOT NULL AND JSON_LENGTH(p_items) > 0 THEN
+        INSERT INTO tbl_readyfor_bill (
+            ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
+            lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess
+        )
+        SELECT 
+            v_new_inv_id,
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_labour_code')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_lab_code')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_code')), ''), ''),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_type')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_type')), ''), 'spare'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_particular')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_lb_name')), ''), ''),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_hsn')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_sacode')), ''), '998729'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_rate')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_rate')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_disc_per')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_disc_p')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_disc')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_disc')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_taxable_amt')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_tax_amunt')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_sgst_p')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_sgst_p')), ''), '9'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_sgst_amt')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_sgst_a')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_cgst_p')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cgst_p')), ''), '9'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_cgst_amt')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cgst_a')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_total')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_amount')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cess')), ''), '0')
+        FROM JSON_TABLE(
+            p_items,
+            '$[*]' COLUMNS (
+                item JSON PATH '$'
+            )
+        ) AS jt;
+    END IF;
+    -- ==========================================
+    -- 3. Insert into Final Invoice Tables
+    -- ==========================================
+    INSERT INTO tbl_invoice_labour (
+        inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, insurance_id, insurance_serveyor, status, ready_status, inv_cesstotal
+    ) VALUES (
+        v_generated_inv_no, p_inv_cus, p_inv_cus_addres, p_inv_pho, p_inv_cus_gstin, p_inv_inv_date, p_inv_type, p_inv_job_card_no, p_inv_jcard_date, p_inv_repair_typ, p_inv_km, p_in_registr, p_inv_chassis, p_in_engine, p_inv_modl, p_inv_sale_date, p_inv_taxpay, p_inv_advisername, p_inv_mechna, p_inv_branch, p_inv_disc_total, p_inv_taxtotal, p_inv_sgstotal, p_inv_gsttotal, p_inv_total, p_insurance_id, p_insurance_serveyor, p_status, 0, '0'
+    );
+    SET v_new_inv_id = LAST_INSERT_ID();
+    -- Insert items into tbl_invoice_labour_cost
+    IF p_items IS NOT NULL AND JSON_LENGTH(p_items) > 0 THEN
+        INSERT INTO tbl_invoice_labour_cost (
+            ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
+            lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess
+        )
+        SELECT 
+            v_new_inv_id,
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_labour_code')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_lab_code')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_code')), ''), ''),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_type')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_type')), ''), 'spare'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_particular')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_lb_name')), ''), ''),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_hsn')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_sacode')), ''), '998729'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_rate')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_rate')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_disc_per')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_disc_p')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_disc')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_disc')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_taxable_amt')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_tax_amunt')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_sgst_p')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_sgst_p')), ''), '9'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_sgst_amt')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_sgst_a')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_cgst_p')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cgst_p')), ''), '9'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_cgst_amt')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cgst_a')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_total')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_amount')), ''), '0'),
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cess')), ''), '0')
+        FROM JSON_TABLE(
+            p_items,
+            '$[*]' COLUMNS (
+                item JSON PATH '$'
+            )
+        ) AS jt;
+    END IF;
+    COMMIT;
+    SELECT v_new_inv_id AS invId, 'Success' AS message;
 END$$
 DELIMITER ;
 
@@ -1028,82 +1309,92 @@ inv_job_card_no_ varchar(100),inv_jcard_date_ date,inv_repair_typ_ varchar(100),
 inv_chassis_ varchar(100),in_engine_ varchar(100),inv_modl_ varchar(100),inv_sale_date_ varchar(100),inv_taxpay_ varchar(100),
 inv_advisername_ varchar(100),inv_mechna_ varchar(100),inv_branch_ varchar(100),inv_disc_total_ varchar(100),inv_taxtotal_ varchar(100),
 inv_sgstotal_ varchar(100),inv_gsttotal_ varchar(100),inv_total_ varchar(100),insurance_id_ int,insurance_serveyor_ varchar(100),
-status_ int,ready_status_ int,inv_cesstotal_ varchar(100),items_ json,isFinalized_ tinyint)
+inv_cesstotal_ varchar(100),items_ json,isFinalized_ tinyint)
 BEGIN
-declare currentInvNo_ varchar(100);declare jobcardno_ varchar(100);
+declare currentInvNo_ varchar(100);declare jobcardno_ varchar(100);declare status_ int;declare ready_status_ int;
+if insurance_id_ is not null or insurance_id_ >0 then
+set status_ =1;
+else
+set status_=0;
+end if;
+if isFinalized_ = 1 then
+set ready_status_=0;
+else
+set ready_status_=1;
+end if;
 IF inv_no_ != '' THEN
-	if isFinalized_ = 1 then
-		set currentInvNo_=(SELECT inv_no FROM tbl_invoice_labour WHERE inv_id = inv_id_);
-	else
-		set currentInvNo_=(SELECT inv_no FROM tbl_readyfor_labour WHERE inv_id = inv_id_);
-	end if;
+if isFinalized_ = 1 then
+set currentInvNo_=(SELECT inv_no FROM tbl_invoice_labour WHERE inv_id = inv_id_);
+else
+set currentInvNo_=(SELECT inv_no FROM tbl_readyfor_labour WHERE inv_id = inv_id_);
+end if;
     if currentInvNo_ != inv_no_ then
-		if isFinalized_ = 1 then
-			SET inv_id_ = (SELECT inv_id
+if isFinalized_ = 1 then
+SET inv_id_ = (SELECT inv_id
                    FROM tbl_readyfor_labour
                    WHERE inv_no = inv_no_
                    LIMIT 1);
-			IF inv_id_ IS NOT NULL AND inv_id_ > 0 THEN
-				SET inv_id_ = -2;
-			ELSE
-				SET inv_id_ = (SELECT inv_id
+IF inv_id_ IS NOT NULL AND inv_id_ > 0 THEN
+SET inv_id_ = -2;
+ELSE
+SET inv_id_ = (SELECT inv_id
                        FROM tbl_invoice_labour
                        WHERE inv_no = inv_no_
                        LIMIT 1);
-				IF inv_id_ IS NOT NULL AND inv_id_ > 0 THEN
-					SET inv_id_ = -2;
-				END IF;
-			END IF;
-		END IF;
-	END IF;
+IF inv_id_ IS NOT NULL AND inv_id_ > 0 THEN
+SET inv_id_ = -2;
+END IF;
+END IF;
+END IF;
+END IF;
 END IF;
 
 IF inv_job_card_no_ != '' THEN
-	if isFinalized_ = 1 then
-		set jobcardno_=(SELECT inv_job_card_no FROM tbl_invoice_labour WHERE inv_id = inv_id_);
-	else
-		set jobcardno_=(SELECT inv_job_card_no FROM tbl_readyfor_labour WHERE inv_id = inv_id_);
-	end if;
-	if jobcardno_ != inv_job_card_no_ then
-		if isFinalized_ = 1 then
-			SET inv_id_ = (SELECT inv_id
+if isFinalized_ = 1 then
+set jobcardno_=(SELECT inv_job_card_no FROM tbl_invoice_labour WHERE inv_id = inv_id_);
+else
+set jobcardno_=(SELECT inv_job_card_no FROM tbl_readyfor_labour WHERE inv_id = inv_id_);
+end if;
+if jobcardno_ != inv_job_card_no_ then
+if isFinalized_ = 1 then
+SET inv_id_ = (SELECT inv_id
                    FROM tbl_readyfor_labour
                    WHERE inv_job_card_no = inv_job_card_no_
                    LIMIT 1);
-			IF inv_id_ IS NOT NULL AND inv_id_ > 0 THEN
-				SET inv_id_ = -3;
-			ELSE
-				SET inv_id_ = (SELECT inv_id
+IF inv_id_ IS NOT NULL AND inv_id_ > 0 THEN
+SET inv_id_ = -3;
+ELSE
+SET inv_id_ = (SELECT inv_id
                        FROM tbl_invoice_labour
                        WHERE inv_job_card_no = inv_job_card_no_
                        LIMIT 1);
-				IF inv_id_ IS NOT NULL AND inv_id_ > 0 THEN
-					SET inv_id_ =-3;
-				END IF;
-			END IF;
-		END IF;
-	END IF;
+IF inv_id_ IS NOT NULL AND inv_id_ > 0 THEN
+SET inv_id_ =-3;
 END IF;
- if inv_id_ is not null or inv_id_ > 0 then 
-	if isFinalized_ = true then
+END IF;
+END IF;
+END IF;
+END IF;
+ if inv_id_ is not null or inv_id_ > 0 then
+if isFinalized_ = true then
     START TRANSACTION;
     -- Inseupdatert into master table
-		UPDATE tbl_invoice_labour SET 
-		inv_cus=inv_cus_, inv_cus_addres=inv_cus_addres_, inv_pho=inv_pho_, inv_cus_gstin=inv_cus_gstin_, 
-		inv_job_card_no=inv_job_card_no_, inv_jcard_date=inv_jcard_date_, inv_inv_date=inv_inv_date_,
-		inv_repair_typ=inv_repair_typ_, inv_km=inv_km_,in_registr=in_registr_,inv_chassis=inv_chassis_,in_engine=in_engine_, 
-		inv_modl=inv_modl_,inv_advisername=inv_advisername_, inv_mechna=inv_mechna_, inv_branch=inv_branch_,
-		inv_disc_total=inv_disc_total_, inv_taxtotal=inv_taxtotal_, inv_sgstotal=inv_sgstotal_, inv_gsttotal=inv_gsttotal_, 
-		inv_total=inv_total_,insurance_id=insurance_id_, insurance_serveyor=insurance_serveyor_, 
-		inv_sale_date=inv_sale_date_, inv_type=inv_type_,inv_cesstotal=inv_cesstotal_
-		WHERE inv_id=inv_id_;
+UPDATE tbl_invoice_labour SET
+inv_cus=inv_cus_, inv_cus_addres=inv_cus_addres_, inv_pho=inv_pho_, inv_cus_gstin=inv_cus_gstin_,
+inv_job_card_no=inv_job_card_no_, inv_jcard_date=inv_jcard_date_, inv_inv_date=inv_inv_date_,
+inv_repair_typ=inv_repair_typ_, inv_km=inv_km_,in_registr=in_registr_,inv_chassis=inv_chassis_,in_engine=in_engine_,
+inv_modl=inv_modl_,inv_advisername=inv_advisername_, inv_mechna=inv_mechna_, inv_branch=inv_branch_,
+inv_disc_total=inv_disc_total_, inv_taxtotal=inv_taxtotal_, inv_sgstotal=inv_sgstotal_, inv_gsttotal=inv_gsttotal_,
+inv_total=inv_total_,insurance_id=insurance_id_, insurance_serveyor=insurance_serveyor_,
+inv_sale_date=inv_sale_date_, inv_type=inv_type_,inv_cesstotal=inv_cesstotal_
+WHERE inv_id=inv_id_;
         delete from tbl_invoice_labour_cost where ic_inv_id = inv_id_;        
-		INSERT INTO tbl_invoice_labour_cost(ic_inv_id,lc_lab_code,lc_type,lc_lb_name,lc_sacode,lc_rate,lc_disc_p,lc_disc,lc_tax_amunt,
-		lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount)
-		SELECT inv_id_,jt.ic_labour_code,jt.ic_type,ic_particular,jt.ic_hsn,jt.ic_rate,jt.ic_disc_per,jt.ic_disc,jt.ic_taxable_amt,
-		jt.ic_sgst_p,jt.ic_sgst_amt,jt.ic_cgst_p,jt.ic_cgst_amt,jt.ic_total
-		FROM JSON_TABLE
-		(
+INSERT INTO tbl_invoice_labour_cost(ic_inv_id,lc_lab_code,lc_type,lc_lb_name,lc_sacode,lc_rate,lc_disc_p,lc_disc,lc_tax_amunt,
+lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount)
+SELECT inv_id_,jt.ic_labour_code,jt.ic_type,ic_particular,jt.ic_hsn,jt.ic_rate,jt.ic_disc_per,jt.ic_disc,jt.ic_taxable_amt,
+jt.ic_sgst_p,jt.ic_sgst_amt,jt.ic_cgst_p,jt.ic_cgst_amt,jt.ic_total
+FROM JSON_TABLE
+(
         items_,
         '$[*]'
         COLUMNS
@@ -1123,25 +1414,25 @@ END IF;
              ic_total varchar(100) PATH '$.ic_total'
         )
     ) jt;
-    COMMIT; 
+    COMMIT;
     else
     START TRANSACTION;
-		UPDATE tbl_readyfor_labour SET 
-		inv_cus=inv_cus_, inv_cus_addres=inv_cus_addres_, inv_pho=inv_pho_, inv_cus_gstin=inv_cus_gstin_, 
-		inv_job_card_no=inv_job_card_no_, inv_jcard_date=inv_jcard_date_, inv_inv_date=inv_inv_date_, 
-		inv_repair_typ=inv_repair_typ_, inv_km=inv_km_, in_registr=in_registr_, inv_chassis=inv_chassis_, 
-		in_engine=in_engine_, inv_modl=inv_modl_,inv_advisername=inv_advisername_, inv_mechna=inv_mechna_, 
-		inv_branch=inv_branch_,inv_disc_total=inv_disc_total_, inv_taxtotal=inv_taxtotal_, inv_sgstotal=inv_sgstotal_, 
-		inv_gsttotal=inv_gsttotal_, inv_total=inv_total_,insurance_id=insurance_id_, insurance_serveyor=insurance_serveyor_, 
-		inv_sale_date=inv_sale_date_, inv_type=inv_type_, inv_cesstotal=inv_cesstotal_
-		WHERE inv_id=inv_id_;
-		delete from tbl_readyfor_bill where ic_inv_id = inv_id_;
+UPDATE tbl_readyfor_labour SET
+inv_cus=inv_cus_, inv_cus_addres=inv_cus_addres_, inv_pho=inv_pho_, inv_cus_gstin=inv_cus_gstin_,
+inv_job_card_no=inv_job_card_no_, inv_jcard_date=inv_jcard_date_, inv_inv_date=inv_inv_date_,
+inv_repair_typ=inv_repair_typ_, inv_km=inv_km_, in_registr=in_registr_, inv_chassis=inv_chassis_,
+in_engine=in_engine_, inv_modl=inv_modl_,inv_advisername=inv_advisername_, inv_mechna=inv_mechna_,
+inv_branch=inv_branch_,inv_disc_total=inv_disc_total_, inv_taxtotal=inv_taxtotal_, inv_sgstotal=inv_sgstotal_,
+inv_gsttotal=inv_gsttotal_, inv_total=inv_total_,insurance_id=insurance_id_, insurance_serveyor=insurance_serveyor_,
+inv_sale_date=inv_sale_date_, inv_type=inv_type_, inv_cesstotal=inv_cesstotal_
+WHERE inv_id=inv_id_;
+delete from tbl_readyfor_bill where ic_inv_id = inv_id_;
         INSERT INTO tbl_readyfor_bill (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
             lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess)
          SELECT inv_id_,jt.ic_labour_code,jt.ic_type,ic_particular,jt.ic_hsn,jt.ic_rate,jt.ic_disc_per,jt.ic_disc,jt.ic_taxable_amt,
-		jt.ic_sgst_p,jt.ic_sgst_amt,jt.ic_cgst_p,jt.ic_cgst_amt,jt.ic_total,jt.ic_cess
-		FROM JSON_TABLE
-		(
+jt.ic_sgst_p,jt.ic_sgst_amt,jt.ic_cgst_p,jt.ic_cgst_amt,jt.ic_total,jt.ic_cess
+FROM JSON_TABLE
+(
         items_,
         '$[*]'
         COLUMNS
@@ -1162,8 +1453,8 @@ END IF;
              ic_cess varchar(100) PATH '$.ic_cess' DEFAULT '0' ON EMPTY
         )
     ) jt;
-    COMMIT;   
-	end if;
+    COMMIT;  
+end if;
 end if;
     -- Return generated master ID (optional)
     SELECT inv_id_ AS inv_id;

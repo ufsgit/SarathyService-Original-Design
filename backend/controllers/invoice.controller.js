@@ -4,6 +4,47 @@ const { generateInvoiceWord } = require('../utils/wordGenerator');
 /**
  * Generates the next invoice number dynamically for any brand.
  */
+
+// org
+
+// function generateNextInvoiceNumber(lastInvoiceNumber, newInvoiceDate, defaultPrefix, defaultBranch) {
+//     const dateObj = new Date(newInvoiceDate);
+//     const year = dateObj.getFullYear();
+//     const month = dateObj.getMonth() + 1; // 0-indexed
+
+//     let targetFY = year;
+//     if (month < 4) {
+//         targetFY = year - 1; // Jan, Feb, Mar belong to the previous year's FY
+//     }
+//     const targetFYStr = targetFY.toString();
+
+//     let prefix = defaultPrefix;
+//     let branchCode = defaultBranch;
+//     let lastSequenceStr = '00000';
+//     let lastFY = '';
+
+//     if (lastInvoiceNumber && lastInvoiceNumber.length >= 16) {
+//         prefix = lastInvoiceNumber.substring(0, 2);
+//         lastFY = lastInvoiceNumber.substring(2, 6);
+//         branchCode = lastInvoiceNumber.substring(6, 11);
+//         lastSequenceStr = lastInvoiceNumber.substring(11);
+//     }
+
+//     let newSequenceNum;
+//     if (targetFYStr === lastFY) {
+//         // Same financial year, just increment
+//         newSequenceNum = parseInt(lastSequenceStr, 10) + 1;
+//     } else {
+//         // New financial year, reset to 1
+//         newSequenceNum = 1;
+//     }
+
+//     // Pad with leading zeros to ensure it's at least 5 digits long
+//     const newSequenceStr = newSequenceNum.toString().padStart(5, '0');
+//     return `${prefix}${targetFYStr}${branchCode}${newSequenceStr}`;
+// }
+
+// sample
 function generateNextInvoiceNumber(lastInvoiceNumber, newInvoiceDate, defaultPrefix, defaultBranch) {
     const dateObj = new Date(newInvoiceDate);
     const year = dateObj.getFullYear();
@@ -974,6 +1015,7 @@ exports.getLabourNames = async (req, res) => {
 };
 
 // Finalize Bill not SP
+
 // exports.finalizeBill = async (req, res) => {
 //     console.log('finalizeBill req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
 //     const conn = await pool.getConnection();
@@ -1051,79 +1093,60 @@ exports.getLabourNames = async (req, res) => {
 // };
 
 // Finalize Bill SP
+
 exports.finalizeBill = async (req, res) => {
     console.log('finalizeBill req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
-    const conn = await pool.getConnection();
+    const d = req.body || {};
+    const invId = req.params.id && req.params.id !== '0' ? parseInt(req.params.id, 10) : 0;
+
     try {
-
-
-        // 1. Find the invoice in Ready table
-        const [readyInvoices] = await conn.query(
-            `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address, lm.logo_url AS branch_logo_url 
-             FROM tbl_readyfor_labour i 
-             LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
-             LEFT JOIN logo_master lm ON b.logo = lm.logo_id
-             LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
-             LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
-             LEFT JOIN tbl_insurance_company c ON i.insurance_id = c.com_id
-             WHERE i.inv_id = ? AND i.ready_status = 1`,
-            [req.params.id]
+        const [result] = await pool.query(
+            'CALL sp_finalizeBill(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                invId,
+                d.inv_no || '',
+                d.inv_cus || '',
+                d.inv_cus_addres || '',
+                d.inv_pho || '',
+                d.inv_cus_gstin || d.inv_gstin || '',
+                d.inv_inv_date || null,
+                d.inv_type || 'Cash',
+                d.inv_job_card_no || '',
+                d.inv_jcard_date || null,
+                d.inv_repair_typ || '',
+                d.inv_km || d.inv_km_in || '',
+                d.in_registr || '',
+                d.inv_chassis || '',
+                d.in_engine || d.inv_engine || '',
+                d.inv_modl || '',
+                d.inv_sale_date || '',
+                d.inv_taxpay || '',
+                d.inv_advisername || '',
+                d.inv_mechna || '',
+                d.inv_branch || '',
+                d.inv_discount || 0,
+                d.inv_taxable_total || d.inv_taxtotal || 0,
+                d.inv_sgst || 0,
+                d.inv_cgst || 0,
+                d.inv_final_amount || d.inv_total || 0,
+                d.inv_insurance_company || d.insurance_id || null,
+                d.inv_surveyor || d.insurance_serveyor || '',
+                d.status || 0,
+                d.ready_status || 0,
+                d.items && d.items.length ? JSON.stringify(d.items) : '[]'
+            ]
         );
 
-        if (readyInvoices.length === 0) {
-            // Already finalized or not found
-            // await conn.rollback();
-            // conn.release();
-            return res.status(200).json({ message: 'Bill already finalized or not found', inv_id: req.params.id });
+        const row = result && result[0] && result[0][0] ? result[0][0] : null;
+
+        if (!row || row.invId === 0) {
+            return res.status(400).json({ message: row ? row.message : 'Failed to finalize bill' });
         }
 
-        let invoice = readyInvoices[0];
-        invoice.inv_advisername = invoice.adv_name || invoice.inv_advisername;
-        invoice.inv_mechna = invoice.mech_name || invoice.inv_mechna;
-
-        // 2. Fetch items 
-        const [items] = await conn.query('SELECT * FROM tbl_readyfor_bill WHERE ic_inv_id = ?', [req.params.id]);
-
-        // 3. Finalize it
-        // 1. Get the latest invoice number with an exclusive row lock
-        await conn.beginTransaction();
-        const [lastInvRows] = await conn.query('SELECT inv_no FROM tbl_invoice_labour ORDER BY inv_id DESC LIMIT 1 FOR UPDATE');
-        let lastInvoiceNumber = '';
-        if (lastInvRows.length > 0) {
-            lastInvoiceNumber = lastInvRows[0].inv_no;
-        }
-
-        // 2. Generate New Invoice Number dynamically
-        const today = new Date();
-        const generatedInvNo = generateNextInvoiceNumber(lastInvoiceNumber, today, 'CI', '11207');
-
-        // 3. Insert into tbl_invoice_labour with the generated invoice number
-        const finalizedStatus = (invoice.status === 0) ? 0 : 1;
-        const [insertResult] = await conn.query(
-            'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status, insurance_id, insurance_serveyor, inv_cesstotal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [generatedInvNo, invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0, invoice.insurance_id || null, invoice.insurance_serveyor || '', invoice.inv_cesstotal || 0]
-        );
-        const newInvId = insertResult.insertId;
-
-        // Insert items into tbl_invoice_labour_cost
-        for (const item of items) {
-            await conn.query(
-                'INSERT INTO tbl_invoice_labour_cost (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt, lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [newInvId, item.lc_lab_code, item.lc_type, item.lc_lb_name, item.lc_sacode, item.lc_rate, item.lc_disc_p, item.lc_disc, item.lc_tax_amunt, item.lc_sgst_p, item.lc_sgst_a, item.lc_cgst_p, item.lc_cgst_a, item.lc_amount]
-            );
-        }
-
-        // Update ready table
-        await conn.query('UPDATE tbl_readyfor_labour SET ready_status = 0 WHERE inv_id = ?', [req.params.id]);
-
-        await conn.commit();
-        res.json({ message: 'Bill finalized successfully', inv_id: newInvId });
+        res.json({ message: row.message, inv_id: row.invId });
     } catch (err) {
-        await conn.rollback();
         console.error('Finalize Bill error:', err);
         res.status(500).json({ message: 'Server error', error: err.message });
-    } finally {
-        conn.release();
     }
 };
 

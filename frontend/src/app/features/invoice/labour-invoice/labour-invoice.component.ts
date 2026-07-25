@@ -563,7 +563,7 @@ export class LabourInvoiceComponent implements OnInit {
     }
   }
 
-  saveBeforeAction(callback: Function) {
+  finalizeBeforeAction(callback: Function) {
     if (!this.validateForm(true)) return;
     this.form.items = this.items.map(it => ({
       ...it,
@@ -582,31 +582,30 @@ export class LabourInvoiceComponent implements OnInit {
     }
     this.isLoading = true;
 
-    if (this.editMode && this.invoiceId) {
-      if (this.isFromPreviousBills) this.form.isFinalized = true;
-      this.api.updateInvoice(this.invoiceId, this.form).subscribe({
-        next: () => {
-          this.isLoading = false;
-          callback();
-        },
-        error: (e: any) => { this.isLoading = false; this.notify.error(e.error?.message || 'Error updating invoice'); }
-      });
-    } else {
-      this.form.ready_status = 1;
-      this.form.status = 0;
-      this.api.createLabourInvoice(this.form).subscribe({
-        next: (res: any) => {
-          this.invoiceId = res.id;
-          this.isLoading = false;
-          callback();
-        },
-        error: (e: any) => { this.isLoading = false; this.notify.error(e.error?.message || 'Error saving invoice'); }
-      });
-    }
+    this.api.finalizeInvoice(this.invoiceId || null, this.form).subscribe({
+      next: (res: any) => {
+        if (res && res.inv_id) {
+           this.invoiceId = res.inv_id;
+        }
+        this.isLoading = false;
+        callback();
+      },
+      error: (e: any) => { 
+        this.isLoading = false; 
+        this.notify.error(e.error?.message || 'Error finalizing invoice'); 
+      }
+    });
   }
 
   onPrint() {
-    this.saveBeforeAction(() => this.triggerPrint());
+    this.finalizeBeforeAction(() => {
+      this.printInvoice();
+      this.notify.success('Invoice finalized and print triggered.');
+      setTimeout(() => {
+        const basePath = this.auth.isAdmin ? '/admin' : '/staff';
+        this.router.navigate([`${basePath}/reports/previous-bills/labour`]);
+      }, 1500);
+    });
   }
 
   printInvoice() {
@@ -616,46 +615,6 @@ export class LabourInvoiceComponent implements OnInit {
     window.open(url, '_blank');
   }
 
-  private triggerPrint() {
-    this.isLoading = true;
-    this.api.finalizeInvoice(this.invoiceId!).subscribe({
-      next: (res: any) => {
-        this.isLoading = false;
-        if (res && res.inv_id) {
-           this.invoiceId = res.inv_id;
-        }
-        this.printInvoice();
-        this.notify.success('Invoice finalized and print triggered.');
-        setTimeout(() => {
-          const basePath = this.auth.isAdmin ? '/admin' : '/staff';
-          this.router.navigate([`${basePath}/reports/previous-bills/labour`]);
-        }, 1500);
-      },
-      error: (e: any) => {
-        this.isLoading = false;
-        this.notify.error(e.error?.message || 'Error finalizing invoice');
-      }
-    });
-  }
-
-  onWordExport() {
-    if (!this.invoiceId) {
-      this.saveBeforeAction(() => this.triggerWord());
-    } else {
-      this.triggerWord();
-    }
-  }
-
-  private triggerWord() {
-    const url = this.api.getInvoiceWordUrl(this.invoiceId!);
-    window.open(url, '_blank');
-
-    this.notify.success('Invoice finalized and Word export triggered.');
-    setTimeout(() => {
-      const basePath = this.auth.isAdmin ? '/admin' : '/staff';
-      this.router.navigate([`${basePath}/reports/previous-bills/labour`]);
-    }, 1500);
-  }
 
 
   scrollTableUp() {

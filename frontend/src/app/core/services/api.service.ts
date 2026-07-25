@@ -110,7 +110,9 @@ export class ApiService {
   }
   getInvoice(id: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/${id}`); }
   updateInvoice(id: number, data: any): Observable<any> { return this.http.put(`${this.baseUrl}/invoices/${id}`, data); }
-  finalizeInvoice(id: number): Observable<any> { return this.http.post(`${this.baseUrl}/invoices/${id}/finalize`, {}); }
+  finalizeInvoice(id: number | null, data?: any): Observable<any> { 
+    return this.http.post(`${this.baseUrl}/invoices/${id || 0}/finalize`, data || {}); 
+  }
   markInvoiceReady(id: number): Observable<any> { return this.http.put(`${this.baseUrl}/invoices/${id}/ready`, {}); }
   getReadyLabourBills(params?: any): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/ready/labour`, { params }); }
   getReadyInsuranceBills(params?: any): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/ready/insurance`, { params }); }

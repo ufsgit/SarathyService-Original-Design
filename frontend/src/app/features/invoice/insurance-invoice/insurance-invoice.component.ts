@@ -620,7 +620,7 @@ export class InsuranceInvoiceComponent implements OnInit {
     }
   }
 
-  saveBeforeAction(callback: Function) {
+  finalizeBeforeAction(callback: Function) {
     if (!this.validateForm(true)) return;
     this.form.items = this.items.map(it => ({
       ...it,
@@ -639,56 +639,37 @@ export class InsuranceInvoiceComponent implements OnInit {
     }
     this.isLoading = true;
 
-    if (this.editMode && this.invoiceId) {
-      if (this.isFromPreviousBills) this.form.isFinalized = true;
-      this.api.updateInvoice(this.invoiceId, this.form).subscribe({
-        next: () => {
-          this.isLoading = false;
-          callback();
-        },
-        error: (e: any) => { this.isLoading = false; this.notify.error(e.error?.message || 'Error updating invoice'); }
-      });
-    } else {
-      this.form.ready_status = 1;
-      this.form.status = 1;
-      this.api.createInsuranceInvoice(this.form).subscribe({
-        next: (res: any) => {
-          this.invoiceId = res.id;
-          this.isLoading = false;
-          callback();
-        },
-        error: (e: any) => { this.isLoading = false; this.notify.error(e.error?.message || 'Error saving invoice'); }
-      });
-    }
-  }
-
-  onPrint() {
-    this.saveBeforeAction(() => this.triggerPrint());
-  }
-
-  private triggerPrint() {
-    this.isLoading = true;
-    this.api.finalizeInvoice(this.invoiceId!).subscribe({
+    this.api.finalizeInvoice(this.invoiceId || null, this.form).subscribe({
       next: (res: any) => {
-        this.isLoading = false;
         if (res && res.inv_id) {
            this.invoiceId = res.inv_id;
         }
-        const filename = `${this.form.inv_no || this.invoiceId} - invoice`;
-        const url = this.api.getInvoicePDFUrl(this.invoiceId!, filename);
-        window.open(url, '_blank');
-
-        this.notify.success('Invoice finalized and print triggered.');
-        setTimeout(() => {
-          const basePath = this.auth.isAdmin ? '/admin' : '/staff';
-          this.router.navigate([`${basePath}/reports/previous-bills/insurance`]);
-        }, 1500);
-      },
-      error: (e: any) => {
         this.isLoading = false;
-        this.notify.error(e.error?.message || 'Error finalizing invoice');
+        callback();
+      },
+      error: (e: any) => { 
+        this.isLoading = false; 
+        this.notify.error(e.error?.message || 'Error finalizing invoice'); 
       }
     });
+  }
+
+  onPrint() {
+    this.finalizeBeforeAction(() => {
+      this.printInvoice();
+      this.notify.success('Invoice finalized and print triggered.');
+      setTimeout(() => {
+        const basePath = this.auth.isAdmin ? '/admin' : '/staff';
+        this.router.navigate([`${basePath}/reports/previous-bills/insurance`]);
+      }, 1500);
+    });
+  }
+
+  printInvoice() {
+    if (!this.invoiceId) return;
+    const filename = `${this.form.inv_no || this.invoiceId} - invoice`;
+    let url = this.api.getInvoicePDFUrl(this.invoiceId, filename);
+    window.open(url, '_blank');
   }
 
 
