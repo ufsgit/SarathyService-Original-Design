@@ -1126,6 +1126,257 @@ END$$
 DELIMITER ;
 
 DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getJobCardStatement`(
+    IN p_from_date VARCHAR(50),
+    IN p_to_date VARCHAR(50),
+    IN p_branch_json JSON,
+    IN p_mechanic_json JSON,
+    IN p_advisor_json JSON,
+    IN p_repair_types_json JSON,
+    IN p_insurance_companies_json JSON,
+    IN p_labour_codes_json JSON,
+    IN p_service_type VARCHAR(100),
+    IN p_limit INT,
+    IN p_offset INT
+)
+BEGIN
+    DECLARE v_where TEXT DEFAULT 'WHERE 1=1';
+    DECLARE v_item_conditions TEXT DEFAULT '';
+    
+    -- Safe parameter passing using session variables
+    SET @p_from_date = p_from_date;
+    SET @p_to_date = p_to_date;
+    SET @p_branch_json = p_branch_json;
+    SET @p_mechanic_json = p_mechanic_json;
+    SET @p_advisor_json = p_advisor_json;
+    SET @p_repair_types_json = p_repair_types_json;
+    SET @p_insurance_companies_json = p_insurance_companies_json;
+    SET @p_labour_codes_json = p_labour_codes_json;
+    SET @p_service_type = p_service_type;
+
+    -- 1. Base Filter for Invoices (v_where)
+    SET v_where = CONCAT(v_where, ' AND i.inv_inv_date >= CONCAT(@p_from_date, '' 00:00:00'') AND i.inv_inv_date <= CONCAT(@p_to_date, '' 23:59:59'')');
+    
+    IF p_branch_json IS NOT NULL AND JSON_LENGTH(p_branch_json) > 0 THEN
+        SET v_where = CONCAT(v_where, ' AND (JSON_CONTAINS(@p_branch_json, CAST(i.inv_branch AS CHAR)) OR JSON_CONTAINS(@p_branch_json, CONCAT(''"'', CAST(i.inv_branch AS CHAR), ''"'')))');
+    END IF;
+    
+    IF p_mechanic_json IS NOT NULL AND JSON_LENGTH(p_mechanic_json) > 0 THEN
+        SET v_where = CONCAT(v_where, ' AND (JSON_CONTAINS(@p_mechanic_json, CONCAT(''"'', i.inv_mechna, ''"'')) OR i.inv_mechna IN (SELECT e_first_name FROM tbl_employee WHERE JSON_CONTAINS(@p_mechanic_json, CAST(emp_id AS CHAR)) OR JSON_CONTAINS(@p_mechanic_json, CONCAT(''"'', CAST(emp_id AS CHAR), ''"''))))');
+    END IF;
+    
+    IF p_advisor_json IS NOT NULL AND JSON_LENGTH(p_advisor_json) > 0 THEN
+        SET v_where = CONCAT(v_where, ' AND (JSON_CONTAINS(@p_advisor_json, CONCAT(''"'', i.inv_advisername, ''"'')) OR i.inv_advisername IN (SELECT e_first_name FROM tbl_employee WHERE JSON_CONTAINS(@p_advisor_json, CAST(emp_id AS CHAR)) OR JSON_CONTAINS(@p_advisor_json, CONCAT(''"'', CAST(emp_id AS CHAR), ''"''))))');
+    END IF;
+    
+    IF p_repair_types_json IS NOT NULL AND JSON_LENGTH(p_repair_types_json) > 0 THEN
+        SET v_where = CONCAT(v_where, ' AND JSON_CONTAINS(@p_repair_types_json, CONCAT(''"'', i.inv_repair_typ, ''"''))');
+    END IF;
+    
+    IF p_insurance_companies_json IS NOT NULL AND JSON_LENGTH(p_insurance_companies_json) > 0 THEN
+        SET v_where = CONCAT(v_where, ' AND (JSON_CONTAINS(@p_insurance_companies_json, CAST(i.insurance_id AS CHAR)) OR JSON_CONTAINS(@p_insurance_companies_json, CONCAT(''"'', CAST(i.insurance_id AS CHAR), ''"'')))');
+    END IF;
+    
+    IF p_labour_codes_json IS NOT NULL AND JSON_LENGTH(p_labour_codes_json) > 0 THEN
+        SET v_where = CONCAT(v_where, ' AND i.inv_id IN (SELECT ic_inv_id FROM tbl_invoice_labour_cost WHERE JSON_CONTAINS(@p_labour_codes_json, CONCAT(''"'', lc_lab_code, ''"'')))');
+    END IF;
+
+    IF p_service_type IS NOT NULL AND p_service_type != 'ALL' THEN
+        IF p_service_type = 'Paid Service' THEN
+            SET v_where = CONCAT(v_where, ' AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND (lc.lc_type = ''Paid Service'' OR lc.lc_type = ''Cash''))');
+        ELSEIF p_service_type = 'Free Service' THEN
+            SET v_where = CONCAT(v_where, ' AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND (lc.lc_type = ''Free Service'' OR lc.lc_type = ''Free''))');
+        ELSEIF p_service_type = 'Expense' THEN
+            SET v_where = CONCAT(v_where, ' AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND (lc.lc_type = ''Expense'' OR lc.lc_type = ''expense''))');
+        ELSE
+            SET v_where = CONCAT(v_where, ' AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND lc.lc_type = @p_service_type)');
+        END IF;
+    END IF;
+
+    -- 2. Item Conditions Filter (v_item_conditions)
+    IF p_labour_codes_json IS NOT NULL AND JSON_LENGTH(p_labour_codes_json) > 0 THEN
+        SET v_item_conditions = CONCAT(v_item_conditions, ' AND JSON_CONTAINS(@p_labour_codes_json, CONCAT(''"'', lc.lc_lab_code, ''"''))');
+    END IF;
+
+    IF p_service_type IS NOT NULL AND p_service_type != 'ALL' THEN
+        IF p_service_type = 'Paid Service' THEN
+            SET v_item_conditions = CONCAT(v_item_conditions, ' AND (lc.lc_type = ''Paid Service'' OR lc.lc_type = ''Cash'')');
+        ELSEIF p_service_type = 'Free Service' THEN
+            SET v_item_conditions = CONCAT(v_item_conditions, ' AND (lc.lc_type = ''Free Service'' OR lc.lc_type = ''Free'')');
+        ELSEIF p_service_type = 'Expense' THEN
+            SET v_item_conditions = CONCAT(v_item_conditions, ' AND (lc.lc_type = ''Expense'' OR lc.lc_type = ''expense'')');
+        ELSE
+            SET v_item_conditions = CONCAT(v_item_conditions, ' AND lc.lc_type = @p_service_type');
+        END IF;
+    END IF;
+
+    -- Query 1: Totals
+    SET @totalsQuery = CONCAT('
+            SELECT 
+                COUNT(DISTINCT i.inv_id) as total_count,
+                COUNT(lc.ic_inv_id) as total_labour_codes,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_tax_amunt, '''') AS DECIMAL(12,2))), 0) as total_taxable,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_disc, '''') AS DECIMAL(12,2))), 0) as total_discount,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_cess, '''') AS DECIMAL(12,2))), 0) as total_kfc,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_amount, '''') AS DECIMAL(12,2))), 0) as grand_total
+            FROM tbl_invoice_labour i
+            LEFT JOIN tbl_invoice_labour_cost lc ON i.inv_id = lc.ic_inv_id 
+            ', v_where, v_item_conditions);
+
+    -- Query 2: Paginated Invoices
+    SET @mainQuery = CONCAT('
+            SELECT i.*, b.branch_name, COALESCE(e.e_first_name, i.inv_mechna) as mechanic_name, COALESCE(a.e_first_name, i.inv_advisername) as advisor_name, ic.icompany_name
+            FROM tbl_invoice_labour i
+            LEFT JOIN tbl_branch b ON i.inv_branch = b.b_id
+            LEFT JOIN tbl_employee e ON i.inv_mechna = e.emp_id
+            LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+            LEFT JOIN tbl_insurance_company ic ON i.insurance_id = ic.com_id 
+            ', v_where, ' 
+            ORDER BY i.inv_inv_date DESC, i.inv_id DESC 
+            LIMIT ', p_limit, ' OFFSET ', p_offset);
+
+    -- Query 3: Items belonging to the paginated invoices ONLY
+    -- This optimizes the flattening process so NodeJS doesn't need to do a huge separate SELECT * query
+    SET @itemsQuery = CONCAT('
+            SELECT lc.* 
+            FROM tbl_invoice_labour_cost lc
+            INNER JOIN (
+                SELECT i.inv_id 
+                FROM tbl_invoice_labour i
+                ', v_where, ' 
+                ORDER BY i.inv_inv_date DESC, i.inv_id DESC 
+                LIMIT ', p_limit, ' OFFSET ', p_offset, '
+            ) paginated ON lc.ic_inv_id = paginated.inv_id
+    ');
+
+    PREPARE stmt1 FROM @totalsQuery;
+    EXECUTE stmt1;
+    DEALLOCATE PREPARE stmt1;
+
+    PREPARE stmt2 FROM @mainQuery;
+    EXECUTE stmt2;
+    DEALLOCATE PREPARE stmt2;
+
+    PREPARE stmt3 FROM @itemsQuery;
+    EXECUTE stmt3;
+    DEALLOCATE PREPARE stmt3;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getJobCardSummary`(
+    IN p_from_date VARCHAR(50),
+    IN p_to_date VARCHAR(50),
+    IN p_branch_json JSON,
+    IN p_mechanic_json JSON,
+    IN p_advisor_json JSON,
+    IN p_repair_types_json JSON,
+    IN p_insurance_companies_json JSON,
+    IN p_service_type VARCHAR(100),
+    IN p_limit INT,
+    IN p_offset INT
+)
+BEGIN
+    DECLARE v_where TEXT DEFAULT 'WHERE 1=1';
+    
+    -- Safe parameter passing using session variables
+    SET @p_from_date = p_from_date;
+    SET @p_to_date = p_to_date;
+    SET @p_branch_json = p_branch_json;
+    SET @p_mechanic_json = p_mechanic_json;
+    SET @p_advisor_json = p_advisor_json;
+    SET @p_repair_types_json = p_repair_types_json;
+    SET @p_insurance_companies_json = p_insurance_companies_json;
+    SET @p_service_type = p_service_type;
+
+    -- Base Filter
+    SET v_where = CONCAT(v_where, ' AND i.inv_inv_date >= CONCAT(@p_from_date, '' 00:00:00'') AND i.inv_inv_date <= CONCAT(@p_to_date, '' 23:59:59'')');
+    
+    IF p_branch_json IS NOT NULL AND JSON_LENGTH(p_branch_json) > 0 THEN
+        SET v_where = CONCAT(v_where, ' AND (JSON_CONTAINS(@p_branch_json, CAST(i.inv_branch AS CHAR)) OR JSON_CONTAINS(@p_branch_json, CONCAT(''"'', CAST(i.inv_branch AS CHAR), ''"'')))');
+    END IF;
+    
+    IF p_mechanic_json IS NOT NULL AND JSON_LENGTH(p_mechanic_json) > 0 THEN
+        SET v_where = CONCAT(v_where, ' AND (JSON_CONTAINS(@p_mechanic_json, CONCAT(''"'', i.inv_mechna, ''"'')) OR i.inv_mechna IN (SELECT e_first_name FROM tbl_employee WHERE JSON_CONTAINS(@p_mechanic_json, CAST(emp_id AS CHAR)) OR JSON_CONTAINS(@p_mechanic_json, CONCAT(''"'', CAST(emp_id AS CHAR), ''"''))))');
+    END IF;
+    
+    IF p_advisor_json IS NOT NULL AND JSON_LENGTH(p_advisor_json) > 0 THEN
+        SET v_where = CONCAT(v_where, ' AND (JSON_CONTAINS(@p_advisor_json, CONCAT(''"'', i.inv_advisername, ''"'')) OR i.inv_advisername IN (SELECT e_first_name FROM tbl_employee WHERE JSON_CONTAINS(@p_advisor_json, CAST(emp_id AS CHAR)) OR JSON_CONTAINS(@p_advisor_json, CONCAT(''"'', CAST(emp_id AS CHAR), ''"''))))');
+    END IF;
+    
+    IF p_repair_types_json IS NOT NULL AND JSON_LENGTH(p_repair_types_json) > 0 THEN
+        SET v_where = CONCAT(v_where, ' AND JSON_CONTAINS(@p_repair_types_json, CONCAT(''"'', i.inv_repair_typ, ''"''))');
+    END IF;
+    
+    IF p_insurance_companies_json IS NOT NULL AND JSON_LENGTH(p_insurance_companies_json) > 0 THEN
+        SET v_where = CONCAT(v_where, ' AND (JSON_CONTAINS(@p_insurance_companies_json, CAST(i.insurance_id AS CHAR)) OR JSON_CONTAINS(@p_insurance_companies_json, CONCAT(''"'', CAST(i.insurance_id AS CHAR), ''"'')))');
+    END IF;
+    
+    IF p_service_type IS NOT NULL AND p_service_type != 'ALL' THEN
+        IF p_service_type = 'Paid Service' THEN
+            SET v_where = CONCAT(v_where, ' AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND (lc.lc_type = ''Paid Service'' OR lc.lc_type = ''Cash''))');
+        ELSEIF p_service_type = 'Free Service' THEN
+            SET v_where = CONCAT(v_where, ' AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND (lc.lc_type = ''Free Service'' OR lc.lc_type = ''Free''))');
+        ELSEIF p_service_type = 'Expense' THEN
+            SET v_where = CONCAT(v_where, ' AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND (lc.lc_type = ''Expense'' OR lc.lc_type = ''expense''))');
+        ELSE
+            SET v_where = CONCAT(v_where, ' AND EXISTS (SELECT 1 FROM tbl_invoice_labour_cost lc WHERE lc.ic_inv_id = i.inv_id AND lc.lc_type = @p_service_type)');
+        END IF;
+    END IF;
+
+    SET @totalsQuery = CONCAT('
+            SELECT 
+                COUNT(*) as total_count,
+                COALESCE(SUM(CASE WHEN i.inv_repair_typ LIKE ''%Free%'' THEN 1 ELSE 0 END), 0) as total_free_service,
+                COALESCE(SUM(CASE WHEN i.inv_repair_typ NOT LIKE ''%Free%'' THEN 1 ELSE 0 END), 0) as total_paid_service,
+                COALESCE(SUM(CAST(NULLIF(i.inv_taxtotal, '''') AS DECIMAL(12,2))), 0) as header_total_taxable,
+                COALESCE(SUM(CAST(NULLIF(i.inv_disc_total, '''') AS DECIMAL(12,2))), 0) as header_total_discount,
+                COALESCE(SUM(CAST(NULLIF(i.inv_sgstotal, '''') AS DECIMAL(12,2))), 0) as header_total_sgst,
+                COALESCE(SUM(CAST(NULLIF(i.inv_gsttotal, '''') AS DECIMAL(12,2))), 0) as header_total_cgst,
+                COALESCE(SUM(CAST(NULLIF(i.inv_cesstotal, '''') AS DECIMAL(12,2))), 0) as header_total_kfc,
+                COALESCE(SUM(CAST(NULLIF(i.inv_total, '''') AS DECIMAL(12,2))), 0) as header_grand_total
+            FROM tbl_invoice_labour i ', v_where);
+
+    SET @detailedTotalsQuery = CONCAT('
+            SELECT 
+                COALESCE(SUM(CASE WHEN lc.lc_type = ''labour'' THEN CAST(NULLIF(lc.lc_tax_amunt, '''') AS DECIMAL(12,2)) ELSE 0 END), 0) as labour_taxable,
+                COALESCE(SUM(CASE WHEN lc.lc_type = ''spare'' OR lc.lc_type = ''parts'' THEN CAST(NULLIF(lc.lc_tax_amunt, '''') AS DECIMAL(12,2)) ELSE 0 END), 0) as parts_taxable,
+                COALESCE(SUM(CASE WHEN lc.lc_type = ''labour'' THEN (CAST(NULLIF(lc.lc_sgst_a, '''') AS DECIMAL(12,2)) + CAST(NULLIF(lc.lc_cgst_a, '''') AS DECIMAL(12,2))) ELSE 0 END), 0) as labour_gst,
+                COALESCE(SUM(CASE WHEN lc.lc_type = ''spare'' OR lc.lc_type = ''parts'' THEN (CAST(NULLIF(lc.lc_sgst_a, '''') AS DECIMAL(12,2)) + CAST(NULLIF(lc.lc_cgst_a, '''') AS DECIMAL(12,2))) ELSE 0 END), 0) as parts_gst,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_tax_amunt, '''') AS DECIMAL(12,2))), 0) as total_taxable,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_disc, '''') AS DECIMAL(12,2))), 0) as total_discount,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_sgst_a, '''') AS DECIMAL(12,2))), 0) as total_sgst,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_cgst_a, '''') AS DECIMAL(12,2))), 0) as total_cgst,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_cess, '''') AS DECIMAL(12,2))), 0) as total_kfc,
+                COALESCE(SUM(CAST(NULLIF(lc.lc_amount, '''') AS DECIMAL(12,2))), 0) as grand_total
+            FROM tbl_invoice_labour_cost lc
+            JOIN tbl_invoice_labour i ON i.inv_id = lc.ic_inv_id ', v_where);
+
+    SET @mainQuery = CONCAT('
+            SELECT i.*, b.branch_name, COALESCE(e.e_first_name, i.inv_mechna) as mechanic_name, COALESCE(a.e_first_name, i.inv_advisername) as advisor_name, ic.icompany_name
+            FROM tbl_invoice_labour i
+            LEFT JOIN tbl_branch b ON i.inv_branch = b.b_id
+            LEFT JOIN tbl_employee e ON i.inv_mechna = e.emp_id
+            LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+            LEFT JOIN tbl_insurance_company ic ON i.insurance_id = ic.com_id ', v_where, ' 
+            ORDER BY i.inv_inv_date DESC, i.inv_id DESC 
+            LIMIT ', p_limit, ' OFFSET ', p_offset);
+
+    PREPARE stmt1 FROM @totalsQuery;
+    EXECUTE stmt1;
+    DEALLOCATE PREPARE stmt1;
+
+    PREPARE stmt2 FROM @detailedTotalsQuery;
+    EXECUTE stmt2;
+    DEALLOCATE PREPARE stmt2;
+
+    PREPARE stmt3 FROM @mainQuery;
+    EXECUTE stmt3;
+    DEALLOCATE PREPARE stmt3;
+END$$
+DELIMITER ;
+
+DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_getPreviousInsuranceBills`(
     IN p_branchId INT,
     IN p_search VARCHAR(255),
