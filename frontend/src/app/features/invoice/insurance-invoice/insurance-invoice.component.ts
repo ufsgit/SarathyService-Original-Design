@@ -508,8 +508,13 @@ export class InsuranceInvoiceComponent implements OnInit {
     }
 
 
-    if (isBilling && (this.items.length === 0 || !this.items[0].ic_particular)) {
+    if (this.items.length === 0) {
       this.notify.error('Please add at least one line item');
+      return false;
+    }
+    const hasEmptyItem = this.items.some(item => !item.ic_particular || item.ic_particular.trim() === '' || item.ic_particular === '-Select-');
+    if (hasEmptyItem) {
+      this.notify.error('Please select a valid Labour for all line items');
       return false;
     }
 
@@ -518,11 +523,27 @@ export class InsuranceInvoiceComponent implements OnInit {
 
   onAddToReadyForBill() {
     if (!this.validateForm(false)) return;
-    if (this.items.length === 0 || !this.items[0].ic_particular) {
+    if (this.items.length === 0) {
       this.notify.error('Please add at least one line item');
       return;
     }
-    this.form.items = this.items;
+    const hasEmpty = this.items.some(item => !item.ic_particular || item.ic_particular.trim() === '' || item.ic_particular === '-Select-');
+    if (hasEmpty) {
+      this.notify.error('Please select a valid Labour for all line items');
+      return;
+    }
+    this.form.items = this.items.map(it => ({
+      ...it,
+      ic_rate: it.ic_rate || 0,
+      ic_disc_per: it.ic_disc_per || 0,
+      ic_disc: it.ic_disc || 0,
+      ic_taxable_amt: it.ic_taxable_amt || 0,
+      ic_sgst_amt: it.ic_sgst_amt || 0,
+      ic_cgst_amt: it.ic_cgst_amt || 0,
+      ic_total: it.ic_total || 0,
+      lc_cess: it.lc_cess || 0,
+      ic_qty: it.ic_qty || 1
+    }));
     if (!this.isFromPreviousBills) {
       this.form.inv_no = ''; // Ensure we do not save the display invoice number
     }
@@ -531,20 +552,12 @@ export class InsuranceInvoiceComponent implements OnInit {
     if (this.editMode && this.invoiceId) {
       this.api.updateInvoice(this.invoiceId, this.form).subscribe({
         next: () => {
-          this.api.markInvoiceReady(this.invoiceId!).subscribe({
-            next: () => {
-              this.isLoading = false;
-              this.notify.success('Invoice updated and marked as Ready for Bill');
-              const basePath = this.auth.isAdmin ? '/admin' : '/staff';
-              setTimeout(() => {
-                this.router.navigate([`${basePath}/invoice/ready/insurance`]);
-              }, 1500);
-            },
-            error: (e: any) => {
-              this.isLoading = false;
-              this.notify.error('Invoice updated but failed to mark as ready');
-            }
-          });
+          this.isLoading = false;
+          this.notify.success('Invoice updated successfully');
+          const basePath = this.auth.isAdmin ? '/admin' : '/staff';
+          setTimeout(() => {
+            this.router.navigate([`${basePath}/invoice/ready/insurance`]);
+          }, 1500);
         },
         error: (e: any) => {
           this.isLoading = false;
@@ -552,23 +565,17 @@ export class InsuranceInvoiceComponent implements OnInit {
         }
       });
     } else {
+      this.form.ready_status = 1;
+      this.form.status = 1;
       this.api.createInsuranceInvoice(this.form).subscribe({
         next: (res: any) => {
           this.invoiceId = res.id;
-          this.api.markInvoiceReady(res.id).subscribe({
-            next: () => {
-              this.isLoading = false;
-              this.notify.success('Invoice saved and marked as Ready for Bill');
-              const basePath = this.auth.isAdmin ? '/admin' : '/staff';
-              setTimeout(() => {
-                this.router.navigate([`${basePath}/invoice/ready/insurance`]);
-              }, 1500);
-            },
-            error: (e: any) => {
-              this.isLoading = false;
-              this.notify.error('Invoice saved but failed to mark as ready');
-            }
-          });
+          this.isLoading = false;
+          this.notify.success('Invoice saved and marked as Ready for Bill');
+          const basePath = this.auth.isAdmin ? '/admin' : '/staff';
+          setTimeout(() => {
+            this.router.navigate([`${basePath}/invoice/ready/insurance`]);
+          }, 1500);
         },
         error: (e: any) => {
           this.isLoading = false;
@@ -580,7 +587,18 @@ export class InsuranceInvoiceComponent implements OnInit {
 
   onSaveBill() {
     if (!this.validateForm(true)) return;
-    this.form.items = this.items;
+    this.form.items = this.items.map(it => ({
+      ...it,
+      ic_rate: it.ic_rate || 0,
+      ic_disc_per: it.ic_disc_per || 0,
+      ic_disc: it.ic_disc || 0,
+      ic_taxable_amt: it.ic_taxable_amt || 0,
+      ic_sgst_amt: it.ic_sgst_amt || 0,
+      ic_cgst_amt: it.ic_cgst_amt || 0,
+      ic_total: it.ic_total || 0,
+      lc_cess: it.lc_cess || 0,
+      ic_qty: it.ic_qty || 1
+    }));
 
     if (this.editMode && this.invoiceId) {
       this.isLoading = true;
@@ -604,7 +622,18 @@ export class InsuranceInvoiceComponent implements OnInit {
 
   saveBeforeAction(callback: Function) {
     if (!this.validateForm(true)) return;
-    this.form.items = this.items;
+    this.form.items = this.items.map(it => ({
+      ...it,
+      ic_rate: it.ic_rate || 0,
+      ic_disc_per: it.ic_disc_per || 0,
+      ic_disc: it.ic_disc || 0,
+      ic_taxable_amt: it.ic_taxable_amt || 0,
+      ic_sgst_amt: it.ic_sgst_amt || 0,
+      ic_cgst_amt: it.ic_cgst_amt || 0,
+      ic_total: it.ic_total || 0,
+      lc_cess: it.lc_cess || 0,
+      ic_qty: it.ic_qty || 1
+    }));
     if (!this.isFromPreviousBills) {
       this.form.inv_no = ''; // Ensure we do not save the display invoice number
     }
@@ -614,21 +643,19 @@ export class InsuranceInvoiceComponent implements OnInit {
       if (this.isFromPreviousBills) this.form.isFinalized = true;
       this.api.updateInvoice(this.invoiceId, this.form).subscribe({
         next: () => {
-          this.api.markInvoiceReady(this.invoiceId!).subscribe({
-            next: () => { this.isLoading = false; callback(); },
-            error: () => { this.isLoading = false; this.notify.error('Failed to prepare invoice for action'); }
-          });
+          this.isLoading = false;
+          callback();
         },
         error: (e: any) => { this.isLoading = false; this.notify.error(e.error?.message || 'Error updating invoice'); }
       });
     } else {
+      this.form.ready_status = 1;
+      this.form.status = 1;
       this.api.createInsuranceInvoice(this.form).subscribe({
         next: (res: any) => {
           this.invoiceId = res.id;
-          this.api.markInvoiceReady(res.id).subscribe({
-            next: () => { this.isLoading = false; callback(); },
-            error: () => { this.isLoading = false; this.notify.error('Failed to prepare invoice for action'); }
-          });
+          this.isLoading = false;
+          callback();
         },
         error: (e: any) => { this.isLoading = false; this.notify.error(e.error?.message || 'Error saving invoice'); }
       });

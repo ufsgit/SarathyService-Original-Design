@@ -174,8 +174,8 @@ exports.createLabourInvoice = async (req, res) => {
                 d.inv_final_amount || d.inv_total || 0,
                 null,
                 null,
-                0,
-                0,
+                d.status || 0,
+                d.ready_status || 1,
                 0,
                 JSON.stringify(d.items || [])
             ]
@@ -297,7 +297,7 @@ exports.createInsuranceInvoice = async (req, res) => {
         const d = req.body;
 
         const [result] = await pool.query(
-            'CALL sp_createInsuranceInvoice(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'CALL sp_createInsuranceInvoice(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 d.inv_no || '',
                 d.inv_cus || '',
@@ -326,6 +326,8 @@ exports.createInsuranceInvoice = async (req, res) => {
                 d.inv_final_amount || d.inv_total || 0,
                 d.inv_insurance_company || d.insurance_id || null,
                 d.inv_surveyor || d.insurance_serveyor || '',
+                d.status || 1,
+                d.ready_status || 1,
                 d.items ? JSON.stringify(d.items) : '[]'
             ]
         );
