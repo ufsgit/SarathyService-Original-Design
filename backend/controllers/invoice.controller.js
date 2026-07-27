@@ -1212,110 +1212,35 @@ exports.generatePDF = async (req, res) => {
     }
 };
 
-// Generate Word and Finalize Bill
+// Generate Word Document
 exports.generateWord = async (req, res) => {
     console.log('generateWord req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     const conn = await pool.getConnection();
+    let connectionReleased = false;
     try {
-        await conn.beginTransaction();
-
-        // 1. Find the invoice (Prefer Ready table)
-        const [readyInvoices] = await conn.query(
-            `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address 
-             FROM tbl_readyfor_labour i 
+        const [invoices] = await conn.query(
+            `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address, lm.logo_url AS branch_logo_url  
+             FROM tbl_invoice_labour i 
              LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+             LEFT JOIN logo_master lm ON b.logo = lm.logo_id
              LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
              LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
              LEFT JOIN tbl_insurance_company c ON i.insurance_id = c.com_id
-             WHERE i.inv_id = ? AND i.ready_status = 1`,
+             WHERE i.inv_id = ?`,
             [req.params.id]
         );
 
-        let invoice;
-        let isFromReadyTable = false;
-
-        if (readyInvoices.length > 0) {
-            invoice = readyInvoices[0];
-            isFromReadyTable = true;
-        } else {
-            const [invoices] = await conn.query(
-                `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address 
-                 FROM tbl_invoice_labour i 
-                 LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
-                 LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
-                 LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
-                 LEFT JOIN tbl_insurance_company c ON i.insurance_id = c.com_id
-                 WHERE i.inv_id = ?`,
-                [req.params.id]
-            );
-            if (invoices.length === 0) {
-                await conn.rollback();
-                conn.release();
-                return res.status(404).json({ message: 'Not found' });
-            }
-            invoice = invoices[0];
+        if (invoices.length === 0) {
+            conn.release();
+            connectionReleased = true;
+            return res.status(404).json({ message: 'Not found' });
         }
 
+        let invoice = invoices[0];
         invoice.inv_advisername = invoice.adv_name || invoice.inv_advisername;
         invoice.inv_mechna = invoice.mech_name || invoice.inv_mechna;
 
-        // 2. Fetch items (Check both tables)
-        let [items] = await conn.query('SELECT * FROM tbl_readyfor_bill WHERE ic_inv_id = ?', [req.params.id]);
-        if (items.length === 0) {
-            [items] = await conn.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [req.params.id]);
-        }
-
-        // 3. If it's from Ready table, finalize it
-        if (isFromReadyTable) {
-            // 1. Get the latest invoice number with an exclusive row lock
-            const [lastInvRows] = await conn.query('SELECT inv_no FROM tbl_invoice_labour ORDER BY inv_id DESC LIMIT 1 FOR UPDATE');
-            let lastInvoiceNumber = '';
-            if (lastInvRows.length > 0) {
-                lastInvoiceNumber = lastInvRows[0].inv_no;
-            }
-
-            // 2. Generate New Invoice Number dynamically
-            const today = new Date();
-            // Default to 'CI' and '11207' as a fallback if the table is completely empty
-            const generatedInvNo = generateNextInvoiceNumber(lastInvoiceNumber, today, 'CI', '11207');
-
-            // 3. Insert into tbl_invoice_labour with the generated invoice number
-            const finalizedStatus = (invoice.status === 0) ? 0 : 1;
-            const [insertResult] = await conn.query(
-                'INSERT INTO tbl_invoice_labour (inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, status, ready_status, insurance_id, insurance_serveyor, inv_cesstotal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [generatedInvNo, invoice.inv_cus, invoice.inv_cus_addres, invoice.inv_pho, invoice.inv_cus_gstin, invoice.inv_inv_date, invoice.inv_type, invoice.inv_job_card_no, invoice.inv_jcard_date, invoice.inv_repair_typ, invoice.inv_km, invoice.in_registr, invoice.inv_chassis, invoice.in_engine, invoice.inv_modl, invoice.inv_sale_date, invoice.inv_taxpay, invoice.inv_advisername, invoice.inv_mechna, invoice.inv_branch, invoice.inv_disc_total, invoice.inv_taxtotal, invoice.inv_sgstotal, invoice.inv_gsttotal, invoice.inv_total, finalizedStatus, 0, invoice.insurance_id || null, invoice.insurance_serveyor || '', invoice.inv_cesstotal || 0]
-            );
-            const newInvId = insertResult.insertId;
-            invoice.inv_no = generatedInvNo;
-
-            for (const item of items) {
-                await conn.query(
-                    'INSERT INTO tbl_invoice_labour_cost (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt, lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    [newInvId, item.lc_lab_code, item.lc_type, item.lc_lb_name, item.lc_sacode, item.lc_rate, item.lc_disc_p, item.lc_disc, item.lc_tax_amunt, item.lc_sgst_p, item.lc_sgst_a, item.lc_cgst_p, item.lc_cgst_a, item.lc_amount]
-                );
-            }
-            await conn.query('UPDATE tbl_readyfor_labour SET ready_status = 0 WHERE inv_id = ?', [req.params.id]);
-
-            // Re-fetch finalized data from tbl_invoice_labour for the Word generator
-            const [finalizedInvoices] = await conn.query(
-                `SELECT i.*, b.branch_name, b.branch_address, b.branch_ph, a.e_first_name AS adv_name, m.e_first_name AS mech_name, c.icompany_gst AS inv_insurance_gstin, c.icompany_address AS inv_insurance_address  
-                 FROM tbl_invoice_labour i 
-                 LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
-                 LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
-                 LEFT JOIN tbl_employee m ON i.inv_mechna = m.emp_id
-                 LEFT JOIN tbl_insurance_company c ON i.insurance_id = c.com_id
-                 WHERE i.inv_id = ?`,
-                [newInvId]
-            );
-            if (finalizedInvoices.length > 0) {
-                invoice = finalizedInvoices[0];
-                invoice.inv_advisername = invoice.adv_name || invoice.inv_advisername;
-                invoice.inv_mechna = invoice.mech_name || invoice.inv_mechna;
-
-                const [finalizedItems] = await conn.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [newInvId]);
-                items = finalizedItems;
-            }
-        }
+        const [items] = await conn.query('SELECT * FROM tbl_invoice_labour_cost WHERE ic_inv_id = ?', [req.params.id]);
 
         // Fetch active brand
         const [brandConfig] = await conn.query('SELECT * FROM tbl_brand_config WHERE brand_status = 1 LIMIT 1');
@@ -1329,19 +1254,22 @@ exports.generateWord = async (req, res) => {
             invoice.active_brand = '';
         }
 
-        // Commit transaction BEFORE generating Word doc to release database locks
-        await conn.commit();
+        // Release connection BEFORE generating Word doc
+        conn.release();
+        connectionReleased = true;
 
+        const { generateInvoiceWord } = require('../utils/wordGenerator');
         const wordBuffer = await generateInvoiceWord(invoice, items);
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
         res.setHeader('Content-Disposition', `attachment; filename="${invoice.inv_no || invoice.inv_id} - invoice.docx"`);
         res.send(wordBuffer);
     } catch (err) {
-        await conn.rollback();
         console.error('Word error:', err);
         res.status(500).json({ message: 'Server error', error: err.message });
     } finally {
-        conn.release();
+        if (!connectionReleased) {
+            conn.release();
+        }
     }
 };
