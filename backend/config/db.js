@@ -17,7 +17,7 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,
 
   waitForConnections: true,
-  connectionLimit: 30,
+  connectionLimit: 40,
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,

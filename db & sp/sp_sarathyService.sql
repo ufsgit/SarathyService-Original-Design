@@ -8,6 +8,16 @@ inv_sgstotal_ varchar(100),inv_gsttotal_ varchar(100),inv_total_ varchar(100),in
 status_ int,ready_status_ int,inv_cesstotal_ varchar(100),items_ json)
 BEGIN
 declare inv_id_ int;
+-- === ADD YOUR ROLLBACK HANDLER HERE ===
+/*
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        DECLARE v_error_msg TEXT;
+        GET DIAGNOSTICS CONDITION 1 v_error_msg = MESSAGE_TEXT;
+        ROLLBACK;
+        SELECT 0 AS inv_id, CONCAT('Database error: ', v_error_msg) AS message;
+    END;
+    */
 SET inv_id_ = 0 ;
 IF inv_no_ != '' THEN
     SET inv_id_ = (SELECT inv_id
@@ -47,7 +57,7 @@ IF inv_job_card_no_ != '' THEN
 END IF;
 
  if inv_id_ is null or inv_id_ = 0 then 
-    START TRANSACTION;
+    -- START TRANSACTION;
     -- Insert into master table
     INSERT INTO tbl_readyfor_labour
     (inv_no,
@@ -90,7 +100,7 @@ status_,ready_status_,inv_cesstotal_
              ic_cess varchar(100) PATH '$.ic_cess' DEFAULT '0' ON EMPTY
         )
     ) jt;
-    COMMIT;   
+    -- COMMIT;   
 	end if;
     -- Return generated master ID (optional)
     SELECT inv_id_ AS inv_id;
@@ -526,6 +536,34 @@ END$$
 DELIMITER ;
 
 DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp3_createInvoiceSequenceTable`()
+BEGIN
+    -- 1. Create the sequence table with VARCHAR(500) to perfectly match your main tables
+    CREATE TABLE IF NOT EXISTS tbl_invoice_sequence (
+        id INT PRIMARY KEY,
+        last_invoice_no VARCHAR(500)
+    );
+
+    -- 2. Insert your absolute latest invoice number here as the starting point
+    -- Using INSERT IGNORE ensures it won't crash if the row already exists
+    INSERT IGNORE INTO tbl_invoice_sequence (id, last_invoice_no) VALUES (1, 'CI24251120700000'); 
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp4_createInvoiceIndexes`()
+BEGIN
+    -- Indexes for the main invoice table
+    CREATE INDEX idx_invoice_no ON tbl_invoice_labour(inv_no);
+    CREATE INDEX idx_job_card_no ON tbl_invoice_labour(inv_job_card_no);
+
+    -- Indexes for the ready table
+    CREATE INDEX idx_ready_invoice_no ON tbl_readyfor_labour(inv_no);
+    CREATE INDEX idx_ready_job_card_no ON tbl_readyfor_labour(inv_job_card_no);
+END$$
+DELIMITER ;
+
+DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_CheckRegistration`(
     IN p_reg_no VARCHAR(100)
 )
@@ -618,7 +656,7 @@ BEGIN
     DECLARE v_exists INT DEFAULT 0;
     DECLARE p_invId INT DEFAULT 0;
     DECLARE p_message VARCHAR(255) DEFAULT NULL;
-
+/*
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
@@ -626,7 +664,7 @@ BEGIN
         SET p_message = 'Database error occurred during execution';
         SELECT p_invId AS invId, p_message AS message;
     END;
-
+*/
     -- Check if inv_no already exists
     IF p_inv_no IS NOT NULL AND p_inv_no != '' THEN
         SELECT COUNT(*) INTO v_exists FROM (
@@ -653,7 +691,7 @@ BEGIN
     END IF;
 
     IF p_message IS NULL THEN
-        START TRANSACTION;
+       -- START TRANSACTION;
         
         -- Insert main record
         INSERT INTO tbl_readyfor_labour (
@@ -702,7 +740,7 @@ BEGIN
             ) AS jt;
         END IF;
 
-        COMMIT;
+      --  COMMIT;
         SET p_message = 'Success';
     END IF;
 
@@ -901,12 +939,21 @@ BEGIN
     DECLARE r_insurance_serveyor VARCHAR(100);
     DECLARE r_status INT;
     DECLARE r_inv_cesstotal VARCHAR(100);
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    
+        DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
+        DECLARE v_error_msg TEXT;
+        -- This grabs the actual MySQL error message
+        GET DIAGNOSTICS CONDITION 1 v_error_msg = MESSAGE_TEXT;
+        
         ROLLBACK;
-        SELECT 0 AS invId, 'Database error occurred during execution' AS message;
+        
+        -- Sends the actual error back to Node.js in the 'message' column
+        SELECT 0 AS invId, CONCAT('Database Error: ', v_error_msg) AS message;
     END;
-    START TRANSACTION;
+
+    
+     START TRANSACTION;
     -- ==========================================
     -- 1. Generate Invoice Number natively
     -- ==========================================
@@ -918,10 +965,13 @@ BEGIN
     ELSE
         SET v_targetFY = CAST(v_year AS CHAR);
     END IF;
-    -- Get last invoice number
-    SELECT inv_no INTO v_lastInvoice 
-    FROM tbl_invoice_labour 
-    ORDER BY inv_id DESC LIMIT 1 FOR UPDATE;
+    
+    -- REPLACE THIS:
+-- SELECT inv_no INTO v_lastInvoice FROM tbl_invoice_labour ORDER BY inv_id DESC LIMIT 1 FOR UPDATE;
+-- WITH THIS:
+
+SELECT last_invoice_no INTO v_lastInvoice FROM tbl_invoice_sequence WHERE id = 1 FOR UPDATE;
+
     IF v_lastInvoice IS NOT NULL AND CHAR_LENGTH(v_lastInvoice) >= 16 THEN
         SET v_prefix = SUBSTRING(v_lastInvoice, 1, 2);
         SET v_lastFY = SUBSTRING(v_lastInvoice, 3, 4);
@@ -937,6 +987,11 @@ BEGIN
     END IF;
     SET v_newSequenceStr = LPAD(v_newSequenceNum, 5, '0');
     SET v_generated_inv_no = CONCAT(v_prefix, v_targetFY, v_branchCode, v_newSequenceStr);
+    
+     -- ✅ RIGHT PLACE! Add the update statement exactly here:
+    UPDATE tbl_invoice_sequence SET last_invoice_no = v_generated_inv_no WHERE id = 1;
+
+    
     -- ==========================================
     -- 2. Handle tbl_readyfor_labour
     -- ==========================================
@@ -1103,20 +1158,20 @@ BEGIN
         SELECT COUNT(*) AS total
         FROM customer_details
         WHERE 
-            c_name LIKE CONCAT('%', p_search, '%')
-            OR c_reg_no LIKE CONCAT('%', p_search, '%')
-            OR c_contact_no LIKE CONCAT('%', p_search, '%')
-            OR model_name LIKE CONCAT('%', p_search, '%')
-            OR c_chassis_no LIKE CONCAT('%', p_search, '%');
+            c_name LIKE CONCAT(p_search, '%')
+            OR c_reg_no LIKE CONCAT(p_search, '%')
+            OR c_contact_no LIKE CONCAT(p_search, '%')
+            OR model_name LIKE CONCAT(p_search, '%')
+            OR c_chassis_no LIKE CONCAT(p_search, '%');
 
         SELECT *
         FROM customer_details
         WHERE 
-            c_name LIKE CONCAT('%', p_search, '%')
-            OR c_reg_no LIKE CONCAT('%', p_search, '%')
-            OR c_contact_no LIKE CONCAT('%', p_search, '%')
-            OR model_name LIKE CONCAT('%', p_search, '%')
-            OR c_chassis_no LIKE CONCAT('%', p_search, '%')
+            c_name LIKE CONCAT(p_search, '%')
+            OR c_reg_no LIKE CONCAT(p_search, '%')
+            OR c_contact_no LIKE CONCAT(p_search, '%')
+            OR model_name LIKE CONCAT(p_search, '%')
+            OR c_chassis_no LIKE CONCAT(p_search, '%')
         ORDER BY c_id DESC
         LIMIT p_page_size OFFSET p_offset;
 
@@ -1568,6 +1623,19 @@ BEGIN
     declare ready_status_ int;
     declare duplicate_id_ int; -- NEW VARIABLE FOR DUPLICATE CHECKS
     declare has_duplicate_ boolean default false;
+    
+     -- === ADD THIS RIGHT HERE ===
+     /*
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        DECLARE v_error_msg TEXT;
+        GET DIAGNOSTICS CONDITION 1 v_error_msg = MESSAGE_TEXT;
+        ROLLBACK;
+        SELECT 0 AS inv_id, CONCAT('Database error: ', v_error_msg) AS message;
+    END;
+    */
+    -- ===========================
+    
     if insurance_id_ is not null and insurance_id_ > 0 then
         set status_ = 1;
     else
@@ -1629,7 +1697,7 @@ BEGIN
     -- PERFORM UPDATE ONLY IF VALID (NOT A DUPLICATE)
     if inv_id_ is not null and inv_id_ > 0 then
         if isFinalized_ = 1 then
-            START TRANSACTION;
+           -- START TRANSACTION;
             
             UPDATE tbl_invoice_labour SET
                 inv_cus=inv_cus_, inv_cus_addres=inv_cus_addres_, inv_pho=inv_pho_, inv_cus_gstin=inv_cus_gstin_,
@@ -1667,9 +1735,9 @@ BEGIN
                 )
             ) jt;
             
-            COMMIT;
+         --   COMMIT;
         else
-            START TRANSACTION;
+            -- START TRANSACTION;
             
             UPDATE tbl_readyfor_labour SET
                 inv_cus=inv_cus_, inv_cus_addres=inv_cus_addres_, inv_pho=inv_pho_, inv_cus_gstin=inv_cus_gstin_,
@@ -1708,7 +1776,7 @@ BEGIN
                 )
             ) jt;
             
-            COMMIT;  
+          --  COMMIT;  
         end if;
     end if;
     
