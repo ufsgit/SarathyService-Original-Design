@@ -154,42 +154,43 @@ exports.getById = async (req, res) => {
     }
 };
 
-// // Get customer by registration number
-exports.getByRegistration = async (req, res) => {
-    try {
-        const [rows] = await pool.query('SELECT * FROM customer_details WHERE c_reg_no = ?', [req.params.regNo]);
-        if (rows.length === 0) return res.status(404).json({ message: 'Customer not found' });
-        res.json(rows[0]);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
-};
-
-// Get customer by registration number
+// invoice page not SP Get customer by registration number
 // exports.getByRegistration = async (req, res) => {
 //     try {
-//         const regNo = req.params.regNo;
-
-//         const [result] = await pool.query(
-//             "CALL sp_GetCustomerByRegistration(?)",
-//             [regNo]
-//         );
-
-//         if (result[0].length === 0) {
-//             return res.status(404).json({
-//                 message: "Customer not found"
-//             });
-//         }
-
-//         res.json(result[0][0]);
-
+//         const [rows] = await pool.query('SELECT * FROM customer_details WHERE c_reg_no = ?', [req.params.regNo]);
+//         if (rows.length === 0) return res.status(404).json({ message: 'Customer not found' });
+//         res.json(rows[0]);
 //     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({
-//             message: "Server error"
-//         });
+//         res.status(500).json({ message: 'Server error' });
 //     }
 // };
+
+// invoice page SP Get customer by registration number
+// Get customer by registration number
+exports.getByRegistration = async (req, res) => {
+    try {
+        const regNo = req.params.regNo;
+
+        const [result] = await pool.query(
+            "CALL sp_GetCustomerByRegistration(?)",
+            [regNo]
+        );
+
+        if (result[0].length === 0) {
+            return res.status(404).json({
+                message: "Customer not found"
+            });
+        }
+
+        res.json(result[0][0]);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "Server error"
+        });
+    }
+};
 
 
 // Check if registration is unique

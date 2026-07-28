@@ -274,11 +274,11 @@ BEGIN
         AND (p_branchId IS NULL OR inv_branch = p_branchId)
         AND (
             p_search = ''
-            OR in_registr LIKE CONCAT('%', p_search, '%')
-            OR inv_cus LIKE CONCAT('%', p_search, '%')
-            OR inv_pho LIKE CONCAT('%', p_search, '%')
-            OR inv_no LIKE CONCAT('%', p_search, '%')
-            OR inv_job_card_no LIKE CONCAT('%', p_search, '%')
+            OR in_registr LIKE CONCAT(p_search, '%')
+            OR inv_cus LIKE CONCAT(p_search, '%')
+            OR inv_pho LIKE CONCAT(p_search, '%')
+            OR inv_no LIKE CONCAT(p_search, '%')
+            OR inv_job_card_no LIKE CONCAT(p_search, '%')
         );
 
     -- Paginated Data
@@ -312,11 +312,11 @@ BEGIN
         AND (p_branchId IS NULL OR l.inv_branch = p_branchId)
         AND (
             p_search = ''
-            OR l.in_registr LIKE CONCAT('%', p_search, '%')
-            OR l.inv_cus LIKE CONCAT('%', p_search, '%')
-            OR l.inv_pho LIKE CONCAT('%', p_search, '%')
-            OR l.inv_no LIKE CONCAT('%', p_search, '%')
-            OR l.inv_job_card_no LIKE CONCAT('%', p_search, '%')
+            OR l.in_registr LIKE CONCAT(p_search, '%')
+            OR l.inv_cus LIKE CONCAT(p_search, '%')
+            OR l.inv_pho LIKE CONCAT(p_search, '%')
+            OR l.inv_no LIKE CONCAT(p_search, '%')
+            OR l.inv_job_card_no LIKE CONCAT(p_search, '%')
         )
     ORDER BY l.inv_id DESC
     LIMIT p_pageSize OFFSET v_offset;
@@ -345,10 +345,10 @@ BEGIN
     AND (branch_id IS NULL OR i.inv_branch = branch_id)
     AND (
         search_text = ''
-        OR i.in_registr LIKE CONCAT('%', search_text, '%')
-        OR i.inv_cus LIKE CONCAT('%', search_text, '%')
-        OR i.inv_job_card_no LIKE CONCAT('%', search_text, '%')
-        OR i.inv_no LIKE CONCAT('%', search_text, '%')
+        OR i.in_registr LIKE CONCAT(search_text, '%')
+        OR i.inv_cus LIKE CONCAT(search_text, '%')
+        OR i.inv_job_card_no LIKE CONCAT(search_text, '%')
+        OR i.inv_no LIKE CONCAT(search_text, '%')
     );
 
 
@@ -377,10 +377,10 @@ BEGIN
     AND (branch_id IS NULL OR i.inv_branch = branch_id)
     AND (
         search_text = ''
-        OR i.in_registr LIKE CONCAT('%', search_text, '%')
-        OR i.inv_cus LIKE CONCAT('%', search_text, '%')
-        OR i.inv_job_card_no LIKE CONCAT('%', search_text, '%')
-        OR i.inv_no LIKE CONCAT('%', search_text, '%')
+        OR i.in_registr LIKE CONCAT(search_text, '%')
+        OR i.inv_cus LIKE CONCAT(search_text, '%')
+        OR i.inv_job_card_no LIKE CONCAT(search_text, '%')
+        OR i.inv_no LIKE CONCAT(search_text, '%')
     )
     ORDER BY i.inv_id DESC
     LIMIT page_size OFFSET offset_val;
@@ -560,6 +560,40 @@ BEGIN
     -- Indexes for the ready table
     CREATE INDEX idx_ready_invoice_no ON tbl_readyfor_labour(inv_no);
     CREATE INDEX idx_ready_job_card_no ON tbl_readyfor_labour(inv_job_card_no);
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_CheckJobCardDuplicate`(
+    IN p_jobcard VARCHAR(100),
+    IN p_exclude_id INT
+)
+BEGIN
+    IF p_exclude_id IS NULL THEN
+        SELECT 1 AS is_duplicate
+        FROM (
+            SELECT inv_id FROM tbl_readyfor_labour 
+            WHERE inv_job_card_no = p_jobcard AND ready_status = 1
+            
+            UNION ALL
+            
+            SELECT inv_id FROM tbl_invoice_labour 
+            WHERE inv_job_card_no = p_jobcard
+        ) AS combined
+        LIMIT 1;
+    ELSE
+        SELECT 1 AS is_duplicate
+        FROM (
+            SELECT inv_id FROM tbl_readyfor_labour 
+            WHERE inv_job_card_no = p_jobcard AND ready_status = 1 AND inv_id != p_exclude_id
+            
+            UNION ALL
+            
+            SELECT inv_id FROM tbl_invoice_labour 
+            WHERE inv_job_card_no = p_jobcard AND inv_id != p_exclude_id
+        ) AS combined
+        LIMIT 1;
+    END IF;
 END$$
 DELIMITER ;
 

@@ -82,22 +82,41 @@ function generateNextInvoiceNumber(lastInvoiceNumber, newInvoiceDate, defaultPre
     return `${prefix}${targetFYStr}${branchCode}${newSequenceStr}`;
 }
 
+// Check jobcard duplicate invoice not SP
+// exports.checkJobCardDuplicate = async (req, res) => {
+//     try {
+//         const { jobcard, excludeId } = req.query;
+//         if (!jobcard) return res.json({ exists: false });
+
+//         let query = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? AND ready_status = 1 UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ?';
+//         let params = [jobcard, jobcard];
+
+//         if (excludeId) {
+//             query = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? AND ready_status = 1 AND inv_id != ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ? AND inv_id != ?';
+//             params = [jobcard, excludeId, jobcard, excludeId];
+//         }
+
+//         const [exists] = await pool.query(query, params);
+//         res.json({ exists: exists.length > 0 });
+//     } catch (err) {
+//         res.status(500).json({ message: 'Server error', error: err.message });
+//     }
+// };
+
+// Check jobcard duplicate invoice SP
 exports.checkJobCardDuplicate = async (req, res) => {
     try {
         const { jobcard, excludeId } = req.query;
         if (!jobcard) return res.json({ exists: false });
 
-        let query = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? AND ready_status = 1 UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ?';
-        let params = [jobcard, jobcard];
+        const [result] = await pool.query(
+            'CALL sp_CheckJobCardDuplicate(?, ?)',
+            [jobcard, excludeId || null]
+        );
 
-        if (excludeId) {
-            query = 'SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = ? AND ready_status = 1 AND inv_id != ? UNION SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = ? AND inv_id != ?';
-            params = [jobcard, excludeId, jobcard, excludeId];
-        }
-
-        const [exists] = await pool.query(query, params);
-        res.json({ exists: exists.length > 0 });
+        res.json({ exists: result[0].length > 0 });
     } catch (err) {
+        console.error('Check Jobcard Duplicate error:', err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
