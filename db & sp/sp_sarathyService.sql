@@ -1609,6 +1609,42 @@ END$$
 DELIMITER ;
 
 DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_UpdateCustomer`(
+    IN p_id INT,
+    IN p_c_name VARCHAR(255),
+    IN p_c_address TEXT,
+    IN p_c_reg_no VARCHAR(100),
+    IN p_c_chassis_no VARCHAR(100),
+    IN p_c_engine_no VARCHAR(100),
+    IN p_model_name VARCHAR(100),
+    IN p_c_contact_no VARCHAR(50),
+    IN p_gstin_no VARCHAR(50),
+    IN p_c_sales_date DATE,
+    IN p_c_email VARCHAR(255)
+)
+BEGIN
+    -- Perform the update
+    UPDATE customer_details 
+    SET 
+        c_name = p_c_name,
+        c_address = p_c_address,
+        c_reg_no = p_c_reg_no,
+        c_chassis_no = p_c_chassis_no,
+        c_engine_no = p_c_engine_no,
+        model_name = p_model_name,
+        c_contact_no = p_c_contact_no,
+        gstin_no = p_gstin_no,
+        c_sales_date = p_c_sales_date,
+        c_email = p_c_email
+    WHERE 
+        c_id = p_id;
+    
+    -- Return the number of affected rows to match result[0][0].affectedRows
+    SELECT ROW_COUNT() AS affectedRows;
+END$$
+DELIMITER ;
+
+DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `updateInvoice`(IN inv_id_ int,inv_no_ varchar(100),inv_cus_ varchar(100),
 inv_cus_addres_ varchar(100),inv_pho_ varchar(100),inv_cus_gstin_ varchar(100),inv_inv_date_ date,inv_type_ varchar(100),
 inv_job_card_no_ varchar(100),inv_jcard_date_ date,inv_repair_typ_ varchar(100),inv_km_ varchar(100),in_registr_ varchar(100),
