@@ -63,21 +63,21 @@ END IF;
     (inv_no,
 	inv_cus,inv_cus_addres,inv_pho,inv_cus_gstin,inv_inv_date,inv_type,inv_job_card_no,inv_jcard_date,inv_repair_typ,
 	inv_km,in_registr,inv_chassis,in_engine,inv_modl,inv_sale_date,inv_taxpay,inv_advisername,inv_mechna,inv_branch,inv_disc_total,
-	inv_taxtotal,inv_sgstotal,inv_gsttotal,inv_total,insurance_id,insurance_serveyor,status,ready_status,inv_cesstotal
+	inv_taxtotal,inv_sgstotal,inv_gsttotal,inv_total,insurance_id,insurance_serveyor,status,ready_status,inv_cesstotal,EntryDate
     )
     VALUES    
    ('',inv_cus_,inv_cus_addres_,inv_pho_,inv_cus_gstin_,inv_inv_date_,inv_type_,inv_job_card_no_,inv_jcard_date_,
 inv_repair_typ_,inv_km_,in_registr_,inv_chassis_,in_engine_,inv_modl_,inv_sale_date_,inv_taxpay_,inv_advisername_,
 inv_mechna_,inv_branch_,inv_disc_total_,inv_taxtotal_,inv_sgstotal_,inv_gsttotal_,inv_total_,insurance_id_,insurance_serveyor_,
-status_,ready_status_,inv_cesstotal_
+status_,ready_status_,inv_cesstotal_,DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)
     );
     -- Get generated ID
     SET inv_id_ = LAST_INSERT_ID();
     -- Insert all detail rows from JSON
     INSERT INTO tbl_readyfor_bill(ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
-	lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount,lc_cess)
+	lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount,lc_cess,EntryDate)
     SELECT inv_id_,jt.ic_labour_code,jt.ic_type,ic_particular,jt.ic_hsn,jt.ic_rate,jt.ic_disc_per,jt.ic_disc,jt.ic_taxable_amt,
-    jt.ic_sgst_p,jt.ic_sgst_amt,jt.ic_cgst_p,jt.ic_cgst_amt,jt.ic_total,jt.ic_cess
+    jt.ic_sgst_p,jt.ic_sgst_amt,jt.ic_cgst_p,jt.ic_cgst_amt,jt.ic_total,jt.ic_cess,DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)
     FROM JSON_TABLE
     (
         items_,
@@ -564,6 +564,47 @@ END$$
 DELIMITER ;
 
 DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp5_AddEntryDate`()
+BEGIN
+    DECLARE _dbname VARCHAR(100);
+    SELECT DATABASE() INTO _dbname;
+
+    -- 1. Add EntryDate to tbl_readyfor_labour
+    IF NOT EXISTS (
+        SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = _dbname AND TABLE_NAME = 'tbl_readyfor_labour' AND COLUMN_NAME = 'EntryDate'
+    ) THEN
+        ALTER TABLE `tbl_readyfor_labour` ADD COLUMN `EntryDate` DATETIME NULL;
+    END IF;
+
+    -- 2. Add EntryDate to tbl_readyfor_bill
+    IF NOT EXISTS (
+        SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = _dbname AND TABLE_NAME = 'tbl_readyfor_bill' AND COLUMN_NAME = 'EntryDate'
+    ) THEN
+        ALTER TABLE `tbl_readyfor_bill` ADD COLUMN `EntryDate` DATETIME NULL;
+    END IF;
+
+    -- 3. Add EntryDate to tbl_invoice_labour
+    IF NOT EXISTS (
+        SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = _dbname AND TABLE_NAME = 'tbl_invoice_labour' AND COLUMN_NAME = 'EntryDate'
+    ) THEN
+        ALTER TABLE `tbl_invoice_labour` ADD COLUMN `EntryDate` DATETIME NULL;
+    END IF;
+
+    -- 4. Add EntryDate to tbl_invoice_labour_cost
+    IF NOT EXISTS (
+        SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = _dbname AND TABLE_NAME = 'tbl_invoice_labour_cost' AND COLUMN_NAME = 'EntryDate'
+    ) THEN
+        ALTER TABLE `tbl_invoice_labour_cost` ADD COLUMN `EntryDate` DATETIME NULL;
+    END IF;
+
+END$$
+DELIMITER ;
+
+DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_CheckJobCardDuplicate`(
     IN p_jobcard VARCHAR(100),
     IN p_exclude_id INT
@@ -733,13 +774,13 @@ BEGIN
             inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl,
             inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, 
             inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total,
-            insurance_id, insurance_serveyor, status, ready_status, inv_cesstotal
+            insurance_id, insurance_serveyor, status, ready_status, inv_cesstotal,EntryDate
         ) VALUES (
             p_inv_no, p_inv_cus, p_inv_cus_addres, p_inv_pho, p_inv_cus_gstin, p_inv_inv_date, p_inv_type,
             p_inv_job_card_no, p_inv_jcard_date, p_inv_repair_typ, p_inv_km, p_in_registr, p_inv_chassis, p_in_engine, p_inv_modl,
             p_inv_sale_date, p_inv_taxpay, p_inv_advisername, p_inv_mechna, p_inv_branch, 
             p_inv_disc_total, p_inv_taxtotal, p_inv_sgstotal, p_inv_gsttotal, p_inv_total,
-            p_insurance_id, p_insurance_serveyor, p_status, p_ready_status, '0'
+            p_insurance_id, p_insurance_serveyor, p_status, p_ready_status, '0',DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)
         );
 
         SET p_invId = LAST_INSERT_ID();
@@ -748,7 +789,7 @@ BEGIN
         IF p_items IS NOT NULL AND JSON_LENGTH(p_items) > 0 THEN
             INSERT INTO tbl_readyfor_bill (
                 ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
-                lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess
+                lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess,EntryDate
             )
             SELECT 
                 p_invId,
@@ -765,7 +806,8 @@ BEGIN
                 COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_cgst_p')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cgst_p')), ''), '9'),
                 COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_cgst_amt')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cgst_a')), ''), '0'),
                 COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_total')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_amount')), ''), '0'),
-                COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cess')), ''), '0')
+                COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cess')), ''), '0'),
+                DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)
             FROM JSON_TABLE(
                 p_items,
                 '$[*]' COLUMNS (
@@ -1068,9 +1110,15 @@ SELECT last_invoice_no INTO v_lastInvoice FROM tbl_invoice_sequence WHERE id = 1
     ELSE
         -- CASE 1: Insert into tbl_readyfor_labour with ready_status = 0
         INSERT INTO tbl_readyfor_labour (
-            inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, insurance_id, insurance_serveyor, status, ready_status, inv_cesstotal
+            inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, 
+            inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, 
+            inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, insurance_id, 
+            insurance_serveyor, status, ready_status, inv_cesstotal,EntryDate
         ) VALUES (
-            p_inv_no, p_inv_cus, p_inv_cus_addres, p_inv_pho, p_inv_cus_gstin, p_inv_inv_date, p_inv_type, p_inv_job_card_no, p_inv_jcard_date, p_inv_repair_typ, p_inv_km, p_in_registr, p_inv_chassis, p_in_engine, p_inv_modl, p_inv_sale_date, p_inv_taxpay, p_inv_advisername, p_inv_mechna, p_inv_branch, p_inv_disc_total, p_inv_taxtotal, p_inv_sgstotal, p_inv_gsttotal, p_inv_total, p_insurance_id, p_insurance_serveyor, p_status, 0, '0'
+            p_inv_no, p_inv_cus, p_inv_cus_addres, p_inv_pho, p_inv_cus_gstin, p_inv_inv_date, p_inv_type, p_inv_job_card_no, p_inv_jcard_date, 
+            p_inv_repair_typ, p_inv_km, p_in_registr, p_inv_chassis, p_in_engine, p_inv_modl, p_inv_sale_date, p_inv_taxpay, p_inv_advisername, 
+            p_inv_mechna, p_inv_branch, p_inv_disc_total, p_inv_taxtotal, p_inv_sgstotal, p_inv_gsttotal, p_inv_total, p_insurance_id, 
+            p_insurance_serveyor, p_status, 0, '0',DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)
         );
         SET v_new_inv_id = LAST_INSERT_ID();
     END IF;
@@ -1078,7 +1126,7 @@ SELECT last_invoice_no INTO v_lastInvoice FROM tbl_invoice_sequence WHERE id = 1
     IF p_items IS NOT NULL AND JSON_LENGTH(p_items) > 0 THEN
         INSERT INTO tbl_readyfor_bill (
             ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
-            lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess
+            lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess,EntryDate
         )
         SELECT 
             v_new_inv_id,
@@ -1095,7 +1143,8 @@ SELECT last_invoice_no INTO v_lastInvoice FROM tbl_invoice_sequence WHERE id = 1
             COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_cgst_p')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cgst_p')), ''), '9'),
             COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_cgst_amt')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cgst_a')), ''), '0'),
             COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_total')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_amount')), ''), '0'),
-            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cess')), ''), '0')
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cess')), ''), '0'),
+            DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)
         FROM JSON_TABLE(
             p_items,
             '$[*]' COLUMNS (
@@ -1107,16 +1156,22 @@ SELECT last_invoice_no INTO v_lastInvoice FROM tbl_invoice_sequence WHERE id = 1
     -- 3. Insert into Final Invoice Tables
     -- ==========================================
     INSERT INTO tbl_invoice_labour (
-        inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, insurance_id, insurance_serveyor, status, ready_status, inv_cesstotal
+        inv_no, inv_cus, inv_cus_addres, inv_pho, inv_cus_gstin, inv_inv_date, inv_type, inv_job_card_no, 
+        inv_jcard_date, inv_repair_typ, inv_km, in_registr, inv_chassis, in_engine, inv_modl, inv_sale_date, inv_taxpay, 
+        inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, 
+        insurance_id, insurance_serveyor, status, ready_status, inv_cesstotal,EntryDate
     ) VALUES (
-        v_generated_inv_no, p_inv_cus, p_inv_cus_addres, p_inv_pho, p_inv_cus_gstin, p_inv_inv_date, p_inv_type, p_inv_job_card_no, p_inv_jcard_date, p_inv_repair_typ, p_inv_km, p_in_registr, p_inv_chassis, p_in_engine, p_inv_modl, p_inv_sale_date, p_inv_taxpay, p_inv_advisername, p_inv_mechna, p_inv_branch, p_inv_disc_total, p_inv_taxtotal, p_inv_sgstotal, p_inv_gsttotal, p_inv_total, p_insurance_id, p_insurance_serveyor, p_status, 0, '0'
+        v_generated_inv_no, p_inv_cus, p_inv_cus_addres, p_inv_pho, p_inv_cus_gstin, p_inv_inv_date, p_inv_type, p_inv_job_card_no, 
+        p_inv_jcard_date, p_inv_repair_typ, p_inv_km, p_in_registr, p_inv_chassis, p_in_engine, p_inv_modl, p_inv_sale_date, p_inv_taxpay, 
+        p_inv_advisername, p_inv_mechna, p_inv_branch, p_inv_disc_total, p_inv_taxtotal, p_inv_sgstotal, p_inv_gsttotal, p_inv_total, 
+        p_insurance_id, p_insurance_serveyor, p_status, 0, '0', DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)
     );
     SET v_new_inv_id = LAST_INSERT_ID();
     -- Insert items into tbl_invoice_labour_cost
     IF p_items IS NOT NULL AND JSON_LENGTH(p_items) > 0 THEN
         INSERT INTO tbl_invoice_labour_cost (
             ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
-            lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess
+            lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess, EntryDate
         )
         SELECT 
             v_new_inv_id,
@@ -1133,7 +1188,8 @@ SELECT last_invoice_no INTO v_lastInvoice FROM tbl_invoice_sequence WHERE id = 1
             COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_cgst_p')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cgst_p')), ''), '9'),
             COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_cgst_amt')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cgst_a')), ''), '0'),
             COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.ic_total')), ''), NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_amount')), ''), '0'),
-            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cess')), ''), '0')
+            COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(item, '$.lc_cess')), ''), '0'),
+            DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)
         FROM JSON_TABLE(
             p_items,
             '$[*]' COLUMNS (
@@ -1783,9 +1839,9 @@ BEGIN
             delete from tbl_invoice_labour_cost where ic_inv_id = inv_id_;        
             
             INSERT INTO tbl_invoice_labour_cost(ic_inv_id,lc_lab_code,lc_type,lc_lb_name,lc_sacode,lc_rate,lc_disc_p,lc_disc,lc_tax_amunt,
-            lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount)
+            lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount,EntryDate)
             SELECT inv_id_,jt.ic_labour_code,jt.ic_type,ic_particular,jt.ic_hsn,jt.ic_rate,jt.ic_disc_per,jt.ic_disc,jt.ic_taxable_amt,
-            jt.ic_sgst_p,jt.ic_sgst_amt,jt.ic_cgst_p,jt.ic_cgst_amt,jt.ic_total
+            jt.ic_sgst_p,jt.ic_sgst_amt,jt.ic_cgst_p,jt.ic_cgst_amt,jt.ic_total,DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)
             FROM JSON_TABLE(
                 items_,
                 '$[*]' COLUMNS (
@@ -1823,9 +1879,9 @@ BEGIN
             delete from tbl_readyfor_bill where ic_inv_id = inv_id_;
             
             INSERT INTO tbl_readyfor_bill (ic_inv_id, lc_lab_code, lc_type, lc_lb_name, lc_sacode, lc_rate, lc_disc_p, lc_disc, lc_tax_amunt,
-                lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess)
+                lc_sgst_p, lc_sgst_a, lc_cgst_p, lc_cgst_a, lc_amount, lc_cess,EntryDate)
             SELECT inv_id_,jt.ic_labour_code,jt.ic_type,ic_particular,jt.ic_hsn,jt.ic_rate,jt.ic_disc_per,jt.ic_disc,jt.ic_taxable_amt,
-            jt.ic_sgst_p,jt.ic_sgst_amt,jt.ic_cgst_p,jt.ic_cgst_amt,jt.ic_total,jt.ic_cess
+            jt.ic_sgst_p,jt.ic_sgst_amt,jt.ic_cgst_p,jt.ic_cgst_amt,jt.ic_total,jt.ic_cess,DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)
             FROM JSON_TABLE(
                 items_,
                 '$[*]' COLUMNS (
