@@ -8,6 +8,8 @@ import { NotificationService } from '../../../core/services/notification.service
 import { AuthService } from '../../../core/services/auth.service';
 import { AddCustomerModalComponent } from '../../../shared/components/add-customer-modal/add-customer-modal.component';
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import { InvoicePdfService } from '../../../pdf/invoice-pdf.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-labour-invoice', standalone: true,
@@ -49,7 +51,7 @@ export class LabourInvoiceComponent implements OnInit {
     return option ? option.split(' - ')[0] : option;
   };
 
-  constructor(private api: ApiService, private notify: NotificationService, private router: Router, public auth: AuthService, private route: ActivatedRoute, private titleService: Title) { }
+  constructor(private api: ApiService, private notify: NotificationService, private router: Router, public auth: AuthService, private route: ActivatedRoute, private titleService: Title, private invoicePdfService: InvoicePdfService) { }
 
   ngOnInit() {
     this.api.getBranches().subscribe(d => {
@@ -610,9 +612,25 @@ export class LabourInvoiceComponent implements OnInit {
 
   printInvoice() {
     if (!this.invoiceId) return;
-    const filename = `${this.form.inv_no || this.invoiceId} - invoice`;
-    let url = this.api.getInvoicePDFUrl(this.invoiceId, filename);
-    window.open(url, '_blank');
+
+    if (environment.newPDFInvoicePrint) {
+      const pdfTitle = `${this.form.inv_no || this.invoiceId} - Labour Invoice`;
+      const pdfWindow = window.open('', '_blank');
+      this.api.getInvoicePdfData(this.invoiceId).subscribe({
+        next: (res: any) => {
+          this.invoicePdfService.generateAndOpenPDF(res.invoice, res.items, pdfWindow, pdfTitle);
+        },
+        error: (err) => {
+          if (pdfWindow) pdfWindow.close();
+          console.error(err);
+          this.notify.error('Failed to fetch PDF data');
+        }
+      });
+    } else {
+      const filename = `${this.form.inv_no || this.invoiceId} - invoice`;
+      let url = this.api.getInvoicePDFUrl(this.invoiceId, filename);
+      window.open(url, '_blank');
+    }
   }
 
 

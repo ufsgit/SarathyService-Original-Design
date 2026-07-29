@@ -35,6 +35,7 @@ app.use('/api/reports', require('./routes/report.routes'));
 app.use('/api/vehicle-history', require('./routes/vehicle-history.routes'));
 app.use('/api/brand', require('./routes/brand.routes'));
 app.use('/api/logo', require('./routes/logo.routes'));
+app.use('/api/pdf', require('./routes/pdf.routes'));
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Unhandled Error:', err);

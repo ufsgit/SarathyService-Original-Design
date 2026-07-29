@@ -1,6 +1,9 @@
 export const environment = {
   production: true,
 
+  newPDFInvoicePrint: 1,
+  newPDFVehiclePrint: 0,
+  
   apiUrl: 'http://localhost:3000/api',
   FilePath: 'http://localhost:3000',
 
@@ -18,5 +21,5 @@ export const environment = {
 
   // apiUrl: 'https://bajajserviceapi.sarathymotors.in/api',
   // FilePath: 'https://bajajserviceapi.sarathymotors.in',
-
+  
 };
