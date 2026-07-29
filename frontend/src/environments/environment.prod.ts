@@ -12,6 +12,9 @@ export const environment = {
   
   // apiUrl: 'https://sarathyserviceapi.trackbox.live/api',
   // FilePath: 'https://sarathyserviceapi.trackbox.live',
+  
+  // apiUrl: 'https://sarathyktmserviceapi.trackbox.live/api',
+  // FilePath: 'https://sarathyktmserviceapi.trackbox.live',
 
   // apiUrl: 'https://ktmserviceapi.sarathymotors.in/api',
   // FilePath: 'https://ktmserviceapi.sarathymotors.in',
