@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { Subject, Subscription, of } from 'rxjs';
+import { VehicleHistoryPdfService } from '../../pdf/vehicle-history-pdf.service';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-vehicle-history',
@@ -21,6 +23,7 @@ export class VehicleHistoryComponent implements OnInit, OnDestroy {
   searched = false;
   isLoading = false;
   isPdfLoading = false;
+  // Removed local newpdf flag; using environment.newPDFVehiclePrint instead
 
   isDropdownLoading = false;
   lastSearchedRegNo = '';
@@ -31,7 +34,8 @@ export class VehicleHistoryComponent implements OnInit, OnDestroy {
 
   constructor(
     private api: ApiService,
-    private notify: NotificationService
+    private notify: NotificationService,
+    private vehicleHistoryPdfService: VehicleHistoryPdfService
   ) { }
 
   ngOnInit() {
@@ -117,9 +121,13 @@ export class VehicleHistoryComponent implements OnInit, OnDestroy {
   }
 
   openPdf() {
-    const baseUrl = this.api.getVehicleHistoryPDFUrl(this.regNo);
-    const cb = Date.now();
-    const pdfUrl = `${baseUrl}&cb=${cb}`;
-    window.open(pdfUrl, '_blank');
+    if (environment.newPDFVehiclePrint) {
+      this.vehicleHistoryPdfService.generatePdf(this.customer, this.invoices);
+    } else {
+      const baseUrl = this.api.getVehicleHistoryPDFUrl(this.regNo);
+      const cb = Date.now();
+      const pdfUrl = `${baseUrl}&cb=${cb}`;
+      window.open(pdfUrl, '_blank');
+    }
   }
 }

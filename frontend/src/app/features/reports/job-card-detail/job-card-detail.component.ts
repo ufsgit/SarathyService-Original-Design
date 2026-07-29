@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { InvoicePdfService } from '../../../pdf/invoice-pdf.service';
+import { environment } from '../../../../environments/environment';
 
 import { FormsModule } from '@angular/forms';
 
@@ -27,7 +29,8 @@ export class JobCardDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private api: ApiService,
-    private notify: NotificationService
+    private notify: NotificationService,
+    private invoicePdfService: InvoicePdfService
   ) { }
 
   ngOnInit(): void {
@@ -232,11 +235,27 @@ export class JobCardDetailComponent implements OnInit {
 
   exportPdf(): void {
     if (!this.id) return;
-    const filename = `${this.data?.invoice?.inv_job_card_no || this.id} - jobcard details`;
-    const url = this.api.getInvoicePDFUrl(this.id, filename);
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-    const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
-    window.open(pdfUrl, '_blank');
+
+    if (environment.newPDFInvoicePrint) {
+      const pdfTitle = `${this.data?.invoice?.inv_job_card_no || this.id} - Job Card Detail`;
+      const pdfWindow = window.open('', '_blank');
+      this.api.getInvoicePdfData(this.id).subscribe({
+        next: (res: any) => {
+          this.invoicePdfService.generateAndOpenPDF(res.invoice, res.items, pdfWindow, pdfTitle);
+        },
+        error: (err) => {
+          if (pdfWindow) pdfWindow.close();
+          console.error(err);
+          this.notify.error('Failed to fetch PDF data');
+        }
+      });
+    } else {
+      const filename = `${this.data?.invoice?.inv_job_card_no || this.id} - jobcard details`;
+      const url = this.api.getInvoicePDFUrl(this.id, filename);
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+      const pdfUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
+      window.open(pdfUrl, '_blank');
+    }
   }
 
   exportWord(): void {

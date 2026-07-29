@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { InvoicePdfService } from '../../../pdf/invoice-pdf.service';
+import { environment } from '../../../../environments/environment';
 @Component({
   selector: 'app-previous-bills', standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
@@ -24,8 +26,15 @@ export class PreviousBillsComponent implements OnInit {
   totalItems = 0;
   totalPages = 0;
 
-  constructor(public api: ApiService, private notify: NotificationService, private route: ActivatedRoute, private router: Router, private auth: AuthService) {
-  }
+  constructor(
+    public api: ApiService, 
+    private notify: NotificationService, 
+    private route: ActivatedRoute, 
+    private router: Router, 
+    private auth: AuthService,
+    private invoicePdfService: InvoicePdfService
+  ) {}
+
   ngOnInit() {
     this.isAdmin = this.router.url.includes('/admin/');
     this.type = this.route.snapshot.data['type'] || 'labour';
@@ -110,10 +119,31 @@ export class PreviousBillsComponent implements OnInit {
   openPdf(bill: any): void {
     console.log("openPdf:", bill);
     if (!bill?.inv_id) return;
-    const filename = `${bill.inv_job_card_no} - previous bill ${this.type}`;
-    const url = this.api.getInvoicePDFUrl(bill.inv_id, filename);
-    const cb = Date.now();
-    const pdfUrl = `${url}?cb=${cb}`;
-    window.open(pdfUrl, '_blank');
+    
+    if (environment.newPDFInvoicePrint) {
+      const pdfWindow = window.open('', '_blank');
+      
+      // Create the title: Jobcard No - Previous Bills(Type)
+      const formattedType = this.type ? this.type.charAt(0).toUpperCase() + this.type.slice(1) : '';
+      const tabName = `Previous Bills(${formattedType})`;
+      const pdfTitle = `${bill.inv_job_card_no} - ${tabName}`;
+
+      this.api.getInvoicePdfData(bill.inv_id).subscribe({
+        next: (res: any) => {
+          this.invoicePdfService.generateAndOpenPDF(res.invoice, res.items, pdfWindow, pdfTitle);
+        },
+        error: (err) => {
+          if (pdfWindow) pdfWindow.close();
+          console.error(err);
+          this.notify.error('Failed to fetch PDF data');
+        }
+      });
+    } else {
+      const filename = `${bill.inv_job_card_no} - previous bill ${this.type}`;
+      const url = this.api.getInvoicePDFUrl(bill.inv_id, filename);
+      const cb = Date.now();
+      const pdfUrl = `${url}?cb=${cb}`;
+      window.open(pdfUrl, '_blank');
+    }
   }
 }

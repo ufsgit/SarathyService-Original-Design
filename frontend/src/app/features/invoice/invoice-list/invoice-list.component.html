@@ -39,7 +39,7 @@
                 <div class="action-content">
                   <a [routerLink]="['/staff/invoice/edit',e.inv_id]">Edit</a>
                   <a (click)="markReady(e.inv_id)">Mark Ready</a>
-                  <a [href]="api.getInvoicePDFUrl(e.inv_id)" target="_blank">PDF</a>
+                  <a href="#" (click)="openPdf($event, e.inv_id, e.inv_job_card_no)">PDF</a>
                 </div>
               </div>
             </td>
@@ -79,7 +79,7 @@
                 <div class="action-content">
                   <a [routerLink]="['/staff/invoice/edit',e.inv_id]">Edit</a>
                   <a (click)="markReady(e.inv_id)">Mark Ready</a>
-                  <a [href]="api.getInvoicePDFUrl(e.inv_id)" target="_blank">PDF</a>
+                  <a href="#" (click)="openPdf($event, e.inv_id, e.inv_job_card_no)">PDF</a>
                 </div>
               </div>
             </td>

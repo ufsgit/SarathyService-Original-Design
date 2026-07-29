@@ -156,4 +156,8 @@ export class ApiService {
   }
   
   getInvoiceWordUrl(id: number): string { return `${this.baseUrl}/invoices/${id}/word`; }
+
+  getInvoicePdfData(id: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/pdf/invoice-data/${id}`);
+  }
 }
