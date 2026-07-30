@@ -176,8 +176,7 @@ export class InvoicePdfService {
           ...headerContent, 
           ...tableContent, 
           ...signatureContent,
-          { text: '', margin: [0, 0, 0, 160] }, 
-          { ...gatePassContent, absolutePosition: { x: 30, y: 650 }, unbreakable: true }
+          { ...gatePassContent, margin: [0, 30, 0, 0], unbreakable: true }
         ],
         
         footer: (currentPage: number, pageCount: number) => {

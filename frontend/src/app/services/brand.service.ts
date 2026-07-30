@@ -62,6 +62,6 @@ export class BrandService {
    */
   private applyBrandColors(hexColor: string): void {
     if (!hexColor) return;
-    document.documentElement.style.setProperty('--primary-brand-color', hexColor);
+    document.documentElement.style.setProperty('--brand-color', hexColor);
   }
 }

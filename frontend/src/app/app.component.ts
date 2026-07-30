@@ -13,13 +13,6 @@ export class AppComponent implements OnInit {
   constructor(private api: ApiService) {}
 
   ngOnInit() {
-    this.api.getActiveBrand().subscribe({
-      next: (res) => {
-        if (res.success && res.data && res.data.brand_color) {
-          document.documentElement.style.setProperty('--brand-color', res.data.brand_color);
-        }
-      },
-      error: (err) => console.error('Failed to fetch brand color', err)
-    });
+    // Brand color is initialized globally by BrandService via APP_INITIALIZER
   }
 }

@@ -46,19 +46,25 @@ export class VehicleHistoryPdfService {
   }
 
   generatePdf(customer: any, invoices: any[]) {
+    const pdfTitle = `${customer?.c_reg_no || 'Vehicle'} - vehicle history.pdf`;
+
     // Hardcoded fallback logic same as backend
     const activeBrand = { brand_title: 'SARATHY MOTORS', brand_dealer_code: '-' };
 
     // Open an intermediate window to show a loading spinner
     const newWindow = window.open('', '_blank');
     if (newWindow) {
-      newWindow.document.write(SPINNER_HTML);
+      newWindow.document.write(SPINNER_HTML.replace('<title>Generating PDF...</title>', `<title>${pdfTitle}</title>`));
+      newWindow.document.title = pdfTitle;
       newWindow.document.close();
     }
 
     setTimeout(async () => {
       try {
         const docDefinition: TDocumentDefinitions = {
+          info: {
+            title: pdfTitle
+          },
           pageSize: 'A4',
           pageMargins: [30, 30, 30, 30],
           defaultStyle: {
