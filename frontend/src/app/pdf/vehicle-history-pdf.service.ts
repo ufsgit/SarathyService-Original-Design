@@ -3,6 +3,7 @@ import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { TDocumentDefinitions, Content, Table, Column } from 'pdfmake/interfaces';
 import { formatAmPm } from './invoice-utils'; 
+import { BrandService } from '../services/brand.service';
 
 // Load the bundled Roboto fonts into pdfmake's virtual file system
 (pdfMake as any).vfs = (pdfFonts as any).pdfMake
@@ -31,7 +32,7 @@ const SPINNER_HTML = `
 })
 export class VehicleHistoryPdfService {
 
-  constructor() { }
+  constructor(private brandService: BrandService) { }
 
   private fmtDate(d: any): string {
     if (!d) return '-';
@@ -48,8 +49,11 @@ export class VehicleHistoryPdfService {
   generatePdf(customer: any, invoices: any[]) {
     const pdfTitle = `${customer?.c_reg_no || 'Vehicle'} - vehicle history.pdf`;
 
-    // Hardcoded fallback logic same as backend
-    const activeBrand = { brand_title: 'SARATHY MOTORS', brand_dealer_code: '-' };
+    const config = this.brandService.getBrandConfig() as any;
+    const activeBrand = { 
+      brand_title: config?.brand_title || config?.brand_name || 'SARATHY MOTORS', 
+      brand_dealer_code: config?.brand_dealer_code || '-' 
+    };
 
     // Open an intermediate window to show a loading spinner
     const newWindow = window.open('', '_blank');
@@ -144,63 +148,55 @@ export class VehicleHistoryPdfService {
 
     // Loop over invoices
     (invoices || []).forEach((inv: any, idx: number) => {
-      
-      // Visit Header Line
       content.push({
-        columns: [
-          { text: `Visit : ${idx + 1}`, bold: true, width: 130 },
-          { text: `JobCard No : ${inv.inv_job_card_no || '-'}`, width: 255 },
-          { text: `Invoice No : ${inv.inv_no || '-'}`, width: 150, alignment: 'right' }
-        ],
-        margin: [0, 0, 0, 5],
-        unbreakable: true
-      });
-
-      // Visit Table
-      content.push({
-        table: {
-          headerRows: 1,
-          widths: [90, 70, 100, 180, '*'],
-          body: [
-            [
-              { text: 'Date Of Visit', bold: true, fontSize: 7, margin: [2, 4, 2, 4] },
-              { text: 'Kms', bold: true, fontSize: 7, margin: [2, 4, 2, 4] },
-              { text: 'Job Type', bold: true, fontSize: 7, margin: [2, 4, 2, 4] },
-              { text: 'Service Dealer', bold: true, fontSize: 7, margin: [2, 4, 2, 4] },
-              { text: 'Dealer Code', bold: true, fontSize: 7, margin: [2, 4, 2, 4] }
+        stack: [
+          // Visit Header Line
+          {
+            columns: [
+              { text: `Visit : ${idx + 1}`, bold: true, fontSize: 9, width: 130 },
+              { text: `JobCard No : ${inv.inv_job_card_no || '-'}`, bold: true, fontSize: 9, width: 255 },
+              { text: `Invoice No : ${inv.inv_no || '-'}`, bold: true, fontSize: 9, width: 150, alignment: 'right' }
             ],
-            [
-              { text: this.fmtDate(inv.inv_jcard_date), fontSize: 7, margin: [2, 4, 2, 4] },
-              { text: String(inv.inv_km || '-'), fontSize: 7, margin: [2, 4, 2, 4] },
-              { text: String(inv.inv_repair_typ || 'Paid service'), fontSize: 7, margin: [2, 4, 2, 4] },
-              { text: String(inv.branch_name || 'Sarathy Bajaj'), fontSize: 7, margin: [2, 4, 2, 4] },
-              { text: String(activeBrand.brand_dealer_code), fontSize: 7, margin: [2, 4, 2, 4] }
-            ]
-          ]
-        },
-        layout: 'borders',
-        margin: [0, 0, 0, 10],
-        unbreakable: true
-      });
-
-      // Services Done Title
-      content.push({
-        text: 'Services Done',
-        bold: true,
-        fontSize: 9,
-        margin: [0, 0, 0, 5],
+            margin: [0, 0, 0, 5]
+          },
+          // Visit Table
+          {
+            table: {
+              headerRows: 1,
+              widths: [90, 70, 100, 180, '*'],
+              body: [
+                [
+                  { text: 'Date Of Visit', bold: true, fontSize: 8, margin: [2, 2, 2, 2] },
+                  { text: 'Kms', bold: true, fontSize: 8, margin: [2, 2, 2, 2] },
+                  { text: 'Job Type', bold: true, fontSize: 8, margin: [2, 2, 2, 2] },
+                  { text: 'Service Dealer', bold: true, fontSize: 8, margin: [2, 2, 2, 2] },
+                  { text: 'Dealer Code', bold: true, fontSize: 8, margin: [2, 2, 2, 2] }
+                ],
+                [
+                  { text: this.fmtDate(inv.inv_jcard_date), fontSize: 7, margin: [2, 2, 2, 2] },
+                  { text: String(inv.inv_km || '-'), fontSize: 7, margin: [2, 2, 2, 2] },
+                  { text: String(inv.inv_repair_typ || 'Paid service'), fontSize: 7, margin: [2, 2, 2, 2] },
+                  { text: String(inv.branch_name || 'Sarathy Bajaj'), fontSize: 7, margin: [2, 2, 2, 2] },
+                  { text: String(activeBrand.brand_dealer_code), fontSize: 7, margin: [2, 2, 2, 2] }
+                ]
+              ]
+            },
+            layout: 'borders',
+            margin: [0, 0, 0, 10]
+          }
+        ],
         unbreakable: true
       });
 
       // Services Table
       const servicesBody: any[] = [];
-      // Header
+      // Column Header row
       servicesBody.push([
-        { text: 'Service Name', bold: true, fontSize: 7, margin: [2, 4, 2, 4] },
-        { text: 'Job Type', bold: true, fontSize: 7, margin: [2, 4, 2, 4] },
-        { text: 'Taxable Amount', bold: true, alignment: 'right', fontSize: 7, margin: [2, 4, 2, 4] },
-        { text: 'Discount Amount', bold: true, alignment: 'right', fontSize: 7, margin: [2, 4, 2, 4] },
-        { text: 'Amount', bold: true, alignment: 'right', fontSize: 7, margin: [2, 4, 2, 4] }
+        { text: 'Service Name', bold: true, fontSize: 8, margin: [2, 2, 2, 2] },
+        { text: 'Job Type', bold: true, fontSize: 8, margin: [2, 2, 2, 2] },
+        { text: 'Taxable Amount', bold: true, alignment: 'right', fontSize: 8, margin: [2, 2, 2, 2] },
+        { text: 'Discount Amount', bold: true, alignment: 'right', fontSize: 8, margin: [2, 2, 2, 2] },
+        { text: 'Amount', bold: true, alignment: 'right', fontSize: 8, margin: [2, 2, 2, 2] }
       ]);
 
       let visitTaxable = 0;
@@ -217,23 +213,33 @@ export class VehicleHistoryPdfService {
         visitTotal += amt;
 
         servicesBody.push([
-          { text: item.lc_lb_name || '-', fontSize: 7, margin: [2, 4, 2, 4] },
-          { text: 'P', fontSize: 7, margin: [2, 4, 2, 4] },
-          { text: tax.toFixed(2), alignment: 'right', fontSize: 7, margin: [2, 4, 2, 4] },
-          { text: disc.toFixed(2), alignment: 'right', fontSize: 7, margin: [2, 4, 2, 4] },
-          { text: amt.toFixed(2), alignment: 'right', fontSize: 7, margin: [2, 4, 2, 4] }
+          { text: item.lc_lb_name || '-', fontSize: 7, margin: [2, 2, 2, 2] },
+          { text: 'P', fontSize: 7, margin: [2, 2, 2, 2] },
+          { text: tax.toFixed(2), alignment: 'right', fontSize: 7, margin: [2, 2, 2, 2] },
+          { text: disc.toFixed(2), alignment: 'right', fontSize: 7, margin: [2, 2, 2, 2] },
+          { text: amt.toFixed(2), alignment: 'right', fontSize: 7, margin: [2, 2, 2, 2] }
         ]);
       });
 
       if (inv.items?.length > 0) {
         content.push({
-          table: {
-            headerRows: 1,
-            widths: [200, 90, 80, 80, '*'],
-            body: servicesBody
-          },
-          layout: 'borders',
-          margin: [0, 0, 0, 10],
+          stack: [
+            {
+              text: 'Services Done',
+              bold: true,
+              fontSize: 9,
+              margin: [0, 0, 0, 5]
+            },
+            {
+              table: {
+                headerRows: 1,
+                widths: [200, 90, 80, 80, '*'],
+                body: servicesBody
+              },
+              layout: 'borders',
+              margin: [0, 0, 0, 10]
+            }
+          ],
           unbreakable: true
         });
       } else {

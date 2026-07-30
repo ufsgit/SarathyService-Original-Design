@@ -2,10 +2,16 @@ export const environment = {
   production: false,
   
   newPDFInvoicePrint: 1,
-  newPDFVehiclePrint: 0,
+  newPDFVehiclePrint: 1,
   
   apiUrl: 'http://localhost:3000/api',
   FilePath: 'http://localhost:3000',
+  
+  // apiUrl: 'https://ktmserviceapi.trackboxcrm.net.in/api',
+  // FilePath: 'https://ktmserviceapi.trackboxcrm.net.in',
+  
+  // apiUrl: 'https://bajajserviceapi.trackboxcrm.net.in/api',
+  // FilePath: 'https://bajajserviceapi.trackboxcrm.net.in',
 
   // apiUrl: 'https://stage-bajajserviceapi.sarathymotors.in/api',
   // FilePath: 'http://stage-bajajserviceapi.sarathymotors.in',

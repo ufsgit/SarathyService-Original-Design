@@ -16,7 +16,7 @@ exports.search = async (req, res) => {
         const [invoices] = await pool.query(
             `SELECT i.*, b.branch_name, e1.e_first_name as advisor_name, e2.e_first_name as mechanic_name 
              FROM tbl_invoice_labour i 
-             LEFT JOIN tbl_branch b ON b.b_id = i.inv_branch 
+             INNER JOIN tbl_branch b ON b.b_id = i.inv_branch 
              LEFT JOIN tbl_employee e1 ON e1.emp_id = i.inv_advisername
              LEFT JOIN tbl_employee e2 ON e2.emp_id = i.inv_mechna
              WHERE i.in_registr = ? ORDER BY i.inv_id ASC`, [reg_no]

@@ -6,7 +6,7 @@ const db = require('../config/db');
  */
 const getActiveBrand = async (req, res) => {
     try {
-        const query = 'SELECT brand_id, brand_name, brand_color, brand_status FROM tbl_brand_config WHERE brand_status = 1 LIMIT 1';
+        const query = 'SELECT * FROM tbl_brand_config WHERE brand_status = 1 LIMIT 1';
         const [rows] = await db.execute(query);
 
         if (!rows || rows.length === 0) {
