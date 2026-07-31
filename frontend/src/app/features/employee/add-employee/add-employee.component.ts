@@ -33,11 +33,12 @@ export class AddEmployeeComponent implements OnInit {
     if (!this.form.e_branch) { this.notify.error('Branch Name is required'); return; }
     if (!this.form.e_code) { this.notify.error('Employee Code is required'); return; }
     if (!this.form.e_designation) { this.notify.error('Employee Designation is required'); return; }
-    if (!this.form.login_id) { this.notify.error('Username is required'); return; }
-    if (!this.form.login_password) { this.notify.error('Password is required'); return; }
+    if (this.form.add_as_user) {
+      if (!this.form.login_id) { this.notify.error('Username is required'); return; }
+      if (!this.form.login_password) { this.notify.error('Password is required'); return; }
+    }
     
-    // The user wants these required, so we force add_as_user to true effectively
-    const submissionData = { ...this.form, add_as_user: true };
+    const submissionData = { ...this.form };
 
     this.api.createEmployee(submissionData).subscribe({ 
       next: () => { this.notify.success('Created'); this.router.navigate(['/admin/employee/list']); }, 

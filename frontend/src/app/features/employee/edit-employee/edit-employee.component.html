@@ -10,76 +10,87 @@
   <div class="card-body">
     <form (ngSubmit)="onSubmit()" class="legacy-form">
       <div class="form-row">
+        <!-- Basic Information Column -->
         <div class="form-col">
-          <div class="form-group">
+          <div class="section-header">Basic Information</div>
+          
+          <div class="form-group row-inline">
             <label>Name :</label>
-            <input type="text" [(ngModel)]="form.e_first_name" name="fname" placeholder="Employee name" required>
+            <div class="input-group-inline">
+              <select [(ngModel)]="form.emp_intial" name="initial" class="select-initial">
+                <option *ngFor="let t of titles" [value]="t">{{t}}</option>
+              </select>
+              <input type="text" [(ngModel)]="form.e_first_name" name="fname" required>
+            </div>
           </div>
 
           <div class="form-group">
-            <label>Initial :</label>
-            <input type="text" [(ngModel)]="form.emp_intial" name="initial" placeholder="Initial">
-          </div>
-
-          <div class="form-group">
-            <label>Mobile :</label>
-            <input type="tel" [(ngModel)]="form.e_mobile" name="mobile" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)" placeholder="Mobile number" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" title="Enter exactly 10 digits" autocomplete="off">
-          </div>
-
-          <div class="form-group">
-            <label>Email :</label>
-            <input type="email" [(ngModel)]="form.e_email" name="email" placeholder="Email address">
-          </div>
-        </div>
-
-        <div class="form-col">
-          <div class="form-group">
-            <label>Designation :</label>
-            <app-searchable-select
-              [(ngModel)]="form.e_designation"
-              name="desig"
-              [options]="designations"
-              placeholder="Select Designation"
-              required>
-            </app-searchable-select>
-          </div>
-
-          <div class="form-group">
-            <label>Code :</label>
-            <input type="text" [(ngModel)]="form.e_code" name="code" placeholder="Employee code" required>
-          </div>
-
-          <div class="form-group">
-            <label>Branch :</label>
+            <label>Branch Name :</label>
             <app-searchable-select
               [(ngModel)]="form.e_branch"
               name="branch"
               [options]="branchNames"
-              placeholder="Select Branch"
-              required>
+              placeholder="Select Branch">
             </app-searchable-select>
           </div>
 
           <div class="form-group">
-            <label>Username :</label>
-            <input type="text" [(ngModel)]="form.login_id" name="uname" placeholder="Username" required>
+            <label>Address :</label>
+            <textarea [(ngModel)]="form.e_address" name="addr" placeholder="Address" rows="6"></textarea>
+          </div>
+        </div>
+
+        <!-- Personal Details Column -->
+        <div class="form-col">
+          <div class="section-header">Personal Details</div>
+
+          <div class="form-group">
+            <label>Mobile No. :</label>
+            <input type="tel" [(ngModel)]="form.e_mobile" name="mobile" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" title="Enter exactly 10 digits" autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label>Employee Code:</label>
+            <input type="text" [(ngModel)]="form.e_code" name="code">
+          </div>
+
+          <div class="form-group">
+            <label>Employee Designation:</label>
+            <app-searchable-select
+              [(ngModel)]="form.e_designation"
+              name="desig"
+              [options]="designations"
+              placeholder="Select Designation">
+            </app-searchable-select>
+          </div>
+
+          <div class="form-group">
+            <label>Email Id :</label>
+            <input type="email" [(ngModel)]="form.e_email" name="email">
+          </div>
+
+          <div class="form-group checkbox-group">
+            <div class="label-placeholder"></div>
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="form.add_as_user" name="addUser"> Add as User
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>Username:</label>
+            <input type="text" [(ngModel)]="form.login_id" name="loginId" [disabled]="!form.add_as_user">
           </div>
 
           <div class="form-group">
             <label>Password :</label>
-            <input type="password" [(ngModel)]="form.login_password" name="pwd" placeholder="Leave blank to keep current" required>
-          </div>
-
-          <div class="form-group">
-            <label>Address :</label>
-            <textarea [(ngModel)]="form.e_address" name="addr" placeholder="Employee address" rows="2"></textarea>
+            <input type="password" [(ngModel)]="form.login_password" name="loginPass" [disabled]="!form.add_as_user" placeholder="Leave blank to keep current">
           </div>
         </div>
       </div>
 
       <div class="form-actions">
         <button type="submit" class="btn-submit">Update</button>
-        <a class="btn-cancel" routerLink="/admin/employee/list">Cancel</a>
+        <button type="button" class="btn-cancel" routerLink="/admin/employee/list">Cancel</button>
       </div>
     </form>
   </div>

@@ -47,7 +47,7 @@
 }
 
 .card-body {
-    padding: 30px;
+    padding: 20px 30px;
 }
 
 .legacy-form {
@@ -55,39 +55,48 @@
     flex-direction: column;
 }
 
+.section-header {
+    background: var(--brand-color);
+    color: #fff;
+    padding: 5px 15px;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    border-radius: 2px;
+}
+
 .form-row {
     display: flex;
     justify-content: space-between;
-    gap: 40px;
+    gap: 60px;
 }
 
 .form-col {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
 }
 
 .form-group {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
 }
 
 .form-group label {
-    width: 150px;
+    width: 160px;
     text-align: right;
     padding-right: 15px;
-    color: #666;
+    color: #333;
     font-size: 13px;
-    margin-top: 8px;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
     flex: 1;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
+    padding: 6px 10px;
+    border: 1px solid #ccc;
     border-radius: 2px;
     font-size: 13px;
     color: #333;
@@ -95,10 +104,10 @@
     background: #fff;
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    border-color: #999;
+.form-group input:disabled,
+.form-group select:disabled {
+    background: #e9ecef;
+    cursor: not-allowed;
 }
 
 .form-group app-searchable-select {
@@ -106,9 +115,9 @@
 }
 
 .form-group app-searchable-select ::ng-deep .select-box {
-    padding: 8px 12px;
-    min-height: 33px; /* Matches input height with 8px padding and 13px font */
-    height: 33px;
+    padding: 6px 10px;
+    min-height: 29px; /* Matches input height with 6px padding and 13px font */
+    height: 29px;
     border-radius: 2px;
 }
 
@@ -121,35 +130,68 @@
     padding: 2px;
 }
 
+/* Row inline for Name (Initial + First Name) */
+.row-inline .input-group-inline {
+    flex: 1;
+    display: flex;
+    gap: 10px;
+}
+
+.select-initial {
+    width: 80px !important;
+    flex: none !important;
+}
+
+/* Checkbox alignment */
+.checkbox-group {
+    margin-top: 5px;
+}
+
+.label-placeholder {
+    width: 160px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #333;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    width: auto !important;
+    flex: none !important;
+    margin: 0;
+}
+
 .form-actions {
     display: flex;
     justify-content: center;
     gap: 15px;
-    margin-top: 30px;
+    margin-top: 40px;
+    padding-bottom: 20px;
 }
 
 .btn-submit {
     background: #cc1212;
     color: white;
     border: none;
-    padding: 8px 25px;
+    padding: 8px 30px;
     font-size: 13px;
     font-weight: bold;
     border-radius: 20px;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: background 0.2s;
-}
-
-.btn-submit:hover {
-    background: #b10f0f;
 }
 
 .btn-cancel {
     background: #fff;
     color: #333;
     border: 1px solid #ccc;
-    padding: 8px 25px;
+    padding: 8px 30px;
     font-size: 13px;
     font-weight: bold;
     border-radius: 20px;
@@ -157,9 +199,7 @@
     text-decoration: none;
     display: inline-block;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: background 0.2s;
 }
 
-.btn-cancel:hover {
-    background: #f0f0f0;
-}
+.btn-submit:hover { background: #b10f0f; }
+.btn-cancel:hover { background: #f0f0f0; }

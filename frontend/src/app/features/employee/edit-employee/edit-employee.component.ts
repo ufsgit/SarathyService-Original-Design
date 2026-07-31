@@ -16,6 +16,7 @@ export class EditEmployeeComponent implements OnInit {
   form: any = {}; 
   branches: any[] = [];
   branchNames: string[] = [];
+  titles: string[] = ['Mr.', 'Ms.'];
   designations: string[] = ['Mechanic', 'Service Advisor', 'Billing Staff', 'Floor Supervisor'];
   constructor(private api: ApiService, private notify: NotificationService, private route: ActivatedRoute, private router: Router) {}
   ngOnInit() {
@@ -23,7 +24,10 @@ export class EditEmployeeComponent implements OnInit {
       this.branches = d;
       this.branchNames = d.map(b => b.branch_name);
     });
-    this.api.getEmployee(+this.route.snapshot.params['id']).subscribe((d: any) => this.form = d);
+    this.api.getEmployee(+this.route.snapshot.params['id']).subscribe((d: any) => {
+      this.form = d;
+      this.form.add_as_user = !!this.form.login_id;
+    });
   }
   onSubmit() { 
     this.api.updateEmployee(this.form.emp_id, this.form).subscribe({ 
