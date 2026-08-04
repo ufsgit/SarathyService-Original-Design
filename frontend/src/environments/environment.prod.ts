@@ -4,14 +4,14 @@ export const environment = {
   newPDFInvoicePrint: 1,
   newPDFVehiclePrint: 1,
   
-  apiUrl: 'http://localhost:3000/api',
-  FilePath: 'http://localhost:3000',
+  // apiUrl: 'http://localhost:3000/api',
+  // FilePath: 'http://localhost:3000',
   
   // apiUrl: 'https://sarathyserviceapi.trackbox.live/api',
   // FilePath: 'https://sarathyserviceapi.trackbox.live',
   
-  // apiUrl: 'https://sarathyktmserviceapi.trackbox.live/api',
-  // FilePath: 'https://sarathyktmserviceapi.trackbox.live',
+  apiUrl: 'https://sarathyktmserviceapi.trackbox.live/api',
+  FilePath: 'https://sarathyktmserviceapi.trackbox.live',
 
   // apiUrl: 'https://ktmserviceapi.trackboxcrm.net.in/api',
   // FilePath: 'https://ktmserviceapi.trackboxcrm.net.in',

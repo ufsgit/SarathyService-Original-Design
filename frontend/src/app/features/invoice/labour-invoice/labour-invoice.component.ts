@@ -62,15 +62,7 @@ export class LabourInvoiceComponent implements OnInit {
       this.labourNames = d;
       this.updateLabourCodeOptions();
     });
-    // Load all advisors & mechanics initially (no branch filter)
-    this.api.getMechanics().subscribe(d => {
-      this.mechanics = d;
-      this.updateMechanicOptions();
-    });
-    this.api.getAdvisors().subscribe(d => {
-      this.advisors = d;
-      this.updateAdvisorOptions();
-    });
+    // Do not load advisors & mechanics initially until a branch is selected
 
     this.isFromPreviousBills = this.route.snapshot.queryParams['from'] === 'previous';
     this.isFromReadyBills = this.route.snapshot.queryParams['from'] === 'ready';
@@ -85,7 +77,7 @@ export class LabourInvoiceComponent implements OnInit {
       if (this.auth.currentUser?.branchId) {
         this.form.inv_branch = this.auth.currentUser.branchId;
         this.loadNextNo();
-        this.loadBranchEmployees(this.auth.currentUser.branchId);
+        this.loadBranchEmployees(this.auth.currentUser.branchId, false);
       }
     }
   }
@@ -148,9 +140,10 @@ export class LabourInvoiceComponent implements OnInit {
 
         // Update selected labels for Edit Mode
         if (this.branches.length > 0) this.updateBranchOptions();
-        if (this.advisors.length > 0) this.updateAdvisorOptions();
-        if (this.mechanics.length > 0) this.updateMechanicOptions();
         if (this.labourNames.length > 0) this.updateLabourCodeOptions();
+        if (this.form.inv_branch) {
+          this.loadBranchEmployees(this.form.inv_branch, false);
+        }
       },
       error: () => {
         this.isLoading = false;
@@ -244,11 +237,13 @@ export class LabourInvoiceComponent implements OnInit {
     // Intentionally left blank: disabled auto-fill job card no on date change per user request
   }
 
-  loadBranchEmployees(branchId: number) {
-    this.form.inv_advisername = '';
-    this.form.inv_mechna = '';
-    this.selectedAdvisorLabel = '';
-    this.selectedMechanicLabel = '';
+  loadBranchEmployees(branchId: number, clearExisting: boolean = true) {
+    if (clearExisting) {
+      this.form.inv_advisername = '';
+      this.form.inv_mechna = '';
+      this.selectedAdvisorLabel = '';
+      this.selectedMechanicLabel = '';
+    }
     this.api.getMechanics(branchId).subscribe(d => {
       this.mechanics = d;
       this.updateMechanicOptions();
@@ -262,17 +257,13 @@ export class LabourInvoiceComponent implements OnInit {
   onBranchChange() {
     this.loadNextNo();
     if (this.form.inv_branch) {
-      this.loadBranchEmployees(this.form.inv_branch);
+      this.loadBranchEmployees(this.form.inv_branch, true);
     } else {
-      // Branch cleared — reload all
-      this.api.getMechanics().subscribe(d => {
-        this.mechanics = d;
-        this.updateMechanicOptions();
-      });
-      this.api.getAdvisors().subscribe(d => {
-        this.advisors = d;
-        this.updateAdvisorOptions();
-      });
+      // Branch cleared — clear mechanics and advisors
+      this.mechanics = [];
+      this.updateMechanicOptions();
+      this.advisors = [];
+      this.updateAdvisorOptions();
     }
   }
 

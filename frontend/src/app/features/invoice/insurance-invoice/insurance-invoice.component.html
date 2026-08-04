@@ -133,7 +133,8 @@
               (ngModelChange)="onAdvisorSelect($event)"
               name="advname"
               placeholder="--Select Advisor--"
-              customClass="very-compact">
+              customClass="very-compact"
+              [disabled]="!form.inv_branch">
             </app-searchable-select>
           </div>
           <div class="control-group">
@@ -144,7 +145,8 @@
               (ngModelChange)="onMechanicSelect($event)"
               name="mechname"
               placeholder="--Select Mechanic--"
-              customClass="very-compact">
+              customClass="very-compact"
+              [disabled]="!form.inv_branch">
             </app-searchable-select>
           </div>
           <div class="control-group">
