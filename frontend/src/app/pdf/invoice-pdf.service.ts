@@ -163,6 +163,8 @@ export class InvoicePdfService {
       const signatureContent = buildSignatureAndGatePass(inv);
       const gatePassContent = buildGatePass(inv);
 
+      gatePassContent.absolutePosition = { x: 30, y: 660 };
+
       const docDefinition: any = {
         info: documentTitle ? { title: documentTitle } : undefined,
         pageSize: 'A4',
@@ -176,7 +178,8 @@ export class InvoicePdfService {
           ...headerContent, 
           ...tableContent, 
           ...signatureContent,
-          { ...gatePassContent, margin: [0, 30, 0, 0], unbreakable: true }
+          { text: '', margin: [0, 150, 0, 0] },
+          gatePassContent
         ],
         
         footer: (currentPage: number, pageCount: number) => {

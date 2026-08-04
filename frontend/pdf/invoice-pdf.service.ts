@@ -10,7 +10,7 @@ import { environment } from '../src/environments/environment';
 // import { formatAmPm } from './invoice-utils';
 import { buildHeader } from '../src/app/pdf/invoice-header';
 import { buildTableAndSummary } from '../src/app/pdf/invoice-table';
-import { buildSignatureAndGatePass } from '../src/app/pdf/invoice-footer';
+import { buildSignatureAndGatePass, buildGatePass } from '../src/app/pdf/invoice-footer';
 import { formatAmPm } from '../src/app/pdf/invoice-utils';
 
 // Load the bundled Roboto fonts into pdfmake's virtual file system
@@ -110,13 +110,21 @@ export class InvoicePdfService {
 
       const headerContent = await buildHeader(inv, logoDataUrl);
       const tableContent  = buildTableAndSummary(inv, items);
-      const footerContent = buildSignatureAndGatePass(inv);
+      const signatureContent = buildSignatureAndGatePass(inv);
+      const gatePassContent = buildGatePass(inv);
+      gatePassContent.absolutePosition = { x: 30, y: 660 };
 
       const docDefinition: TDocumentDefinitions = {
         pageSize: 'A4',
-        pageMargins: [30, 10, 30, 15],
+        pageMargins: [30, 10, 30, 30],
         defaultStyle: { fontSize: 7.5, color: '#000' },
-        content: [...headerContent, ...tableContent, ...footerContent],
+        content: [
+          ...headerContent, 
+          ...tableContent, 
+          ...signatureContent,
+          { text: '', margin: [0, 150, 0, 0] },
+          gatePassContent
+        ],
         footer: (currentPage: number, pageCount: number) => ({
           columns: [
             { text: `Printed On: ${formatAmPm(new Date())}`, fontSize: 7, margin: [30, 0, 0, 0] },
