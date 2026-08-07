@@ -763,7 +763,7 @@ exports.updateInvoice = async (req, res) => {
                 d.inv_mechna || "",
                 d.inv_branch || "",
                 d.inv_discount || 0,
-                d.inv_taxable_total || d.inv_taxtotal || 0,
+                d.inv_taxable_total ?? d.inv_taxtotal ?? 0,
                 d.inv_sgst || 0,
                 d.inv_cgst || 0,
                 d.inv_final_amount || d.inv_total || 0,
