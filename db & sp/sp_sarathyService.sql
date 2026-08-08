@@ -1078,7 +1078,8 @@ SELECT last_invoice_no INTO v_lastInvoice FROM tbl_invoice_sequence WHERE id = 1
             inv_cus_addres = p_inv_cus_addres,
             inv_pho = p_inv_pho,
             inv_cus_gstin = p_inv_cus_gstin,
-            inv_inv_date = p_inv_inv_date,
+            -- inv_inv_date = p_inv_inv_date,
+            inv_inv_date = DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)),
             inv_type = p_inv_type,
             inv_job_card_no = p_inv_job_card_no,
             inv_jcard_date = p_inv_jcard_date,
@@ -1115,7 +1116,10 @@ SELECT last_invoice_no INTO v_lastInvoice FROM tbl_invoice_sequence WHERE id = 1
             inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, insurance_id, 
             insurance_serveyor, status, ready_status, inv_cesstotal,EntryDate
         ) VALUES (
-            p_inv_no, p_inv_cus, p_inv_cus_addres, p_inv_pho, p_inv_cus_gstin, p_inv_inv_date, p_inv_type, p_inv_job_card_no, p_inv_jcard_date, 
+            p_inv_no, p_inv_cus, p_inv_cus_addres, p_inv_pho, p_inv_cus_gstin, 
+            -- p_inv_inv_date, 
+            DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)),
+            p_inv_type, p_inv_job_card_no, p_inv_jcard_date, 
             p_inv_repair_typ, p_inv_km, p_in_registr, p_inv_chassis, p_in_engine, p_inv_modl, p_inv_sale_date, p_inv_taxpay, p_inv_advisername, 
             p_inv_mechna, p_inv_branch, p_inv_disc_total, p_inv_taxtotal, p_inv_sgstotal, p_inv_gsttotal, p_inv_total, p_insurance_id, 
             p_insurance_serveyor, p_status, 0, '0',DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)
@@ -1161,7 +1165,10 @@ SELECT last_invoice_no INTO v_lastInvoice FROM tbl_invoice_sequence WHERE id = 1
         inv_advisername, inv_mechna, inv_branch, inv_disc_total, inv_taxtotal, inv_sgstotal, inv_gsttotal, inv_total, 
         insurance_id, insurance_serveyor, status, ready_status, inv_cesstotal,EntryDate
     ) VALUES (
-        v_generated_inv_no, p_inv_cus, p_inv_cus_addres, p_inv_pho, p_inv_cus_gstin, p_inv_inv_date, p_inv_type, p_inv_job_card_no, 
+        v_generated_inv_no, p_inv_cus, p_inv_cus_addres, p_inv_pho, p_inv_cus_gstin, 
+        -- p_inv_inv_date, 
+        DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)),
+        p_inv_type, p_inv_job_card_no, 
         p_inv_jcard_date, p_inv_repair_typ, p_inv_km, p_in_registr, p_inv_chassis, p_in_engine, p_inv_modl, p_inv_sale_date, p_inv_taxpay, 
         p_inv_advisername, p_inv_mechna, p_inv_branch, p_inv_disc_total, p_inv_taxtotal, p_inv_sgstotal, p_inv_gsttotal, p_inv_total, 
         p_insurance_id, p_insurance_serveyor, p_status, 0, '0', DATE_ADD(UTC_TIMESTAMP(), INTERVAL '5:30' HOUR_MINUTE)
