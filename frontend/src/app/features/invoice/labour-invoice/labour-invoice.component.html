@@ -1,3 +1,22 @@
+<style>
+  .branch-long-text-fix {
+    flex: 1;
+  }
+  .branch-long-text-fix app-searchable-select {
+    height: auto !important;
+  }
+  .branch-long-text-fix ::ng-deep .select-box {
+    height: auto !important;
+    min-height: 28px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .branch-long-text-fix ::ng-deep .selected-text {
+    white-space: normal !important;
+    word-wrap: break-word;
+    line-height: 1.2;
+  }
+</style>
 <div id="content" class="container-fluid">
   <div id="content-header">
     <div id="breadcrumb">
@@ -41,14 +60,16 @@
             <div *ngIf="!auth.isAdmin" class="readonly-value">
               {{ editMode ? form.branch_name : auth.currentUser?.branchName }}
             </div>
-            <app-searchable-select 
-              *ngIf="auth.isAdmin"
-              [options]="branchOptions"
-              [(ngModel)]="selectedBranchLabel"
-              (ngModelChange)="onBranchSelect($event)"
-              placeholder="--Select Branch--"
-              customClass="very-compact">
-            </app-searchable-select>
+            <div class="branch-long-text-fix">
+              <app-searchable-select 
+                *ngIf="auth.isAdmin"
+                [options]="branchOptions"
+                [(ngModel)]="selectedBranchLabel"
+                (ngModelChange)="onBranchSelect($event)"
+                placeholder="--Select Branch--"
+                customClass="very-compact">
+              </app-searchable-select>
+            </div>
           </div>
           <div class="control-group">
             <label>Jobcard No : <span class="text-danger">*</span></label>

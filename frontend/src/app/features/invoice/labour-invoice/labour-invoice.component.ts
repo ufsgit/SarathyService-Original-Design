@@ -164,7 +164,7 @@ export class LabourInvoiceComponent implements OnInit {
     this.advisorOptions = this.advisors.map(a => `${a.e_first_name} [${a.e_code}]`);
     if (this.form.inv_advisername) {
       const a = this.advisors.find(x => x.e_first_name == this.form.inv_advisername);
-      this.selectedAdvisorLabel = a ? `${a.e_first_name} [${a.e_code}]` : '';
+      this.selectedAdvisorLabel = a ? `${a.e_first_name} [${a.e_code}]` : this.form.inv_advisername;
     }
   }
 
@@ -172,7 +172,7 @@ export class LabourInvoiceComponent implements OnInit {
     this.mechanicOptions = this.mechanics.map(m => `${m.e_first_name} [${m.e_code}]`);
     if (this.form.inv_mechna) {
       const m = this.mechanics.find(x => x.e_first_name == this.form.inv_mechna);
-      this.selectedMechanicLabel = m ? `${m.e_first_name} [${m.e_code}]` : '';
+      this.selectedMechanicLabel = m ? `${m.e_first_name} [${m.e_code}]` : this.form.inv_mechna;
     }
   }
 
