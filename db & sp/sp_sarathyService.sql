@@ -1375,6 +1375,7 @@ BEGIN
             LEFT JOIN tbl_invoice_labour_cost lc ON i.inv_id = lc.ic_inv_id 
             ', v_where, v_item_conditions);
 
+/*
     -- Query 2: Paginated Invoices
     SET @mainQuery = CONCAT('
             SELECT i.*, b.branch_name, COALESCE(e.e_first_name, i.inv_mechna) as mechanic_name, COALESCE(a.e_first_name, i.inv_advisername) as advisor_name, ic.icompany_name
@@ -1397,6 +1398,46 @@ BEGIN
                 FROM tbl_invoice_labour i
                 ', v_where, ' 
                 ORDER BY i.inv_inv_date DESC, i.inv_id DESC 
+                LIMIT ', p_limit, ' OFFSET ', p_offset, '
+            ) paginated ON lc.ic_inv_id = paginated.inv_id
+    ');
+
+    PREPARE stmt1 FROM @totalsQuery;
+    EXECUTE stmt1;
+    DEALLOCATE PREPARE stmt1;
+
+    PREPARE stmt2 FROM @mainQuery;
+    EXECUTE stmt2;
+    DEALLOCATE PREPARE stmt2;
+
+    PREPARE stmt3 FROM @itemsQuery;
+    EXECUTE stmt3;
+    DEALLOCATE PREPARE stmt3;
+END
+*/
+
+    -- Query 2: Paginated Invoices
+    SET @mainQuery = CONCAT('
+            SELECT i.*, b.branch_name, COALESCE(e.e_first_name, i.inv_mechna) as mechanic_name, COALESCE(a.e_first_name, i.inv_advisername) as advisor_name, ic.icompany_name
+            FROM tbl_invoice_labour i
+            LEFT JOIN tbl_branch b ON i.inv_branch = b.b_id
+            LEFT JOIN tbl_employee e ON i.inv_mechna = e.emp_id
+            LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+            LEFT JOIN tbl_insurance_company ic ON i.insurance_id = ic.com_id 
+            ', v_where, ' 
+            ORDER BY DATE(i.inv_inv_date) DESC, i.inv_id DESC 
+            LIMIT ', p_limit, ' OFFSET ', p_offset);
+
+    -- Query 3: Items belonging to the paginated invoices ONLY
+    -- This optimizes the flattening process so NodeJS doesn't need to do a huge separate SELECT * query
+    SET @itemsQuery = CONCAT('
+            SELECT lc.* 
+            FROM tbl_invoice_labour_cost lc
+            INNER JOIN (
+                SELECT i.inv_id 
+                FROM tbl_invoice_labour i
+                ', v_where, ' 
+                ORDER BY DATE(i.inv_inv_date) DESC, i.inv_id DESC 
                 LIMIT ', p_limit, ' OFFSET ', p_offset, '
             ) paginated ON lc.ic_inv_id = paginated.inv_id
     ');
@@ -1504,6 +1545,7 @@ BEGIN
             FROM tbl_invoice_labour_cost lc
             JOIN tbl_invoice_labour i ON i.inv_id = lc.ic_inv_id ', v_where);
 
+/*
     SET @mainQuery = CONCAT('
             SELECT i.*, b.branch_name, COALESCE(e.e_first_name, i.inv_mechna) as mechanic_name, COALESCE(a.e_first_name, i.inv_advisername) as advisor_name, ic.icompany_name
             FROM tbl_invoice_labour i
@@ -1513,6 +1555,23 @@ BEGIN
             LEFT JOIN tbl_insurance_company ic ON i.insurance_id = ic.com_id ', v_where, ' 
             ORDER BY i.inv_inv_date DESC, i.inv_id DESC 
             LIMIT ', p_limit, ' OFFSET ', p_offset);
+*/
+
+    SET @mainQuery = CONCAT('
+            SELECT i.*, b.branch_name, COALESCE(e.e_first_name, i.inv_mechna) as mechanic_name, COALESCE(a.e_first_name, i.inv_advisername) as advisor_name, ic.icompany_name
+            FROM (
+                SELECT * FROM tbl_invoice_labour i 
+                ', v_where, ' 
+                ORDER BY DATE(i.inv_inv_date) DESC, i.inv_id DESC 
+                LIMIT ', p_limit, ' OFFSET ', p_offset, '
+            ) i
+            LEFT JOIN tbl_branch b ON i.inv_branch = b.b_id
+            LEFT JOIN tbl_employee e ON i.inv_mechna = e.emp_id
+            LEFT JOIN tbl_employee a ON i.inv_advisername = a.emp_id
+            LEFT JOIN tbl_insurance_company ic ON i.insurance_id = ic.com_id 
+            ORDER BY DATE(i.inv_inv_date) DESC, i.inv_id DESC');
+
+
 
     PREPARE stmt1 FROM @totalsQuery;
     EXECUTE stmt1;
