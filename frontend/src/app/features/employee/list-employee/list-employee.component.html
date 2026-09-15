@@ -60,6 +60,7 @@
                 <div class="action-content">
                   <a [routerLink]="['/admin/employee/edit', e.emp_id]">Edit</a>
                   <a (click)="openStatusModal(e)">Status</a>
+                  <a (click)="del(e.emp_id)" *ngIf="auth.isAdmin" style="cursor: pointer; color: red;">Delete</a>
                 </div>
               </div>
             </td>

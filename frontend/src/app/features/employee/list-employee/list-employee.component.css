@@ -114,6 +114,11 @@
     border: 1px solid #ddd;
 }
 
+.legacy-table tbody tr:nth-last-child(-n+3):nth-child(n+5) .action-content {
+    top: auto;
+    bottom: 100%;
+}
+
 .action-content a {
     color: #333;
     padding: 6px 10px;

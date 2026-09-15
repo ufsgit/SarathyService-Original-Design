@@ -159,3 +159,8 @@
 .action-dropdown:hover .action-content {
     display: block;
 }
+
+.legacy-table tbody tr:nth-last-child(-n+3):nth-child(n+5) .action-content {
+    top: auto;
+    bottom: 100%;
+}

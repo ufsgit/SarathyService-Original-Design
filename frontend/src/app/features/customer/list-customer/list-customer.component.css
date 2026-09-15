@@ -222,10 +222,9 @@
 }
 
 /* Make dropdown open upwards for the last 3 rows so it doesn't get cut off at the bottom */
-.legacy-table tbody tr:nth-last-child(-n+3) .action-content {
+.legacy-table tbody tr:nth-last-child(-n+3):nth-child(n+5) .action-content {
     top: auto;
     bottom: 100%;
-    margin-bottom: 2px;
 }
 
 /* Ensure the very first row ALWAYS opens downwards, even if it's the only row */
