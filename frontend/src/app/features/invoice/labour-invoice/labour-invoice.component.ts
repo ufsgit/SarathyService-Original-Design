@@ -10,10 +10,11 @@ import { AddCustomerModalComponent } from '../../../shared/components/add-custom
 import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 import { InvoicePdfService } from '../../../pdf/invoice-pdf.service';
 import { environment } from '../../../../environments/environment';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 
 @Component({
   selector: 'app-labour-invoice', standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, AddCustomerModalComponent, SearchableSelectComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AddCustomerModalComponent, SearchableSelectComponent, MatDatepickerModule],
   templateUrl: './labour-invoice.component.html',
   styleUrls: ['./labour-invoice.component.css']
 })
@@ -71,8 +72,16 @@ export class LabourInvoiceComponent implements OnInit {
       this.editMode = true;
       this.loadInvoice(this.invoiceId);
     } else {
-      this.form.inv_inv_date = new Date().toISOString().split('T')[0];
-      this.form.inv_jcard_date = new Date().toISOString().split('T')[0];
+      this.api.getServerDate().subscribe({
+        next: (res) => {
+          this.form.inv_inv_date = res.date;
+          this.form.inv_jcard_date = res.date;
+        },
+        error: () => {
+          this.form.inv_inv_date = new Date().toISOString().split('T')[0];
+          this.form.inv_jcard_date = new Date().toISOString().split('T')[0];
+        }
+      });
       this.form.inv_repair_typ = '';
       if (this.auth.currentUser?.branchId) {
         this.form.inv_branch = this.auth.currentUser.branchId;
@@ -116,8 +125,14 @@ export class LabourInvoiceComponent implements OnInit {
         if (this.form.inv_sale_date) this.form.inv_sale_date = formatDate(this.form.inv_sale_date);
 
         if (this.isFromReadyBills) {
-          const today = new Date().toISOString().split('T')[0];
-          this.form.inv_inv_date = today;
+          this.api.getServerDate().subscribe({
+            next: (resDate) => {
+              this.form.inv_inv_date = resDate.date;
+            },
+            error: () => {
+              this.form.inv_inv_date = new Date().toISOString().split('T')[0];
+            }
+          });
         }
 
         this.items = res.items.map((it: any) => ({
@@ -485,8 +500,17 @@ export class LabourInvoiceComponent implements OnInit {
     }
     this.isLoading = true;
 
+    this.isLoading = true;
+    const payload = { ...this.form };
+    if (payload.inv_inv_date && typeof payload.inv_inv_date.format === 'function') {
+      payload.inv_inv_date = payload.inv_inv_date.format('YYYY-MM-DD');
+    }
+    if (payload.inv_jcard_date && typeof payload.inv_jcard_date.format === 'function') {
+      payload.inv_jcard_date = payload.inv_jcard_date.format('YYYY-MM-DD');
+    }
+
     if (this.editMode && this.invoiceId) {
-      this.api.updateInvoice(this.invoiceId, this.form).subscribe({
+      this.api.updateInvoice(this.invoiceId, payload).subscribe({
         next: () => {
           this.isLoading = false;
           this.notify.success('Invoice updated successfully');
@@ -501,9 +525,9 @@ export class LabourInvoiceComponent implements OnInit {
         }
       });
     } else {
-      this.form.ready_status = 1;
-      this.form.status = 0;
-      this.api.createLabourInvoice(this.form).subscribe({
+      payload.ready_status = 1;
+      payload.status = 0;
+      this.api.createLabourInvoice(payload).subscribe({
         next: (res: any) => {
           this.invoiceId = res.id;
           this.isLoading = false;
@@ -538,8 +562,16 @@ export class LabourInvoiceComponent implements OnInit {
 
     if (this.editMode && this.invoiceId) {
       this.isLoading = true;
-      if (this.isFromPreviousBills) this.form.isFinalized = true;
-      this.api.updateInvoice(this.invoiceId, this.form).subscribe({
+      const payload = { ...this.form };
+      if (this.isFromPreviousBills) payload.isFinalized = true;
+      if (payload.inv_inv_date && typeof payload.inv_inv_date.format === 'function') {
+        payload.inv_inv_date = payload.inv_inv_date.format('YYYY-MM-DD');
+      }
+      if (payload.inv_jcard_date && typeof payload.inv_jcard_date.format === 'function') {
+        payload.inv_jcard_date = payload.inv_jcard_date.format('YYYY-MM-DD');
+      }
+
+      this.api.updateInvoice(this.invoiceId, payload).subscribe({
         next: () => {
           this.isLoading = false;
           this.notify.success('Invoice updated successfully');
@@ -574,8 +606,15 @@ export class LabourInvoiceComponent implements OnInit {
       this.form.inv_no = ''; // Ensure we do not save the display invoice number
     }
     this.isLoading = true;
+    const payload = { ...this.form };
+    if (payload.inv_inv_date && typeof payload.inv_inv_date.format === 'function') {
+      payload.inv_inv_date = payload.inv_inv_date.format('YYYY-MM-DD');
+    }
+    if (payload.inv_jcard_date && typeof payload.inv_jcard_date.format === 'function') {
+      payload.inv_jcard_date = payload.inv_jcard_date.format('YYYY-MM-DD');
+    }
 
-    this.api.finalizeInvoice(this.invoiceId || null, this.form).subscribe({
+    this.api.finalizeInvoice(this.invoiceId || null, payload).subscribe({
       next: (res: any) => {
         if (res && res.inv_id) {
            this.invoiceId = res.inv_id;

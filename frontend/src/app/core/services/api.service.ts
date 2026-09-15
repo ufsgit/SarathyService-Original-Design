@@ -117,6 +117,7 @@ export class ApiService {
   getReadyLabourBills(params?: any): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/ready/labour`, { params }); }
   getReadyInsuranceBills(params?: any): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/ready/insurance`, { params }); }
   getNextInvoiceNo(branchId: number): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/next-no`, { params: { branchId: branchId.toString() } }); }
+  getServerDate(): Observable<any> { return this.http.get<any>(`${this.baseUrl}/invoices/server-date`); }
   getLabourNames(): Observable<any[]> { return this.http.get<any[]>(`${this.baseUrl}/invoices/labour-names`); }
 
   // --- Job Cards ---

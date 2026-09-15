@@ -84,6 +84,16 @@ function generateNextInvoiceNumber(lastInvoiceNumber, newInvoiceDate, defaultPre
 
 // Check jobcard duplicate invoice not SP
 // exports.checkJobCardDuplicate = async (req, res) => {
+// ...
+
+exports.getServerDate = async (req, res) => {
+    try {
+        const [rows] = await pool.query("SELECT DATE_FORMAT(NOW(), '%Y-%m-%d') as serverDate");
+        res.json({ date: rows[0].serverDate });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};
 //     try {
 //         const { jobcard, excludeId } = req.query;
 //         if (!jobcard) return res.json({ exists: false });

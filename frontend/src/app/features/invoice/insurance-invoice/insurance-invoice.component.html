@@ -77,7 +77,11 @@
           </div>
           <div class="control-group">
             <label>Jobcard Date : <span class="text-danger">*</span></label>
-            <input type="date" name="jname" [(ngModel)]="form.inv_jcard_date" (ngModelChange)="onJcardDateChange()" required />
+            <div style="display: flex; align-items: center; border: 1px solid #ccc; padding-right: 5px; background: #fff; flex: 1; height: 24px;">
+              <input style="border: none; outline: none; padding: 2px 5px; flex: 1; height: 100%; background: transparent;" [matDatepicker]="jcPickerIns" name="jname" [(ngModel)]="form.inv_jcard_date" (ngModelChange)="onJcardDateChange()" required />
+              <mat-datepicker-toggle matIconSuffix [for]="jcPickerIns" style="transform: scale(0.7); height: 24px; display: flex; align-items: center;"></mat-datepicker-toggle>
+              <mat-datepicker #jcPickerIns></mat-datepicker>
+            </div>
           </div>
           <div class="control-group">
             <label>Invoice No : <span class="text-danger">*</span></label>
@@ -85,7 +89,12 @@
           </div>
           <div class="control-group">
             <label>Invoice Date : <span class="text-danger">*</span></label>
-            <input type="date" name="invoicedate" [(ngModel)]="form.inv_inv_date" [disabled]="true" />
+            <div *ngIf="auth.isAdmin" style="display: flex; align-items: center; border: 1px solid #ccc; padding-right: 5px; background: #fff; flex: 1; height: 24px;">
+              <input style="border: none; outline: none; padding: 2px 5px; flex: 1; height: 100%; background: transparent;" [matDatepicker]="invPickerIns" name="invoicedate" [(ngModel)]="form.inv_inv_date" />
+              <mat-datepicker-toggle matIconSuffix [for]="invPickerIns" style="transform: scale(0.7); height: 24px; display: flex; align-items: center;"></mat-datepicker-toggle>
+              <mat-datepicker #invPickerIns></mat-datepicker>
+            </div>
+            <input *ngIf="!auth.isAdmin" type="text" name="invoicedate" [value]="form.inv_inv_date | date:'dd/MM/yy'" readonly />
           </div>
         </div>
 

@@ -19,6 +19,7 @@ router.use((req, res, next) => {
 const invoiceController = require('../controllers/invoice.controller');
 const { verifyToken } = require('../middleware/auth');
 
+router.get('/server-date', verifyToken, invoiceController.getServerDate);
 router.get('/next-no', verifyToken, invoiceController.getNextInvoiceNo);
 router.get('/check-jobcard', verifyToken, invoiceController.checkJobCardDuplicate);
 router.get('/labour-names', verifyToken, invoiceController.getLabourNames);
