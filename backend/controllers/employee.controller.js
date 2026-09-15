@@ -268,3 +268,29 @@ exports.getPaginated = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
+
+// Delete employee
+exports.remove = async (req, res) => {
+    try {
+        const id = req.params.id;
+        
+        // 1st check the emp_id and find the emp_login_id
+        const [emp] = await pool.query('SELECT emp_login_id FROM tbl_employee WHERE emp_id = ?', [id]);
+        if (emp.length === 0) return res.status(404).json({ message: 'Employee not found' });
+        
+        const loginRecordId = emp[0].emp_login_id;
+        
+        // Delete from tbl_employee
+        await pool.query('DELETE FROM tbl_employee WHERE emp_id = ?', [id]);
+        
+        // If the emp_login_id exists, delete from tbl_login as well
+        if (loginRecordId) {
+            await pool.query('DELETE FROM tbl_login WHERE login_id = ?', [loginRecordId]);
+        }
+        
+        res.json({ message: 'Employee deleted successfully' });
+    } catch (err) {
+        console.error('Delete employee error:', err);
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};
