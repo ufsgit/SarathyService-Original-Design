@@ -57,12 +57,9 @@
         <div class="grid-col">
           <div class="control-group">
             <label>Branch Name: <span class="text-danger">*</span></label>
-            <div *ngIf="!auth.isAdmin" class="readonly-value">
-              {{ editMode ? form.branch_name : auth.currentUser?.branchName }}
-            </div>
-            <div class="branch-long-text-fix">
+            <input *ngIf="!auth.isAdmin" type="text" [value]="editMode ? form.branch_name : auth.currentUser?.branchName" readonly />
+            <div class="branch-long-text-fix" *ngIf="auth.isAdmin">
               <app-searchable-select 
-                *ngIf="auth.isAdmin"
                 [options]="branchOptions"
                 [(ngModel)]="selectedBranchLabel"
                 (ngModelChange)="onBranchSelect($event)"
