@@ -1,5 +1,5 @@
 <div class="searchable-select-container" [class.open]="isOpen" [ngClass]="customClass">
-  <div class="select-box" (click)="toggleDropdown()" [class.open]="isOpen" [class.disabled]="disabled">
+  <div #selectBox [tabIndex]="enableKeyboardNavigation ? 0 : -1" class="select-box" (click)="toggleDropdown()" (keydown)="onSelectBoxKeydown($event)" [class.open]="isOpen" [class.disabled]="disabled">
     <div class="selected-text">{{ getDisplayValue() || placeholder }}</div>
     <div class="arrow-container">
       <i class="arrow" [class.up]="isOpen" [class.down]="!isOpen"></i>
@@ -13,6 +13,8 @@
         #searchInput
         type="text" 
         [(ngModel)]="searchQuery" 
+        (ngModelChange)="onSearchQueryChange()"
+        (keydown)="onSearchKeydown($event)"
         [placeholder]="searchPlaceholder"
         class="search-input"
         (click)="$event.stopPropagation()"
@@ -21,10 +23,12 @@
 
     <div class="options-list">
       <div 
-        *ngFor="let option of filteredOptions()" 
+        *ngFor="let option of filteredOptions(); let i = index" 
         class="option-item" 
         (click)="selectOption(option)"
         [class.selected]="option === selectedValue"
+        [class.highlighted]="i === highlightedIndex"
+        (mouseenter)="highlightedIndex = i"
       >
         {{ option }}
       </div>

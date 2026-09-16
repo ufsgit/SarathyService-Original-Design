@@ -11,6 +11,7 @@ import { SearchableSelectComponent } from '../../../shared/components/searchable
 import { InvoicePdfService } from '../../../pdf/invoice-pdf.service';
 import { environment } from '../../../../environments/environment';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { ViewChildren, QueryList } from '@angular/core';
 
 @Component({
   selector: 'app-labour-invoice', standalone: true,
@@ -47,6 +48,8 @@ export class LabourInvoiceComponent implements OnInit {
 
   labourCodeOptions: string[] = [];
   jobTypeOptions: string[] = ['Paid Service', 'Expense', 'Free Service'];
+
+  @ViewChildren(SearchableSelectComponent) searchableSelects!: QueryList<SearchableSelectComponent>;
 
   formatLabourCode = (option: string) => {
     return option ? option.split(' - ')[0] : option;
@@ -304,6 +307,40 @@ export class LabourInvoiceComponent implements OnInit {
 
   addItem() { this.items.push(this.newItem()); }
   removeItem(i: number) { this.items.splice(i, 1); this.calcTotals(); }
+
+  focusNextLabourCode(index: number) {
+    // Determine the next index
+    const nextIndex = index + 1;
+    
+    if (nextIndex >= this.items.length) {
+      // If we are at the last item, add a new row
+      this.addItem();
+    }
+    
+    // Find the next searchable select in the view
+    setTimeout(() => {
+      // The searchable selects include Branch, Advisor, Mechanic, then the Labour Codes, then Job Types.
+      // So we can't just pick by absolute index easily. Let's filter by the ones that have labour options
+      // Or simply find the select-box of the next row.
+      const selects = this.searchableSelects.toArray();
+      // To find the right one, we know that there are fixed selects (Branch, Advisor, Mechanic = up to 3) 
+      // + items.length * 2 (Labour Code, Job Type per row).
+      // We can iterate the DOM directly or rely on a specific class.
+      const containerId = 'tableScrollContainer';
+      const container = document.getElementById(containerId);
+      if (container) {
+        const nextRow = container.querySelectorAll('tbody tr')[nextIndex];
+        if (nextRow) {
+          const nextSelectBox = nextRow.querySelector('.select-box') as HTMLElement;
+          if (nextSelectBox) {
+            nextSelectBox.focus();
+            // Automatically open dropdown for next field for seamless entry
+            // It will open because we added Space/Enter handler, but we can also trigger it if wanted.
+          }
+        }
+      }
+    }, 50);
+  }
 
   onLabourCodeSelect(i: number) {
     const label = this.items[i].ic_labour_label;

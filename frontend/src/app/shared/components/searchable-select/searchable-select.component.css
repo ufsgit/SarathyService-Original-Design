@@ -109,6 +109,16 @@
   font-weight: bold;
 }
 
+.option-item.highlighted {
+  background-color: #f1f1f1;
+}
+
+.option-item.selected.highlighted {
+  background-color: #d0e7fb;
+  border-left: 2px solid #3498db;
+  padding-left: 10px;
+}
+
 .no-results {
   padding: 12px;
   text-align: center;
