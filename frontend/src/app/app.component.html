@@ -1,1 +1,8 @@
 <router-outlet></router-outlet>
+
+<!-- Global Router Loading Overlay -->
+<div class="global-route-loader" *ngIf="isRouteLoading()">
+  <div class="loader-content">
+    <img src="assets/sarathy-logo.png" alt="Sarathy Loading..." class="pulse-logo">
+  </div>
+</div>
