@@ -66,17 +66,18 @@
       </div>
       <div class="show-entries">
         Show
-        <select [ngModel]="pageSize()" (ngModelChange)="onPageSizeChange(+$event)">
+        <select [ngModel]="pageSize()" (ngModelChange)="onPageSizeChange($event)">
           <option [value]="10">10</option>
           <option [value]="25">25</option>
           <option [value]="50">50</option>
           <option [value]="100">100</option>
+          <option value="All">All</option>
         </select>
         entries
       </div>
     </div>
 
-    <div class="scrollable-table-wrap">
+    <div class="scrollable-table-wrap" (scroll)="onTableScroll($event)">
       <table class="legacy-table">
         <thead>
           <tr class="main-header">
@@ -201,13 +202,17 @@
     </div>
 
     <!-- Pagination Footer -->
+    <!-- Pagination Footer -->
     <div class="pagination-bar" *ngIf="results().length > 0">
-      <span class="pagination-info">
-        Showing {{(currentPage() - 1) * pageSize() + 1}} –
-        {{currentPage() * pageSize() > totalItems() ? totalItems() : currentPage() * pageSize()}}
+      <span class="pagination-info" *ngIf="pageSize() !== 'All'">
+        Showing {{(currentPage() - 1) * numericPageSize() + 1}} –
+        {{currentPage() * numericPageSize() > totalItems() ? totalItems() : currentPage() * numericPageSize()}}
         of {{totalItems()}} entries
       </span>
-      <div class="pagination-controls">
+      <span class="pagination-info" *ngIf="pageSize() === 'All'">
+        Showing {{results().length}} of {{totalItems()}} entries
+      </span>
+      <div class="pagination-controls" *ngIf="pageSize() !== 'All'">
         <button class="page-btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">← Prev</button>
         <ng-container *ngFor="let p of pageNumbersInner()">
           <span *ngIf="p === -1" class="page-ellipsis">…</span>

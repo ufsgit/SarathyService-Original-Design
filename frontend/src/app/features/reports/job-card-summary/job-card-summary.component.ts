@@ -54,11 +54,13 @@ export class JobCardSummaryComponent implements OnInit {
   loading = signal<boolean>(false);
 
   // Pagination Signals
-  pageSize = signal<number>(10);
+  pageSize = signal<number | 'All'>(10);
   currentPage = signal<number>(1);
   totalItems = signal<number>(0);
 
-  totalPages = computed(() => Math.ceil(this.totalItems() / this.pageSize()));
+  numericPageSize = computed(() => this.pageSize() === 'All' ? 250 : (this.pageSize() as number));
+
+  totalPages = computed(() => Math.ceil(this.totalItems() / this.numericPageSize()));
 
   pageNumbersInner = computed(() => {
     const total = this.totalPages();
@@ -134,9 +136,26 @@ export class JobCardSummaryComponent implements OnInit {
     this.currentPage.set(page);
   }
 
-  onPageSizeChange(val: number) {
-    this.pageSize.set(val);
+  onPageSizeChange(val: any) {
+    if (val === 'All') {
+      this.pageSize.set('All');
+    } else {
+      this.pageSize.set(+val);
+    }
     this.currentPage.set(1);
+  }
+
+  onTableScroll(event: any) {
+    if (this.pageSize() !== 'All' || this.loading()) return;
+    
+    const element = event.target;
+    // Check if scrolled near the bottom (within 1500px) to load early
+    if (element.scrollHeight - element.scrollTop - element.clientHeight < 1500) {
+      if (this.results().length < this.totalItems()) {
+        this.currentPage.set(this.currentPage() + 1);
+        // The effect on currentPage will trigger search(false) automatically
+      }
+    }
   }
 
   private formatDate(dateStr: string): string {
@@ -444,13 +463,19 @@ export class JobCardSummaryComponent implements OnInit {
       service_type: this.serviceType(),
       view_by: this.viewBy(),
       page: this.currentPage(),
-      pageSize: this.pageSize()
+      pageSize: this.pageSize() === 'All' ? 250 : this.pageSize()
     };
 
     this.loading.set(true);
     this.api.getJobCardSummary(payload).subscribe({
       next: (d: any) => {
-        this.results.set(d.data);
+        if (this.pageSize() === 'All' && this.currentPage() > 1) {
+          // Append new records
+          this.results.set([...this.results(), ...d.data]);
+        } else {
+          // Replace records
+          this.results.set(d.data);
+        }
         this.totalItems.set(d.total || 0);
         this.totals.set(d.totals);
         this.searched.set(true);
