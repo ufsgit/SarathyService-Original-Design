@@ -218,22 +218,22 @@
                     customClass="very-compact" (enterPressed)="focusNextLabourCode(i)" [enableKeyboardNavigation]="true">
                   </app-searchable-select>
                 </td>
-                <td><input type="text" [(ngModel)]="item.ic_particular" readonly /></td>
-                <td><input type="text" [(ngModel)]="item.ic_hsn" readonly /></td>
+                <td><input type="text" [(ngModel)]="item.ic_particular" readonly (keydown.enter)="focusNextLabourCode(i)" /></td>
+                <td><input type="text" [(ngModel)]="item.ic_hsn" readonly (keydown.enter)="focusNextLabourCode(i)" /></td>
                 <td>
                   <app-searchable-select [options]="jobTypeOptions" [(ngModel)]="item.ic_type"
-                    (ngModelChange)="calcItem(i)" placeholder="-Select-" customClass="very-compact" [enableKeyboardNavigation]="true">
+                    (ngModelChange)="calcItem(i)" placeholder="-Select-" customClass="very-compact" [enableKeyboardNavigation]="true" [openOnEnter]="true">
                   </app-searchable-select>
                 </td>
-                <td><input type="number" [(ngModel)]="item.ic_rate" (keyup)="calcItem(i)" /></td>
-                <td><input type="number" [(ngModel)]="item.ic_disc_per" (keyup)="calcItem(i)" /></td>
-                <td><input type="number" [(ngModel)]="item.ic_disc" readonly /></td>
-                <td><input type="number" [(ngModel)]="item.ic_taxable_amt" readonly /></td>
-                <td><input type="number" [(ngModel)]="item.ic_sgst_p" readonly /></td>
-                <td><input type="number" [(ngModel)]="item.ic_sgst_amt" readonly /></td>
-                <td><input type="number" [(ngModel)]="item.ic_cgst_p" readonly /></td>
-                <td><input type="number" [(ngModel)]="item.ic_cgst_amt" readonly /></td>
-                <td><input type="number" [(ngModel)]="item.ic_total" readonly /></td>
+                <td><input type="number" [(ngModel)]="item.ic_rate" (keyup)="calcItem(i)" (keydown.enter)="focusNextLabourCode(i)" /></td>
+                <td><input type="number" [(ngModel)]="item.ic_disc_per" (keyup)="calcItem(i)" (keydown.enter)="focusNextLabourCode(i)" /></td>
+                <td><input type="number" [(ngModel)]="item.ic_disc" readonly (keydown.enter)="focusNextLabourCode(i)" /></td>
+                <td><input type="number" [(ngModel)]="item.ic_taxable_amt" readonly (keydown.enter)="focusNextLabourCode(i)" /></td>
+                <td><input type="number" [(ngModel)]="item.ic_sgst_p" readonly (keydown.enter)="focusNextLabourCode(i)" /></td>
+                <td><input type="number" [(ngModel)]="item.ic_sgst_amt" readonly (keydown.enter)="focusNextLabourCode(i)" /></td>
+                <td><input type="number" [(ngModel)]="item.ic_cgst_p" readonly (keydown.enter)="focusNextLabourCode(i)" /></td>
+                <td><input type="number" [(ngModel)]="item.ic_cgst_amt" readonly (keydown.enter)="focusNextLabourCode(i)" /></td>
+                <td><input type="number" [(ngModel)]="item.ic_total" readonly (keydown.enter)="focusNextLabourCode(i)" /></td>
                 <td style="text-align: center; vertical-align: middle;">
                   <button type="button" class="btn-delete-row" (click)="removeItem(i)"
                     title="Delete row">&#8722;</button>

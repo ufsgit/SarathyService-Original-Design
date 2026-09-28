@@ -335,7 +335,7 @@ export class LabourInvoiceComponent implements OnInit {
           if (nextSelectBox) {
             nextSelectBox.focus();
             // Automatically open dropdown for next field for seamless entry
-            // It will open because we added Space/Enter handler, but we can also trigger it if wanted.
+            nextSelectBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
           }
         }
       }

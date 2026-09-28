@@ -24,6 +24,7 @@ export class SearchableSelectComponent implements ControlValueAccessor {
   @Input() displayFormatter?: (option: string) => string;
   @Input() disabled: boolean = false;
   @Input() enableKeyboardNavigation: boolean = false;
+  @Input() openOnEnter: boolean = false;
 
   @Output() enterPressed = new EventEmitter<void>();
 
@@ -81,7 +82,11 @@ export class SearchableSelectComponent implements ControlValueAccessor {
     
     if (event.key === 'Enter') {
       if (!this.isOpen) {
-        if (!this.selectedValue) {
+        if (this.openOnEnter) {
+          this.isOpen = true;
+          this.highlightedIndex = 0;
+          setTimeout(() => { this.searchInput?.nativeElement.focus(); }, 0);
+        } else if (!this.selectedValue) {
           const options = this.filteredOptions();
           if (options.length > 0) {
             this.selectOption(options[0]);
