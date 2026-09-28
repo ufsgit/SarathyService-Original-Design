@@ -18,7 +18,7 @@
           [options]="branchOptions" 
           [(ngModel)]="filters.branch_label" 
           (ngModelChange)="onBranchSelect($event); markPending()"
-          placeholder="--Select Branch--"
+          placeholder="ALL branch"
           customClass="compact"
           [disabled]="!isAdmin()">
         </app-searchable-select>
@@ -83,7 +83,22 @@
           <tr class="main-header">
             <th><input type="text" class="th-input" value="JobCard" readonly></th>
             <th><input type="text" class="th-input" value="JobCard Date" readonly></th>
-            <th><input type="text" class="th-input th-wide" value="Branch Name" readonly></th>
+            <th>
+              <ng-container *ngIf="!filters.branch_label || filters.branch_label === 'ALL branch'; else singleBranch">
+                <app-mat-multi-search-select
+                  placeholder="--Select Branch--"
+                  [ngModel]="branch()"
+                  (ngModelChange)="branch.set($event); markPending()"
+                  [options]="options().branches"
+                  displayKey="branch_name"
+                  valueKey="b_id"
+                  typeLabel="branches"
+                ></app-mat-multi-search-select>
+              </ng-container>
+              <ng-template #singleBranch>
+                <input type="text" class="th-input th-wide" value="Branch Name" readonly>
+              </ng-template>
+            </th>
             <th>
               <app-mat-multi-search-select
                 placeholder="--Select Mechanic--"

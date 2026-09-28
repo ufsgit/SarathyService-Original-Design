@@ -382,7 +382,7 @@ export class JobCardSummaryComponent implements OnInit {
     this.api.getFilterOptions().subscribe({
       next: (d: any) => {
         this.options.set(d);
-        this.branchOptions = ['--Select Branch--', ...this.options().branches.map((b: any) => `${b.branch_name}(${b.branch_id})`)];
+        this.branchOptions = ['ALL branch', ...this.options().branches.map((b: any) => `${b.branch_name}(${b.branch_id})`)];
         
         if (!this.isAdmin()) {
           try {
@@ -422,7 +422,7 @@ export class JobCardSummaryComponent implements OnInit {
   }
 
   onBranchSelect(label: string) {
-    if (!label || label === '--Select Branch--') {
+    if (!label || label === 'ALL branch') {
       this.branch.set([]);
     } else {
       const branch = this.options().branches.find((b: any) => `${b.branch_name}(${b.branch_id})` === label);

@@ -236,7 +236,7 @@ exports.getAdvisors = async (req, res) => {
 exports.getPaginated = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        const limit = parseInt(req.query.limit) || parseInt(req.query.pageSize) || 10;
         const search = req.query.search || '';
         
         let query = `SELECT e.*, COALESCE(b.branch_name, e.e_branch) AS branch_name FROM tbl_employee e LEFT JOIN tbl_branch b ON b.b_id = e.e_branch`;

@@ -49,3 +49,9 @@
     top: auto;
     bottom: 100%;
 }
+
+.table-container {
+    overflow-x: auto;
+    border: 1px solid #eee;
+    min-height: 300px;
+}

@@ -54,6 +54,7 @@
 .table-container {
     overflow-x: auto;
     border: 1px solid #eee;
+    min-height: 300px;
 }
 
 .legacy-table {
@@ -207,4 +208,4 @@
     font-weight: 400;
     color: #6c757d;
 }
-
+
