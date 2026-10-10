@@ -1017,7 +1017,7 @@ exports.getReadyInsuranceBills = async (req, res) => {
 exports.getNextInvoiceNo = async (req, res) => {
     console.log('getNextInvoiceNo req.body:', req.body, 'req.query:', req.query, 'req.params:', req.params);
     try {
-        const [lastInvRows] = await pool.query('SELECT inv_no FROM tbl_invoice_labour ORDER BY inv_id DESC LIMIT 1');
+        const [lastInvRows] = await pool.query('SELECT inv_no FROM tbl_invoice_labour ORDER BY inv_no DESC LIMIT 1');
         let lastInvoiceNumber = '';
         if (lastInvRows.length > 0) {
             lastInvoiceNumber = lastInvRows[0].inv_no;
