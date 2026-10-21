@@ -58,6 +58,12 @@
     margin-right: 5px;
 }
 
+.btn-ready-bill:disabled, .btn-print:disabled, .btn-danger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .btn-word {
     background-color: var(--brand-color); /* Corporate Blue */
     color: #fff;

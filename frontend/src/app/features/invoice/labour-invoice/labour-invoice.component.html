@@ -43,10 +43,10 @@
       <h5 *ngIf="isFromReadyBills">Ready for Bill (Labour)</h5>
       <h5 *ngIf="isFromPreviousBills">Previous Bills (Labour)</h5>
       <h5 *ngIf="!isFromReadyBills && !isFromPreviousBills">INVOICE (Labour)</h5>
-      <button *ngIf="!isFromPreviousBills" type="button" class="btn-ready-bill" [disabled]="isLoading"
+      <button *ngIf="!isFromPreviousBills" type="button" class="btn-ready-bill" [disabled]="isLoading || isSubmitting"
         (click)="onAddToReadyForBill()">Add to Ready for Bill</button>
       <button *ngIf="isFromPreviousBills" type="button" class="btn-ready-bill" style="background-color: #e74c3c;"
-        [disabled]="isLoading" (click)="onSaveBill()">Save Bill</button>
+        [disabled]="isLoading || isSubmitting" (click)="onSaveBill()">Save Bill</button>
     </div>
 
     <div class="widget-content" style="position: relative; min-height: 200px;">
@@ -180,7 +180,7 @@
         <div class="total-amount-display">
           Total Payable Amount : Rs {{ form.inv_total | number:'1.2-2' }}
         </div>
-        <button *ngIf="!isFromPreviousBills" type="button" class="btn-print" [disabled]="isLoading"
+        <button *ngIf="!isFromPreviousBills" type="button" class="btn-print" [disabled]="isLoading || isSubmitting"
           (click)="onPrint()">Print</button>
       </div>
 

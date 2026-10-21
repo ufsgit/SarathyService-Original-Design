@@ -28,6 +28,7 @@ export class LabourInvoiceComponent implements OnInit {
   showAddCustomerModal = false;
   pendingRegNo = '';
   isLoading = false;
+  isSubmitting = false;
   display_inv_no = '';
   jobCardExistsError = false;
 
@@ -510,6 +511,7 @@ export class LabourInvoiceComponent implements OnInit {
   }
 
   onAddToReadyForBill() {
+    if (this.isSubmitting) return;
     if (!this.validateForm(false)) return;
     if (this.items.length === 0) {
       this.notify.error('Please add at least one line item');
@@ -520,6 +522,10 @@ export class LabourInvoiceComponent implements OnInit {
       this.notify.error('Please select a valid Labour for all line items');
       return;
     }
+
+    this.isSubmitting = true;
+    this.isLoading = true;
+
     this.form.items = this.items.map(it => ({
       ...it,
       ic_rate: it.ic_rate || 0,
@@ -535,9 +541,7 @@ export class LabourInvoiceComponent implements OnInit {
     if (!this.isFromPreviousBills) {
       this.form.inv_no = ''; // Ensure we do not save the display invoice number
     }
-    this.isLoading = true;
 
-    this.isLoading = true;
     const payload = { ...this.form };
     if (payload.inv_inv_date && typeof payload.inv_inv_date.format === 'function') {
       payload.inv_inv_date = payload.inv_inv_date.format('YYYY-MM-DD');
@@ -550,6 +554,7 @@ export class LabourInvoiceComponent implements OnInit {
       this.api.updateInvoice(this.invoiceId, payload).subscribe({
         next: () => {
           this.isLoading = false;
+          // Keep this.isSubmitting = true to prevent clicks during navigation redirect window
           this.notify.success('Invoice updated successfully');
           const basePath = this.auth.isAdmin ? '/admin' : '/staff';
           setTimeout(() => {
@@ -558,6 +563,7 @@ export class LabourInvoiceComponent implements OnInit {
         },
         error: (e: any) => {
           this.isLoading = false;
+          this.isSubmitting = false;
           this.notify.error(e.error?.message || 'Error updating invoice');
         }
       });
@@ -568,6 +574,7 @@ export class LabourInvoiceComponent implements OnInit {
         next: (res: any) => {
           this.invoiceId = res.id;
           this.isLoading = false;
+          // Keep this.isSubmitting = true to prevent clicks during navigation redirect window
           this.notify.success('Invoice saved and marked as Ready for Bill');
           const basePath = this.auth.isAdmin ? '/admin' : '/staff';
           setTimeout(() => {
@@ -576,6 +583,7 @@ export class LabourInvoiceComponent implements OnInit {
         },
         error: (e: any) => {
           this.isLoading = false;
+          this.isSubmitting = false;
           this.notify.error(e.error?.message || 'Error saving invoice');
         }
       });
@@ -583,7 +591,12 @@ export class LabourInvoiceComponent implements OnInit {
   }
 
   onSaveBill() {
+    if (this.isSubmitting) return;
     if (!this.validateForm(true)) return;
+
+    this.isSubmitting = true;
+    this.isLoading = true;
+
     this.form.items = this.items.map(it => ({
       ...it,
       ic_rate: it.ic_rate || 0,
@@ -598,7 +611,6 @@ export class LabourInvoiceComponent implements OnInit {
     }));
 
     if (this.editMode && this.invoiceId) {
-      this.isLoading = true;
       const payload = { ...this.form };
       if (this.isFromPreviousBills) payload.isFinalized = true;
       if (payload.inv_inv_date && typeof payload.inv_inv_date.format === 'function') {
@@ -611,6 +623,7 @@ export class LabourInvoiceComponent implements OnInit {
       this.api.updateInvoice(this.invoiceId, payload).subscribe({
         next: () => {
           this.isLoading = false;
+          // Keep this.isSubmitting = true to prevent clicks during navigation redirect window
           this.notify.success('Invoice updated successfully');
           setTimeout(() => {
             const basePath = this.auth.isAdmin ? '/admin' : '/staff';
@@ -619,14 +632,23 @@ export class LabourInvoiceComponent implements OnInit {
         },
         error: (e: any) => {
           this.isLoading = false;
+          this.isSubmitting = false;
           this.notify.error(e.error?.message || 'Error updating invoice');
         }
       });
+    } else {
+      this.isSubmitting = false;
+      this.isLoading = false;
     }
   }
 
   finalizeBeforeAction(callback: Function) {
+    if (this.isSubmitting) return;
     if (!this.validateForm(true)) return;
+
+    this.isSubmitting = true;
+    this.isLoading = true;
+
     this.form.items = this.items.map(it => ({
       ...it,
       ic_rate: it.ic_rate || 0,
@@ -642,7 +664,7 @@ export class LabourInvoiceComponent implements OnInit {
     if (!this.isFromPreviousBills) {
       this.form.inv_no = ''; // Ensure we do not save the display invoice number
     }
-    this.isLoading = true;
+
     const payload = { ...this.form };
     if (payload.inv_inv_date && typeof payload.inv_inv_date.format === 'function') {
       payload.inv_inv_date = payload.inv_inv_date.format('YYYY-MM-DD');
@@ -657,10 +679,12 @@ export class LabourInvoiceComponent implements OnInit {
            this.invoiceId = res.inv_id;
         }
         this.isLoading = false;
+        // Keep this.isSubmitting = true so that clicks while print pop-up is shown / redirecting are blocked
         callback();
       },
       error: (e: any) => { 
         this.isLoading = false; 
+        this.isSubmitting = false;
         this.notify.error(e.error?.message || 'Error finalizing invoice'); 
       }
     });
