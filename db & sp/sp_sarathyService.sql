@@ -754,11 +754,13 @@ BEGIN
     END IF;
 
     IF p_message IS NULL AND p_inv_job_card_no IS NOT NULL AND p_inv_job_card_no != '' THEN
-        SELECT COUNT(*) INTO v_exists FROM (
-            SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = p_inv_job_card_no
-            UNION 
-            SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = p_inv_job_card_no
-        ) AS t;
+		SELECT COUNT(*) INTO v_exists FROM (
+			(SELECT inv_id FROM tbl_readyfor_labour WHERE inv_job_card_no = p_inv_job_card_no LIMIT 1)
+			UNION 
+			(SELECT inv_id FROM tbl_invoice_labour WHERE inv_job_card_no = p_inv_job_card_no LIMIT 1)
+		) AS t;
+
+
         
         IF v_exists > 0 THEN
             SET p_message = CONCAT('Jobcard number already exists (', p_inv_job_card_no, ')');
@@ -972,7 +974,8 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_finalizeBill`(
     IN p_items JSON
 )
 BEGIN
-    DECLARE v_new_inv_id INT;
+    DECLARE v_new_inv_id INT DEFAULT 0;
+    DECLARE p_message VARCHAR(255) DEFAULT NULL;
     DECLARE v_generated_inv_no VARCHAR(100);
     DECLARE v_year INT;
     DECLARE v_month INT;
@@ -1027,7 +1030,37 @@ BEGIN
         -- Sends the actual error back to Node.js in the 'message' column
         SELECT 0 AS invId, CONCAT('Database Error: ', v_error_msg) AS message;
     END;
-
+    
+        -- 1. Check if Job Card is already finalized in tbl_invoice_labour
+    IF p_inv_job_card_no IS NOT NULL AND p_inv_job_card_no != '' THEN
+        IF EXISTS (SELECT 1 FROM tbl_invoice_labour WHERE inv_job_card_no = p_inv_job_card_no LIMIT 1) THEN
+            SET p_message = CONCAT('This Job Card has already been finalized: ', p_inv_job_card_no);
+        END IF;
+    END IF;
+    -- 2. Check if Job Card already exists in tbl_readyfor_labour
+    IF p_message IS NULL AND p_inv_job_card_no IS NOT NULL AND p_inv_job_card_no != '' THEN
+        IF p_inv_id IS NOT NULL AND p_inv_id > 0 THEN
+            -- When updating an existing ready bill, check if another bill has this same job card
+            IF EXISTS (
+                SELECT 1 FROM tbl_readyfor_labour 
+                WHERE inv_job_card_no = p_inv_job_card_no AND inv_id != p_inv_id 
+                LIMIT 1
+            ) THEN
+                SET p_message = CONCAT('Jobcard number already exists on another Ready Bill: ', p_inv_job_card_no);
+            END IF;
+        ELSE
+            -- When creating directly from new screen, check if it exists anywhere in ready bills
+            IF EXISTS (
+                SELECT 1 FROM tbl_readyfor_labour 
+                WHERE inv_job_card_no = p_inv_job_card_no 
+                LIMIT 1
+            ) THEN
+                SET p_message = CONCAT('Jobcard number already exists in Ready Bills: ', p_inv_job_card_no);
+            END IF;
+        END IF;
+    END IF;
+    -- Proceed only if no duplicate was found
+    IF p_message IS NULL THEN
     
      START TRANSACTION;
     -- ==========================================
@@ -1198,7 +1231,10 @@ SELECT last_invoice_no INTO v_lastInvoice FROM tbl_invoice_sequence WHERE id = 1
         ) AS jt;
     END IF;
     COMMIT;
-    SELECT v_new_inv_id AS invId, 'Success' AS message;
+        SET p_message = 'Success';
+    END IF;
+
+    SELECT v_new_inv_id AS invId, p_message AS message;
 END$$
 DELIMITER ;
 
@@ -1772,6 +1808,8 @@ BEGIN
     else
         set ready_status_ = 1;
     end if;
+    
+    /*
     -- INVOICE NUMBER DUPLICATE CHECK
     IF inv_no_ != '' THEN
         if isFinalized_ = 1 then
@@ -1820,6 +1858,77 @@ BEGIN
             END IF;
         END IF;
     END IF;
+
+*/
+    -- ============================================================
+    -- INVOICE NUMBER DUPLICATE CHECK
+    -- ============================================================
+    IF inv_no_ != '' THEN
+        if isFinalized_ = 1 then
+            set currentInvNo_ = (SELECT inv_no FROM tbl_invoice_labour WHERE inv_id = inv_id_);
+        else
+            set currentInvNo_ = (SELECT inv_no FROM tbl_readyfor_labour WHERE inv_id = inv_id_);
+        end if;
+        
+        -- Check only if the invoice number was changed or was empty
+        if currentInvNo_ IS NULL OR currentInvNo_ != inv_no_ then
+            -- 1. Check tbl_readyfor_labour (exclude own row if isFinalized_ = 0)
+            SET duplicate_id_ = (SELECT inv_id FROM tbl_readyfor_labour 
+                                 WHERE inv_no = inv_no_ 
+                                   AND (isFinalized_ = 1 OR inv_id != inv_id_) 
+                                 LIMIT 1);
+            IF duplicate_id_ IS NOT NULL AND duplicate_id_ > 0 THEN
+                SET inv_id_ = -2;
+                SET has_duplicate_ = true;
+            ELSE
+                -- 2. Check tbl_invoice_labour (exclude own row if isFinalized_ = 1)
+                SET duplicate_id_ = (SELECT inv_id FROM tbl_invoice_labour 
+                                     WHERE inv_no = inv_no_ 
+                                       AND (isFinalized_ = 0 OR inv_id != inv_id_) 
+                                     LIMIT 1);
+                IF duplicate_id_ IS NOT NULL AND duplicate_id_ > 0 THEN
+                    SET inv_id_ = -2;
+                    SET has_duplicate_ = true;
+                END IF;
+            END IF;
+        END IF;
+    END IF;
+
+    -- ============================================================
+    -- JOBCARD NUMBER DUPLICATE CHECK
+    -- ============================================================
+    IF inv_job_card_no_ != '' AND has_duplicate_ = false THEN
+        if isFinalized_ = 1 then
+            set jobcardno_ = (SELECT inv_job_card_no FROM tbl_invoice_labour WHERE inv_id = inv_id_);
+        else
+            set jobcardno_ = (SELECT inv_job_card_no FROM tbl_readyfor_labour WHERE inv_id = inv_id_);
+        end if;
+        
+        -- Check only if the jobcard number was changed or was empty
+        if jobcardno_ IS NULL OR jobcardno_ != inv_job_card_no_ then
+            -- 1. Check tbl_readyfor_labour (exclude own row if isFinalized_ = 0)
+            SET duplicate_id_ = (SELECT inv_id FROM tbl_readyfor_labour 
+                                 WHERE inv_job_card_no = inv_job_card_no_ 
+                                   AND (isFinalized_ = 1 OR inv_id != inv_id_) 
+                                 LIMIT 1);
+            IF duplicate_id_ IS NOT NULL AND duplicate_id_ > 0 THEN
+                SET inv_id_ = -3;
+                SET has_duplicate_ = true;
+            ELSE
+                -- 2. Check tbl_invoice_labour (exclude own row if isFinalized_ = 1)
+                SET duplicate_id_ = (SELECT inv_id FROM tbl_invoice_labour 
+                                     WHERE inv_job_card_no = inv_job_card_no_ 
+                                       AND (isFinalized_ = 0 OR inv_id != inv_id_) 
+                                     LIMIT 1);
+                IF duplicate_id_ IS NOT NULL AND duplicate_id_ > 0 THEN
+                    SET inv_id_ = -3;
+                    SET has_duplicate_ = true;
+                END IF;
+            END IF;
+        END IF;
+    END IF;
+
+    
     -- PERFORM UPDATE ONLY IF VALID (NOT A DUPLICATE)
     if inv_id_ is not null and inv_id_ > 0 then
         if isFinalized_ = 1 then
