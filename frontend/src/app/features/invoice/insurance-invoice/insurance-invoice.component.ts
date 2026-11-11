@@ -555,7 +555,7 @@ export class InsuranceInvoiceComponent implements OnInit {
       this.form.inv_no = ''; // Ensure we do not save the display invoice number
     }
     this.isLoading = true;
-    const payload = { ...this.form };
+    const payload = { ...this.form, status: 1 };
     if (payload.inv_inv_date && typeof payload.inv_inv_date.format === 'function') {
       payload.inv_inv_date = payload.inv_inv_date.format('YYYY-MM-DD');
     }
@@ -660,7 +660,7 @@ export class InsuranceInvoiceComponent implements OnInit {
       this.form.inv_no = ''; // Ensure we do not save the display invoice number
     }
     this.isLoading = true;
-    const payload = { ...this.form };
+    const payload = { ...this.form, status: 1 };
     if (payload.inv_inv_date && typeof payload.inv_inv_date.format === 'function') {
       payload.inv_inv_date = payload.inv_inv_date.format('YYYY-MM-DD');
     }
